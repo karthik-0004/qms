@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+eggs/
+*.egg-info/
+.eggs/
+*.egg
+.venv
+venv/
+env/
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+*.pact.json
+pacts/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+
+# Node / Frontend
+node_modules/
+.next/
+.turbo/
+out/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+*.log
+
+# Secrets (never commit)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+vault_token
+.vault-token
+infra/postgres/userlist.txt
+
+# K8s generated
+*.kubeconfig
+
+# Alembic
+migrations/versions/*.pyc
