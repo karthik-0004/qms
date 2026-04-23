@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "user-service"
+version = "0.1.0"
+description = "Rainer Platform — User Profile and RBAC Service"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.29.0",
+    "aiosqlite>=0.20.0",
+    "alembic>=1.13.0",
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.5.0",
+    "redis[hiredis]>=5.0.0",
+    "structlog>=24.4.0",
+    "rainer-common>=0.1.0",
+    "rainer-auth-lib>=0.1.0",
+    "rainer-tenant-lib>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.27.0",
+    "testcontainers[postgres]>=4.8.0",
+    "ruff>=0.6.0",
+    "aiosqlite>=0.20.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B"]
+ignore = ["B008"]
+
+[tool.coverage.run]
+source = ["app"]
+
+[tool.coverage.report]
+fail_under = 80

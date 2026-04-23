@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "job-service"
+version = "0.1.0"
+description = "EndGameBiotech — Async Job Queue and Execution Service"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.5",
+    "uvicorn[standard]==0.32.1",
+    "pydantic==2.10.3",
+    "pydantic-settings==2.6.1",
+    "sqlalchemy[asyncio]==2.0.36",
+    "asyncpg==0.30.0",
+    "alembic==1.14.0",
+    "structlog==24.4.0",
+    "python-json-logger==2.0.7",
+    "redis==5.2.0",
+    "aiokafka==0.11.0",
+    "opentelemetry-sdk==1.28.0",
+    "opentelemetry-instrumentation-fastapi==0.49b0",
+    "httpx==0.28.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.3",
+    "pytest-asyncio==0.24.0",
+    "pytest-cov==6.0.0",
+    "anyio==4.6.2",
+    "httpx==0.28.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=app --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*"]
