@@ -1,0 +1,18 @@
+import { auth } from "@/lib/auth/config";
+import { redirect } from "next/navigation";
+import { DashboardProducts } from "@/components/platform/DashboardProducts";
+
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const productAccess =
+    ((session as unknown as Record<string, unknown>).product_access as string[]) ?? [];
+
+  const userName =
+    (session.user as { email?: string }).email?.split("@")[0] ?? "User";
+
+  return (
+    <DashboardProducts productAccess={productAccess} userName={userName} />
+  );
+}
