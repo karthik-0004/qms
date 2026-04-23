@@ -1,0 +1,6 @@
+; PgBouncer userlist — format: "username" "password_hash"
+; Use SCRAM-SHA-256 or md5 hashes in real environments.
+; This file is safe to commit; copy to `userlist.txt` for local dev.
+"rainer" "CHANGE_ME_DEV_PASSWORD"
+"rainer_admin" "CHANGE_ME_DEV_PASSWORD"
+"rainer_monitor" "CHANGE_ME_DEV_PASSWORD"

@@ -1,0 +1,195 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+  rainerEnv: "production"
+
+replicaCount: 2
+
+image:
+  repository: rainertek
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+ingress:
+  enabled: true
+  className: "kong"
+  annotations:
+    konghq.com/strip-path: "true"
+    konghq.com/protocols: "https"
+
+# ─── Service-specific overrides ────────────────────────────────────────────
+
+services:
+  auth-service:
+    port: 8001
+    replicas: 3
+  tenant-service:
+    port: 8002
+    replicas: 2
+  user-service:
+    port: 8003
+    replicas: 2
+  gateway-service:
+    port: 8000
+    replicas: 3
+  audit-service:
+    port: 8004
+    replicas: 2
+  notification-service:
+    port: 8005
+    replicas: 2
+  config-service:
+    port: 8006
+    replicas: 2
+  workflow-engine:
+    port: 8007
+    replicas: 2
+  schedule-service:
+    port: 8008
+    replicas: 2
+  file-service:
+    port: 8009
+    replicas: 2
+  reporting-service:
+    port: 8010
+    replicas: 2
+  analytics-service:
+    port: 8011
+    replicas: 2
+  document-service:
+    port: 8020
+    replicas: 2
+  quality-event-service:
+    port: 8021
+    replicas: 2
+  capa-service:
+    port: 8022
+    replicas: 2
+  training-service:
+    port: 8023
+    replicas: 2
+  equipment-service:
+    port: 8024
+    replicas: 2
+  plate-service:
+    port: 8030
+    replicas: 2
+  image-service:
+    port: 8031
+    replicas: 2
+  ai-service:
+    port: 8032
+    replicas: 3
+  job-service:
+    port: 8033
+    replicas: 2
+  qa-review-service:
+    port: 8034
+    replicas: 2
+  crm-service:
+    port: 8040
+    replicas: 2
+  contract-service:
+    port: 8041
+    replicas: 2
+  workorder-service:
+    port: 8042
+    replicas: 2
+  technician-service:
+    port: 8043
+    replicas: 2
+  billing-service:
+    port: 8044
+    replicas: 2
+
+# ─── Infra dependencies ─────────────────────────────────────────────────────
+
+postgresql:
+  enabled: false
+  auth:
+    postgresPassword: "change-in-production"
+    database: rainer_master
+
+redis:
+  enabled: false
+  auth:
+    enabled: true
+    password: "change-in-production"
+
+kafka:
+  enabled: false
+
+# ─── External secrets (HashiCorp Vault) ─────────────────────────────────────
+
+vault:
+  enabled: true
+  address: "https://vault.rainertek.internal:8200"
+  role: "rainer-platform"
+  secretPath: "secret/rainer"
+
+# ─── Network policies ────────────────────────────────────────────────────────
+
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: rainer-platform
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: ingress

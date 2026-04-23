@@ -1,0 +1,31 @@
+============================================================
+  Rainer Platform — {{ .Chart.Version }}
+============================================================
+
+Deployed {{ len .Values.services }} services to namespace: {{ .Release.Namespace }}
+
+Services:
+{{- range $name, $svc := .Values.services }}
+  - {{ $name }} → port {{ $svc.port }} ({{ $svc.replicas | default 2 }} replicas)
+{{- end }}
+
+To verify the deployment:
+
+  kubectl get pods -n {{ .Release.Namespace }}
+  kubectl get svc -n {{ .Release.Namespace }}
+
+To check a specific service:
+
+  kubectl logs -f deployment/auth-service -n {{ .Release.Namespace }}
+  kubectl port-forward svc/auth-service 8001:8001 -n {{ .Release.Namespace }}
+
+API Gateway: http://api.rainertek.com (via Kong Ingress)
+
+{{- if .Values.vault.enabled }}
+Vault integration is enabled:
+  Address: {{ .Values.vault.address }}
+  Role: {{ .Values.vault.role }}
+{{- end }}
+
+IMPORTANT: Update all Secret values before production deployment!
+  kubectl get secret -n {{ .Release.Namespace }} -o yaml

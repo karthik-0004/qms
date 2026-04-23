@@ -1,0 +1,29 @@
+{{- if .Values.ingress.enabled }}
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}-ingress
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    {{- include "rainer-platform.labels" $ | nindent 4 }}
+  annotations:
+    {{- toYaml $.Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ $.Values.ingress.className | quote }}
+  rules:
+    - host: api.rainertek.com
+      http:
+        paths:
+          - path: /api/v1/{{ $name | trimSuffix "-service" }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: {{ $svc.port }}
+{{- end }}
+{{- end }}

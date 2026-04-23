@@ -1,0 +1,83 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rainer-em-default-deny
+  namespace: rainer-em
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-intra-namespace
+  namespace: rainer-em
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rainer-em
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rainer-em
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rainer-infra
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 9000
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rainer-monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-platform-to-em
+  namespace: rainer-em
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rainer-platform
+      ports:
+        - protocol: TCP
+          port: 8030
+        - protocol: TCP
+          port: 8031
+        - protocol: TCP
+          port: 8032
+        - protocol: TCP
+          port: 8033
+        - protocol: TCP
+          port: 8034

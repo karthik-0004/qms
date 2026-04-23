@@ -1,0 +1,51 @@
+# ──────────────────────────────────────────────────────────────
+# Example K8s pod annotations + sidecar for Vault Agent injection
+# Add these annotations to the Helm deployment template.
+# ──────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-service
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/agent-init-first: "true"
+    vault.hashicorp.com/role: "rainer-service"
+
+    # Database credentials
+    vault.hashicorp.com/agent-inject-secret-db-credentials.env: "database/creds/rainer-service"
+    vault.hashicorp.com/agent-inject-template-db-credentials.env: |
+      {{- with secret "database/creds/rainer-service" -}}
+      DATABASE_URL=postgresql+asyncpg://{{ .Data.username }}:{{ .Data.password }}@postgres:5432/rainer_master
+      {{- end }}
+
+    # Redis credentials
+    vault.hashicorp.com/agent-inject-secret-redis-credentials.env: "secret/data/rainer/redis"
+    vault.hashicorp.com/agent-inject-template-redis-credentials.env: |
+      {{- with secret "secret/data/rainer/redis" -}}
+      REDIS_URL=redis://:{{ .Data.data.password }}@redis:6379/0
+      {{- end }}
+
+    # JWT / master secret
+    vault.hashicorp.com/agent-inject-secret-jwt-secret.env: "secret/data/rainer/jwt"
+    vault.hashicorp.com/agent-inject-template-jwt-secret.env: |
+      {{- with secret "secret/data/rainer/jwt" -}}
+      JWT_SECRET_KEY={{ .Data.data.secret_key }}
+      RAINER_MASTER_SECRET={{ .Data.data.master_secret }}
+      {{- end }}
+
+spec:
+  serviceAccountName: example-service-sa
+  containers:
+    - name: app
+      image: rainer/example-service:latest
+      envFrom:
+        - secretRef:
+            name: example-service-secrets
+      volumeMounts:
+        - name: vault-secrets
+          mountPath: /vault/secrets
+          readOnly: true
+  volumes:
+    - name: vault-secrets
+      emptyDir:
+        medium: Memory

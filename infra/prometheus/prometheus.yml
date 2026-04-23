@@ -1,0 +1,113 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: development
+    platform: rainer
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Platform Services
+  - job_name: auth-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['auth-service:8001']
+    labels:
+      product: platform
+      service: auth-service
+
+  - job_name: tenant-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['tenant-service:8002']
+    labels:
+      product: platform
+      service: tenant-service
+
+  - job_name: user-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['user-service:8003']
+    labels:
+      product: platform
+      service: user-service
+
+  - job_name: audit-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['audit-service:8004']
+    labels:
+      product: platform
+      service: audit-service
+
+  - job_name: notification-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['notification-service:8005']
+    labels:
+      product: platform
+      service: notification-service
+
+  - job_name: config-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['config-service:8006']
+    labels:
+      product: platform
+      service: config-service
+
+  - job_name: workflow-engine
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['workflow-engine:8007']
+    labels:
+      product: platform
+      service: workflow-engine
+
+  - job_name: file-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['file-service:8009']
+    labels:
+      product: platform
+      service: file-service
+
+  - job_name: reporting-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['reporting-service:8010']
+    labels:
+      product: platform
+      service: reporting-service
+
+  - job_name: analytics-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['analytics-service:8011']
+    labels:
+      product: platform
+      service: analytics-service
+
+  # Infrastructure
+  - job_name: postgres
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: redis
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: kafka
+    static_configs:
+      - targets: ['kafka-exporter:9308']

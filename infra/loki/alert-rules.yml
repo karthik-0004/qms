@@ -1,0 +1,164 @@
+# ──────────────────────────────────────────────────────────────
+# Loki LogQL Alert Rules for Rainer Platform
+# Evaluated by the Loki ruler and forwarded to Alertmanager.
+# ──────────────────────────────────────────────────────────────
+groups:
+  - name: rainer-error-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "ERROR" [5m])) by (app)
+          /
+          sum(rate({namespace=~"rainer-.*"} [5m])) by (app)
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High error rate in {{ $labels.app }}"
+          description: "Error rate exceeds 5% over the last 5 minutes for {{ $labels.app }}."
+
+      - alert: UnhandledException
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "unhandled_exception" [5m])) by (app) > 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Unhandled exceptions in {{ $labels.app }}"
+          description: "Unhandled exceptions detected in {{ $labels.app }}."
+
+  - name: rainer-auth-alerts
+    rules:
+      - alert: BruteForceLoginAttempts
+        expr: |
+          sum(rate({app="auth-service"} |= "login_failed" [5m])) > 10
+        for: 3m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Possible brute-force login attempts"
+          description: "More than 10 failed login attempts per 5 minutes on auth-service."
+
+      - alert: ServiceAuthFailures
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "service_auth_failed" [5m])) by (app) > 0
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Service-to-service auth failures in {{ $labels.app }}"
+          description: "Internal service authentication failures detected."
+
+  - name: rainer-database-alerts
+    rules:
+      - alert: SlowDBQueries
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "slow_query" [5m])) by (app) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Slow database queries in {{ $labels.app }}"
+          description: "More than 5 slow queries per 5 minutes."
+
+      - alert: DBConnectionPoolExhausted
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "connection_pool_exhausted" [5m])) by (app) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "DB connection pool exhausted in {{ $labels.app }}"
+          description: "Database connection pool is fully utilized."
+
+  - name: rainer-kafka-alerts
+    rules:
+      - alert: EventPublishFailures
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "event_publish_failed" [5m])) by (app) > 0
+        for: 3m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Kafka event publish failures in {{ $labels.app }}"
+          description: "Failed to publish events to Kafka."
+
+      - alert: ConsumerLag
+        expr: |
+          sum(rate({namespace=~"rainer-.*"} |= "consumer_lag_high" [5m])) by (app) > 0
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Kafka consumer lag in {{ $labels.app }}"
+          description: "Kafka consumer is falling behind."
+
+  - name: rainer-qms-alerts
+    rules:
+      - alert: DocumentApprovalStale
+        expr: |
+          sum(rate({app="document-service"} |= "document_pending_review" [1h])) > 20
+        for: 30m
+        labels:
+          severity: info
+          team: qms
+        annotations:
+          summary: "High number of documents pending review"
+          description: "More than 20 documents pending review in the last hour."
+
+  - name: rainer-em-alerts
+    rules:
+      - alert: AIAnalysisBacklog
+        expr: |
+          sum(rate({app="ai-service"} |= "analysis_queued" [10m])) > 50
+        for: 15m
+        labels:
+          severity: warning
+          team: em
+        annotations:
+          summary: "AI analysis backlog growing"
+          description: "More than 50 analyses queued in 10 minutes."
+
+      - alert: QAReviewBacklog
+        expr: |
+          sum(rate({app="qa-review-service"} |= "review_pending" [1h])) > 30
+        for: 30m
+        labels:
+          severity: info
+          team: em
+        annotations:
+          summary: "QA review backlog growing"
+          description: "More than 30 reviews pending in the last hour."
+
+  - name: rainer-ccv-alerts
+    rules:
+      - alert: OverdueWorkOrders
+        expr: |
+          sum(rate({app="workorder-service"} |= "work_order_overdue" [1h])) > 5
+        for: 30m
+        labels:
+          severity: warning
+          team: ccv
+        annotations:
+          summary: "Overdue work orders detected"
+          description: "More than 5 overdue work orders in the last hour."
+
+      - alert: InvoicePaymentOverdue
+        expr: |
+          sum(rate({app="billing-service"} |= "invoice_overdue" [1h])) > 10
+        for: 1h
+        labels:
+          severity: info
+          team: ccv
+        annotations:
+          summary: "Overdue invoices detected"
+          description: "More than 10 overdue invoices."

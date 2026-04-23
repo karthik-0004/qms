@@ -1,0 +1,278 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "QMS — Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{namespace=\"rainer-qms\"}[5m])) by (service)",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      }
+    },
+    {
+      "title": "QMS — Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{namespace=\"rainer-qms\", status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{namespace=\"rainer-qms\"}[5m])) by (service) * 100",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "QMS — P95 Latency (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"rainer-qms\"}[5m])) by (le, service)) * 1000",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" },
+        "overrides": []
+      }
+    },
+    {
+      "title": "QMS — Availability SLO (target: 99.9%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "(1 - sum(rate(http_requests_total{namespace=\"rainer-qms\", status=~\"5..\"}[24h])) / sum(rate(http_requests_total{namespace=\"rainer-qms\"}[24h]))) * 100",
+          "legendFormat": "QMS Availability"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 95,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "EM — Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{namespace=\"rainer-em\"}[5m])) by (service)",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      }
+    },
+    {
+      "title": "EM — Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{namespace=\"rainer-em\", status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{namespace=\"rainer-em\"}[5m])) by (service) * 100",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "EM — P95 Latency (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"rainer-em\"}[5m])) by (le, service)) * 1000",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" },
+        "overrides": []
+      }
+    },
+    {
+      "title": "EM — Availability SLO (target: 99.9%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "(1 - sum(rate(http_requests_total{namespace=\"rainer-em\", status=~\"5..\"}[24h])) / sum(rate(http_requests_total{namespace=\"rainer-em\"}[24h]))) * 100",
+          "legendFormat": "EM Availability"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 95,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "CCV — Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{namespace=\"rainer-ccv\"}[5m])) by (service)",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      }
+    },
+    {
+      "title": "CCV — Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{namespace=\"rainer-ccv\", status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{namespace=\"rainer-ccv\"}[5m])) by (service) * 100",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "CCV — P95 Latency (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"rainer-ccv\"}[5m])) by (le, service)) * 1000",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" },
+        "overrides": []
+      }
+    },
+    {
+      "title": "CCV — Availability SLO (target: 99.9%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "(1 - sum(rate(http_requests_total{namespace=\"rainer-ccv\", status=~\"5..\"}[24h])) / sum(rate(http_requests_total{namespace=\"rainer-ccv\"}[24h]))) * 100",
+          "legendFormat": "CCV Availability"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 95,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["rainer", "slo", "qms", "em", "ccv"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Rainer Platform — SLO Dashboard (QMS / EM / CCV)",
+  "uid": "rainer-slo-bcd",
+  "version": 1
+}

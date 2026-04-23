@@ -1,0 +1,888 @@
+version: "3.9"
+
+# ============================================================
+# Rainer Platform — Local Development Stack
+# Usage: docker-compose up -d
+# ============================================================
+
+x-common-env: &common-env
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  LOG_LEVEL: "DEBUG"
+  JSON_LOGS: "false"
+  RAINER_ENV: "development"
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - rainer-net
+
+networks:
+  rainer-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
+  minio_data:
+  opensearch_data:
+  vault_data:
+  grafana_data:
+  prometheus_data:
+  loki_data:
+
+    # ============================================================
+    # INFRASTRUCTURE SERVICES
+    # ============================================================
+services:
+  postgres:
+    image: postgres:16-alpine
+    <<: *service-defaults
+    environment:
+      POSTGRES_USER: rainer
+      POSTGRES_PASSWORD: rainer_dev_password
+      POSTGRES_DB: rainer_master
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U rainer -d rainer_master" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    <<: *service-defaults
+    command: redis-server --appendonly yes --requirepass rainer_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "rainer_redis_dev", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    <<: *service-defaults
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - kafka_data:/var/lib/zookeeper
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    <<: *service-defaults
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.7.0
+    <<: *service-defaults
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  minio:
+    image: minio/minio:latest
+    <<: *service-defaults
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: rainer_minio
+      MINIO_ROOT_PASSWORD: rainer_minio_dev_secret
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  opensearch:
+    image: opensearchproject/opensearch:2.16.0
+    <<: *service-defaults
+    environment:
+      discovery.type: single-node
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "Rainer@Dev123!"
+      plugins.security.disabled: "true"
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    <<: *service-defaults
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  vault:
+    image: hashicorp/vault:1.17
+    <<: *service-defaults
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: rainer-dev-root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    command: server -dev
+    volumes:
+      - vault_data:/vault/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    <<: *service-defaults
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: rainer-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+
+  # ============================================================
+  # OBSERVABILITY SERVICES
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    <<: *service-defaults
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    <<: *service-defaults
+    depends_on:
+      - prometheus
+      - loki
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: rainer_grafana_dev
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+
+  loki:
+    image: grafana/loki:3.1.0
+    <<: *service-defaults
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:3.1.0
+    <<: *service-defaults
+    volumes:
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./infra/promtail/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    <<: *service-defaults
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686" # UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  # ============================================================
+  # PLATFORM SERVICES (backend)
+  # ============================================================
+  auth-service:
+    build:
+      context: .
+      dockerfile: backend/platform/auth-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: "7"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "auth-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8001"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8001/health/live || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  tenant-service:
+    build:
+      context: .
+      dockerfile: backend/platform/tenant-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8002:8002"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      POSTGRES_ADMIN_URL: "postgresql://rainer:rainer_dev_password@postgres:5432/postgres"
+      SERVICE_NAME: "tenant-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8002"
+
+  user-service:
+    build:
+      context: .
+      dockerfile: backend/platform/user-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8003:8003"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      AUTH_SERVICE_URL: "http://auth-service:8001"
+      TENANT_SERVICE_URL: "http://tenant-service:8002"
+      SERVICE_NAME: "user-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8003"
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: backend/platform/audit-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8004:8004"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "audit-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8004"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: backend/platform/notification-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8005:8005"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      SMTP_HOST: "mailhog"
+      SMTP_PORT: "1025"
+      SMTP_USE_TLS: "false"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "notification-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8005"
+
+  config-service:
+    build:
+      context: .
+      dockerfile: backend/platform/config-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8006:8006"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "config-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8006"
+
+  workflow-engine:
+    build:
+      context: .
+      dockerfile: backend/platform/workflow-engine/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8007:8007"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "workflow-engine"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8007"
+
+  file-service:
+    build:
+      context: .
+      dockerfile: backend/platform/file-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8009:8009"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      S3_ENDPOINT_URL: "http://minio:9000"
+      S3_ACCESS_KEY_ID: "rainer_minio"
+      S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
+      S3_BUCKET_NAME: "rainer-files"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "file-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8009"
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: backend/platform/gateway-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      - auth-service
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *common-env
+      AUTH_SERVICE_URL: "http://auth-service:8001"
+      TENANT_SERVICE_URL: "http://tenant-service:8002"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "gateway-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8000"
+
+  schedule-service:
+    build:
+      context: .
+      dockerfile: backend/platform/schedule-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8008:8008"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "schedule-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8008"
+
+  reporting-service:
+    build:
+      context: .
+      dockerfile: backend/platform/reporting-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8010:8010"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      S3_ENDPOINT_URL: "http://minio:9000"
+      S3_ACCESS_KEY_ID: "rainer_minio"
+      S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
+      S3_REPORTS_BUCKET: "rainer-reports"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "reporting-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8010"
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: backend/platform/analytics-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8011:8011"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "analytics-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8011"
+
+  # ============================================================
+  # QMS DOMAIN SERVICES
+  # ============================================================
+  document-service:
+    build:
+      context: .
+      dockerfile: backend/qms/document-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8020:8020"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      WORKFLOW_SERVICE_URL: "http://workflow-engine:8007"
+      FILE_SERVICE_URL: "http://file-service:8009"
+      SERVICE_NAME: "document-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8020"
+
+  quality-event-service:
+    build:
+      context: .
+      dockerfile: backend/qms/quality-event-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8021:8021"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "quality-event-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8021"
+
+  capa-service:
+    build:
+      context: .
+      dockerfile: backend/qms/capa-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8022:8022"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "capa-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8022"
+
+  training-service:
+    build:
+      context: .
+      dockerfile: backend/qms/training-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8023:8023"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "training-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8023"
+
+  equipment-service:
+    build:
+      context: .
+      dockerfile: backend/qms/equipment-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8024:8024"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "equipment-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8024"
+
+  # ============================================================
+  # PHASE C — EndGameBiotech EM Services
+  # ============================================================
+  plate-service:
+    build:
+      context: .
+      dockerfile: backend/em/plate-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8030:8030"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "plate-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8030"
+
+  image-service:
+    build:
+      context: .
+      dockerfile: backend/em/image-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "8031:8031"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      S3_ENDPOINT_URL: "http://minio:9000"
+      S3_ACCESS_KEY_ID: "rainer_minio"
+      S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
+      S3_IMAGES_BUCKET: "rainer-em-images"
+      SERVICE_NAME: "image-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8031"
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: backend/em/ai-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "8032:8032"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      S3_ENDPOINT_URL: "http://minio:9000"
+      S3_ACCESS_KEY_ID: "rainer_minio"
+      S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
+      S3_IMAGES_BUCKET: "rainer-em-images"
+      MODEL_NAME: "endgame-colony-detector-v1"
+      MODEL_VERSION: "1.0.0"
+      CONFIDENCE_THRESHOLD: "0.75"
+      SERVICE_NAME: "ai-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8032"
+
+  job-service:
+    build:
+      context: .
+      dockerfile: backend/em/job-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8033:8033"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      MAX_RETRY_ATTEMPTS: "3"
+      RETRY_BACKOFF_SECONDS: "60"
+      JOB_TIMEOUT_SECONDS: "600"
+      WORKER_CONCURRENCY: "4"
+      SERVICE_NAME: "job-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8033"
+
+  qa-review-service:
+    build:
+      context: .
+      dockerfile: backend/em/qa-review-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8034:8034"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "qa-review-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8034"
+
+  # ============================================================
+  # PHASE D — RAINERCCV SERVICES
+  # ============================================================
+  crm-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/crm-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8040:8040"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "crm-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8040"
+
+  contract-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/contract-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8041:8041"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "contract-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8041"
+
+  workorder-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/workorder-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8042:8042"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
+      SERVICE_NAME: "workorder-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8042"
+
+  technician-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/technician-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8043:8043"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "technician-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8043"
+
+  billing-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/billing-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8044:8044"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      DEFAULT_CURRENCY: "USD"
+      PAYMENT_DUE_DAYS: "30"
+      SERVICE_NAME: "billing-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8044"
+
+  # ============================================================
+  # FRONTEND
+  # ============================================================
+  web:
+    build:
+      context: ./frontend/apps/web
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    depends_on:
+      - auth-service
+      - tenant-service
+      - user-service
+    ports:
+      - "3000:3000"
+    environment:
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_SECRET: "dev-nextauth-secret-change-in-production"
+      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      AUTH_SERVICE_URL: "http://auth-service:8001"
+      NODE_ENV: "development"

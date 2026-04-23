@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rainer-platform-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rainer-platform.labels" . | nindent 4 }}
+data:
+  RAINER_ENV: {{ .Values.global.rainerEnv | quote }}
+  LOG_LEVEL: "INFO"
+  JSON_LOGS: "true"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+  OTEL_SERVICE_NAMESPACE: "rainer"
+  PROMETHEUS_METRICS_PORT: "9090"
+  {{- if .Values.vault.enabled }}
+  VAULT_ADDR: {{ .Values.vault.address | quote }}
+  VAULT_ROLE: {{ .Values.vault.role | quote }}
+  {{- end }}
