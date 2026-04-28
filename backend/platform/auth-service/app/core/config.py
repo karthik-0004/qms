@@ -58,14 +58,14 @@ class Settings(BaseSettings):
     password_reset_expire_minutes: int = 60
 
     # Cookie (Refresh Token)
-    cookie_domain: str = "localhost"
+    cookie_domain: str | None = None  # None allows browser to set automatically
     cookie_secure: bool = False  # True in production (HTTPS)
     cookie_samesite: str = "lax"
-    cookie_path: str = "/api/v1/auth"
+    cookie_path: str = "/"
     refresh_token_cookie_name: str = "rainer_refresh_token"
 
     # CORS
-    cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:8001", "*"]
     cors_allow_credentials: bool = True
 
     # Observability
