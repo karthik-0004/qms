@@ -118,9 +118,16 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Adds standard security headers to all responses."""
+    
+    SKIP_PATHS = {"/docs", "/redoc", "/openapi.json", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout", "/api/v1/auth/logout-all"}
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
+        
+        # Skip security headers for documentation endpoints
+        if request.url.path in self.SKIP_PATHS:
+            return response
+        
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
