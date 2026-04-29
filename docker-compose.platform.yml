@@ -167,6 +167,7 @@ services:
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      ALLOW_RESERVED_EMAIL_DOMAINS: "true"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "15"

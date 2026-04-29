@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     otlp_endpoint: str = "http://jaeger:4317"
     enable_tracing: bool = True
 
+    # Validation
+    # If true (recommended only for development/testing), allow reserved/special-use
+    # email domains (e.g. ".local") during request validation.
+    allow_reserved_email_domains: bool = False
+
     @field_validator("rainer_env")
     @classmethod
     def validate_env(cls, v: str) -> str:

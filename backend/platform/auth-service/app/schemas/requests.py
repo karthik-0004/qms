@@ -2,9 +2,10 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from ..core.security import is_strong_password
+from ..core.validators import validate_request_email
 
 
 def _normalize_and_validate_mfa_code(value: str) -> str:
@@ -15,9 +16,14 @@ def _normalize_and_validate_mfa_code(value: str) -> str:
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str = Field(min_length=1)
     mfa_code: str | None = Field(default=None, min_length=6, max_length=6)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_request_email(v)
 
     @field_validator("mfa_code")
     @classmethod
@@ -70,7 +76,12 @@ class ChangePasswordRequest(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_request_email(v)
 
 
 class ResetPasswordRequest(BaseModel):
