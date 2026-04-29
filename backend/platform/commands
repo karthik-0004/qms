@@ -1,0 +1,1 @@
+docker-compose -f docker-compose.platform.yml up -d # comand to run the services
