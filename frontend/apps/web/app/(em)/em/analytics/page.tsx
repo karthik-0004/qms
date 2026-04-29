@@ -1,11 +1,14 @@
 "use client";
 
-import { BarChart3, FlaskConical, Cpu, CheckCircle2, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BarChart3, FlaskConical, Cpu, CheckCircle2, XCircle, ArrowLeft, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePlatformKPIs, useDashboard } from "@/lib/hooks/queries/analytics";
 
 export default function EMAnalyticsPage() {
+  const router = useRouter();
   const { data: kpiData, isLoading: kpiLoading } = usePlatformKPIs();
   const { data: dashData, isLoading: dashLoading } = useDashboard("em_overview");
   const loading = kpiLoading || dashLoading;
@@ -20,6 +23,31 @@ export default function EMAnalyticsPage() {
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <Home className="h-4 w-4 mr-1" />
+          Home
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-foreground font-medium">EM Analytics</span>
+      </div>
+
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <BarChart3 className="h-6 w-6" />

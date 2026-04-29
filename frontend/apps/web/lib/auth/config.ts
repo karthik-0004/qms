@@ -5,7 +5,11 @@ import { z } from "zod";
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  mfa_code: z.string().length(6).optional(),
+  mfa_code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/)
+    .optional(),
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({

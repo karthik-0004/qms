@@ -1,16 +1,24 @@
 FROM python:3.12-slim AS base
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
 FROM base AS builder
-COPY pyproject.toml .
-RUN pip install --upgrade pip && pip install hatchling && pip install -e ".[dev]"
+RUN pip install hatchling
+COPY backend/shared/rainer_common /deps/rainer_common
+COPY backend/shared/rainer_auth_lib /deps/rainer_auth_lib
+COPY backend/shared/rainer_tenant_lib /deps/rainer_tenant_lib
+RUN pip install /deps/rainer_common /deps/rainer_auth_lib /deps/rainer_tenant_lib
+COPY backend/em/plate-service/pyproject.toml /app/
+RUN pip install -e /app
+COPY backend/em/plate-service /app
 
-FROM base AS runtime
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY . .
+FROM base AS production
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+COPY --from=builder /usr/local/lib/python3.12 /usr/local/lib/python3.12
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app /app
 USER appuser
 EXPOSE 8030
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \

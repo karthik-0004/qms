@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
   FlaskConical,
   Plus,
   Search,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +49,7 @@ const SAMPLE_TYPES = ["settle_plate", "contact_plate", "air_sample", "surface_sa
 const PAGE_SIZE = 10;
 
 export default function PlatesPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sampleTypeFilter, setSampleTypeFilter] = useState("all");
@@ -65,6 +69,31 @@ export default function PlatesPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <Home className="h-4 w-4 mr-1" />
+          Home
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-foreground font-medium">Plates</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

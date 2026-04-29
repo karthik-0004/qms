@@ -16,7 +16,10 @@ const loginSchema = z.object({
 });
 
 const mfaSchema = z.object({
-  mfa_code: z.string().length(6, "MFA code must be 6 digits"),
+  mfa_code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "MFA code must be exactly 6 digits"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -54,7 +57,9 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(callbackUrl);
+      // `typedRoutes` is enabled; `callbackUrl` comes from `searchParams` (string at runtime).
+      // Casting keeps navigation working without constraining runtime callback URLs.
+      router.push(callbackUrl as any);
       router.refresh();
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
@@ -78,7 +83,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(callbackUrl);
+      router.push(callbackUrl as any);
       router.refresh();
     } catch {
       toast.error("An unexpected error occurred");

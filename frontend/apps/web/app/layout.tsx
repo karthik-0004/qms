@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { auth } from "@/lib/auth/config";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -29,8 +30,10 @@ export default async function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider session={session}>
           <QueryProvider>
-            {children}
-            <Toaster position="top-right" richColors closeButton />
+            <ThemeProvider>
+              {children}
+              <Toaster position="top-right" richColors closeButton />
+            </ThemeProvider>
           </QueryProvider>
         </SessionProvider>
       </body>

@@ -7,10 +7,24 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from ..core.security import is_strong_password
 
 
+def _normalize_and_validate_mfa_code(value: str) -> str:
+    code = value.strip().replace(" ", "")
+    if len(code) != 6 or not code.isdigit():
+        raise ValueError("MFA code must be exactly 6 digits.")
+    return code
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1)
     mfa_code: str | None = Field(default=None, min_length=6, max_length=6)
+
+    @field_validator("mfa_code")
+    @classmethod
+    def validate_mfa_code(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return _normalize_and_validate_mfa_code(v)
 
 
 class RefreshTokenRequest(BaseModel):
@@ -23,6 +37,11 @@ class LogoutRequest(BaseModel):
 
 class MFAVerifyRequest(BaseModel):
     code: str = Field(min_length=6, max_length=6)
+
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        return _normalize_and_validate_mfa_code(v)
 
 
 class MFADisableRequest(BaseModel):
