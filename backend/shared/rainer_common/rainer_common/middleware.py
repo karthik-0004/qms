@@ -118,14 +118,22 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Adds standard security headers to all responses."""
-    
-    SKIP_PATHS = {"/docs", "/redoc", "/openapi.json", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout", "/api/v1/auth/logout-all"}
+    # Swagger/Redoc use inline scripts + external CDN assets; strict CSP will blank the page.
+    # Use prefix matches so both `/docs` and `/docs/` (and oauth redirect) are covered.
+    _SKIP_PREFIXES = ("/docs", "/redoc", "/openapi.json")
+    _SKIP_EXACT = {
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/logout-all",
+    }
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
         
         # Skip security headers for documentation endpoints
-        if request.url.path in self.SKIP_PATHS:
+        path = request.url.path
+        if path in self._SKIP_EXACT or path.startswith(self._SKIP_PREFIXES):
             return response
         
         response.headers["X-Content-Type-Options"] = "nosniff"
