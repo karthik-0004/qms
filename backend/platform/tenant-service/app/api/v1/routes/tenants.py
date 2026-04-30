@@ -106,7 +106,7 @@ async def update_tenant(
 ) -> SuccessResponse[TenantResponse]:
     update_data = payload.model_dump(exclude_none=True)
     if update_data:
-        await service._tenants.update(tenant_id, **update_data)
+        await service.update_tenant(tenant_id, **update_data)
     tenant = await service.get_tenant(tenant_id)
     return SuccessResponse.of(TenantResponse.model_validate(tenant, from_attributes=True))
 

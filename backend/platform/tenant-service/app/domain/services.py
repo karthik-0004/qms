@@ -163,7 +163,7 @@ class TenantDomainService:
         # Check uniqueness
         existing = await self._tenants.get_by_name(tenant_name)
         if existing:
-            raise ConflictError(f"Tenant with name '{tenant_name}' already exists")
+            raise ConflictError("tenant_name already exists")
 
         # Create Master DB record
         tenant = await self._tenants.create(
@@ -195,6 +195,18 @@ class TenantDomainService:
             logger.error("tenant_provisioning_failed", tenant_id=tenant.id, error=str(exc))
             await self._tenants.update_status(tenant.id, "provisioning_failed")
             raise
+
+    async def update_tenant(self, tenant_id: str, **fields) -> None:
+        """
+        Update tenant fields while preventing unique constraint violations from
+        surfacing as INTERNAL_SERVER_ERROR.
+        """
+        if "tenant_name" in fields and fields["tenant_name"]:
+            existing = await self._tenants.get_by_name(fields["tenant_name"])
+            if existing and existing.id != tenant_id:
+                raise ConflictError("tenant_name already exists")
+
+        await self._tenants.update(tenant_id, **fields)
 
     async def get_tenant(self, tenant_id: str) -> Tenant:
         tenant = await self._tenants.get_by_id(tenant_id)
