@@ -10,7 +10,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class JWTSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="JWT_", case_sensitive=False)
+    model_config = SettingsConfigDict(
+        env_prefix="JWT_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     secret_key: str = "dev-secret-change-in-production"
     algorithm: str = "HS256"

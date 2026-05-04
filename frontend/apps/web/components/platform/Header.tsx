@@ -1,19 +1,19 @@
 "use client";
 
+import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import { useUIStore } from "@/lib/stores/ui.store";
-import { Bell, LogOut, User, Search, Moon, Sun } from "lucide-react";
+import { LogOut, User, Search, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { toast } from "sonner";
+import { NotificationBell } from "@/components/platform/notification-bell";
 
 interface HeaderProps {
-  session: Record<string, unknown>;
+  session: Session;
 }
 
 export function Header({ session }: HeaderProps) {
   const { theme, setTheme } = useUIStore();
-  const [notifOpen, setNotifOpen] = useState(false);
 
   const handleSignOut = async () => {
     toast.promise(signOut({ callbackUrl: "/login" }), {
@@ -50,17 +50,7 @@ export function Header({ session }: HeaderProps) {
           {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            className="p-2 rounded-lg hover:bg-muted transition relative"
-            title="Notifications"
-          >
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-          </button>
-        </div>
+        <NotificationBell />
 
         {/* User menu */}
         <div className="flex items-center gap-2 pl-2 border-l border-border">
@@ -69,10 +59,12 @@ export function Header({ session }: HeaderProps) {
           </div>
           <div className="hidden sm:block">
             <p className="text-sm font-medium leading-none">
-              {(session?.user as { email?: string } | undefined)?.email?.split("@")[0] ?? "User"}
+              {session.user?.email?.split("@")[0] ?? "User"}
             </p>
             <p className="text-xs text-muted-foreground capitalize">
-              {String((session as Record<string, unknown>)?.role ?? "user")}
+              {String(
+                (session.user as { role?: string } | undefined)?.role ?? "user"
+              )}
             </p>
           </div>
           <button

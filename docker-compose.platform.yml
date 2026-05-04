@@ -346,6 +346,8 @@ services:
       S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
       S3_BUCKET_NAME: "rainer-files"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "file-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8009"

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth/config";
+import { getCachedSession } from "@/lib/auth/get-cached-session";
 
 
 
@@ -14,7 +14,7 @@ export default async function QMSLayout({
 
 }) {
 
-  const session = await auth();
+  const session = await getCachedSession();
 
   if (!session?.user) redirect("/login");
 

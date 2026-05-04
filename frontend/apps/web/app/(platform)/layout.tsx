@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/config";
+import { getCachedSession } from "@/lib/auth/get-cached-session";
 import { Sidebar } from "@/components/platform/Sidebar";
 import { Header } from "@/components/platform/Header";
 
@@ -8,7 +8,7 @@ export default async function PlatformLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getCachedSession();
   if (!session?.user) redirect("/login");
 
   return (

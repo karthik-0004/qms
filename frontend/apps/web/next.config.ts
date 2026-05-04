@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+/** App directory — avoids Turbopack picking a parent folder (e.g. user home) when multiple lockfiles exist. */
+const turbopackRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: turbopackRoot,
+  },
   typedRoutes: true,
   images: {
     remotePatterns: [

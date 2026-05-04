@@ -15,8 +15,13 @@ from rainer_common.middleware import (
 )
 from rainer_common.responses import ErrorResponse
 
+# JWT env must be set before importing routes/db: database.py calls get_settings() at import time,
+# and rainer_auth_lib.JWTSettings() reads JWT_* from os.environ only.
+from .core.config import ensure_jwt_environment, get_settings
+
+ensure_jwt_environment()
+
 from .api.v1 import api_v1_router
-from .core.config import get_settings
 from .core.database import check_db_health, dispose_engine
 
 logger = structlog.get_logger(__name__)

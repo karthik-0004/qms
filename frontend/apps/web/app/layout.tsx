@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
-import { auth } from "@/lib/auth/config";
+import { getCachedSession } from "@/lib/auth/get-cached-session";
+import { AppSessionProvider } from "@/components/providers/AppSessionProvider";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -23,19 +23,19 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getCachedSession();
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SessionProvider session={session}>
+        <AppSessionProvider session={session}>
           <QueryProvider>
             <ThemeProvider>
               {children}
               <Toaster position="top-right" richColors closeButton />
             </ThemeProvider>
           </QueryProvider>
-        </SessionProvider>
+        </AppSessionProvider>
       </body>
     </html>
   );
