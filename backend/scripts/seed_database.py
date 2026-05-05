@@ -20,17 +20,30 @@ from datetime import datetime, timezone
 # Ensure backend packages are importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://rainer:rainer_dev_password@localhost:5432/rainer_master",
-)
-MASTER_SECRET = os.getenv("RAINER_MASTER_SECRET", "dev-master-secret-change-in-production")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@rainertek.com")
-ADMIN_PASSWORD_HASH = os.getenv(
-    "ADMIN_PASSWORD_HASH",
-    # bcrypt hash for "RainerAdmin123!" — replace in production
-    "$2b$12$LJ3m5ZQOJci.eFEVVx3BqORXV0JKH4rG1FGP.TJH6z4AbCrfD7VhK",
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+MASTER_SECRET = os.getenv("RAINER_MASTER_SECRET")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH")
+
+
+def _require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required env var: {name}")
+    return value
+
+
+def _get_admin_password_hash() -> str:
+    if ADMIN_PASSWORD_HASH:
+        return ADMIN_PASSWORD_HASH
+    if not ADMIN_PASSWORD:
+        raise RuntimeError("Missing required env var: ADMIN_PASSWORD or ADMIN_PASSWORD_HASH")
+    try:
+        import bcrypt  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError("bcrypt is required when using ADMIN_PASSWORD") from exc
+    return bcrypt.hashpw(ADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def derive_tenant_password(tenant_slug: str) -> str:
@@ -41,12 +54,22 @@ def derive_tenant_password(tenant_slug: str) -> str:
 
 
 async def main():
+    global DATABASE_URL, MASTER_SECRET, ADMIN_EMAIL
     try:
         from sqlalchemy.ext.asyncio import create_async_engine
         from sqlalchemy import text
     except ImportError:
         print("ERROR: sqlalchemy[asyncio] + asyncpg not installed.")
         print("  pip install sqlalchemy[asyncio] asyncpg")
+        sys.exit(1)
+
+    try:
+        DATABASE_URL = DATABASE_URL or _require_env("DATABASE_URL")
+        MASTER_SECRET = MASTER_SECRET or _require_env("RAINER_MASTER_SECRET")
+        ADMIN_EMAIL = ADMIN_EMAIL or _require_env("ADMIN_EMAIL")
+        admin_password_hash = _get_admin_password_hash()
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}")
         sys.exit(1)
 
     engine = create_async_engine(DATABASE_URL, echo=False)
@@ -100,7 +123,7 @@ async def main():
                     "id": user_id,
                     "tenant_id": tenant_id,
                     "email": ADMIN_EMAIL,
-                    "password_hash": ADMIN_PASSWORD_HASH,
+                    "password_hash": admin_password_hash,
                     "first_name": "Platform",
                     "last_name": "Admin",
                     "role": "admin",

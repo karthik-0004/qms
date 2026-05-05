@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     # Observability
     otlp_endpoint: str = "http://jaeger:4317"
     enable_tracing: bool = True
+    enable_perf_logs: bool = False
 
     # Validation
     # If true (recommended only for development/testing), allow reserved/special-use
