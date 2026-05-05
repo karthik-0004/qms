@@ -65,7 +65,13 @@ class Settings(BaseSettings):
     refresh_token_cookie_name: str = "rainer_refresh_token"
 
     # CORS
-    cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:8001", "*"]
+    # NOTE: When `cors_allow_credentials=True`, wildcard origins ("*") are invalid in browsers.
+    # Keep this list explicit and override via env (`CORS_ALLOWED_ORIGINS`) when needed.
+    cors_allowed_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:8001",
+    ]
     cors_allow_credentials: bool = True
 
     # Observability
@@ -85,6 +91,33 @@ class Settings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"rainer_env must be one of {allowed}")
         return v
+
+    @field_validator("cors_allowed_origins")
+    @classmethod
+    def normalize_cors_allowed_origins(cls, v: list[str]) -> list[str]:
+        # Normalize, de-dupe, and strip trailing slashes so origins match browser `Origin` header.
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for origin in v:
+            origin_value = (origin or "").strip()
+            if not origin_value:
+                continue
+            origin_value = origin_value.rstrip("/")
+            if origin_value not in seen:
+                normalized.append(origin_value)
+                seen.add(origin_value)
+        return normalized
+
+    @field_validator("cors_allow_credentials")
+    @classmethod
+    def validate_cors_credentials_with_origins(cls, allow_credentials: bool, info):
+        # If credentials are allowed, "*" cannot be used as an allowed origin.
+        cors_allowed_origins = info.data.get("cors_allowed_origins") or []
+        if allow_credentials and "*" in cors_allowed_origins:
+            raise ValueError(
+                "Invalid CORS config: cors_allow_credentials=true cannot be used with '*' in cors_allowed_origins"
+            )
+        return allow_credentials
 
     @property
     def is_production(self) -> bool:

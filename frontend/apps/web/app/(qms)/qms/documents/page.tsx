@@ -36,9 +36,10 @@ export default function DocumentsPage() {
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
+    doc_number: "",
     title: "",
     doc_type: "SOP",
-    content: "",
+    description: "",
   });
 
   const { data, isLoading } = useDocuments({
@@ -59,15 +60,16 @@ export default function DocumentsPage() {
     
     createDocument.mutate(
       {
+        doc_number: formData.doc_number,
         title: formData.title,
         doc_type: formData.doc_type,
-        content: formData.content,
+        description: formData.description,
       },
       {
         onSuccess: () => {
           toast.success("Document created successfully");
           setDialogOpen(false);
-          setFormData({ title: "", doc_type: "SOP", content: "" });
+          setFormData({ doc_number: "", title: "", doc_type: "SOP", description: "" });
         },
         onError: (error: any) => {
           const errorMessage = error?.response?.data?.detail || error?.message || "Failed to create document";
@@ -134,6 +136,16 @@ export default function DocumentsPage() {
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
+                    <Label htmlFor="doc_number">Document Number</Label>
+                    <Input
+                      id="doc_number"
+                      value={formData.doc_number}
+                      onChange={(e) => setFormData({ ...formData, doc_number: e.target.value })}
+                      placeholder="SOP-001"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="title">Title</Label>
                     <Input
                       id="title"
@@ -159,12 +171,12 @@ export default function DocumentsPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="content">Content</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Input
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Document content or description"
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Document description"
                       required
                     />
                   </div>
@@ -251,7 +263,7 @@ export default function DocumentsPage() {
                       key={doc.id}
                       className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">{doc.document_number}</td>
+                      <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">{doc.doc_number}</td>
                       <td className="py-3 pr-4 font-medium">{doc.title}</td>
                       <td className="py-3 pr-4 text-muted-foreground hidden sm:table-cell">{doc.doc_type}</td>
                       <td className="py-3 pr-4">
@@ -259,7 +271,7 @@ export default function DocumentsPage() {
                           {doc.status.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="py-3 pr-4 text-muted-foreground hidden md:table-cell">v{doc.version}</td>
+                      <td className="py-3 pr-4 text-muted-foreground hidden md:table-cell">v{doc.current_version}</td>
                       <td className="py-3 text-muted-foreground text-xs hidden md:table-cell">
                         {new Date(doc.updated_at).toLocaleDateString()}
                       </td>

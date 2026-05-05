@@ -11,6 +11,9 @@ x-common-env: &common-env
   LOG_LEVEL: "DEBUG"
   JSON_LOGS: "false"
   RAINER_ENV: "development"
+  # JWT settings must be consistent across all services that validate access tokens
+  JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+  JWT_ALGORITHM: "HS256"
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
