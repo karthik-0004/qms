@@ -245,6 +245,28 @@ services:
   # ============================================================
   # PLATFORM SERVICES (backend)
   # ============================================================
+  auth-service-init:
+    build:
+      context: .
+      dockerfile: backend/platform/auth-service/Dockerfile
+    <<: *service-defaults
+    # One-off init container: run once and exit.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      # Dev-only super admin bootstrap (override in your local .env if desired)
+      AUTH_SUPERADMIN_EMAIL: "admin@rainertek.com"
+      AUTH_SUPERADMIN_PASSWORD: "RainerAdmin123!"
+      SERVICE_NAME: "auth-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head && python -m app.scripts.create_super_admin"
+
   auth-service:
     build:
       context: .
@@ -255,6 +277,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      auth-service-init:
+        condition: service_completed_successfully
     ports:
       - "8001:8001"
     environment:
