@@ -50,15 +50,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const data = await res.json();
-          const user = data.data;
+          const payload = data.data;
+          const user = payload?.user;
+          if (!user || !payload?.access_token) return null;
 
           return {
-            id: user.user.id,
-            email: user.user.email,
-            role: user.user.role,
-            tenant_id: user.user.tenant_id,
-            mfa_enabled: user.user.mfa_enabled,
-            access_token: user.access_token,
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            tenant_id: user.tenant_id,
+            mfa_enabled: user.mfa_enabled,
+            access_token: payload.access_token,
           };
         } catch (err: unknown) {
           if (err instanceof Error && err.message === "MFA_REQUIRED") {
