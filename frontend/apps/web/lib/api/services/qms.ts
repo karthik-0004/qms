@@ -8,7 +8,7 @@ export interface Document {
   title: string;
   doc_type: string;
   status: string;
-  version: number;
+  version: string;
   author_id: string;
   created_at: string;
   updated_at: string;
@@ -73,23 +73,96 @@ export interface PaginatedResponse<T> {
   page_size: number;
 }
 
+type ApiMeta = {
+  request_id: string;
+  timestamp: string;
+  service?: string | null;
+  version?: string | null;
+};
+
+type ApiSuccess<T> = {
+  success: true;
+  data: T;
+  meta: ApiMeta;
+};
+
+type ApiPaginated<T> = {
+  success: true;
+  data: T[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+  meta: ApiMeta;
+};
+
+type DocumentDto = {
+  id: string;
+  doc_number: string;
+  title: string;
+  doc_type: string;
+  status: string;
+  current_version: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+function mapDocument(dto: DocumentDto): Document {
+  return {
+    id: dto.id,
+    document_number: dto.doc_number,
+    title: dto.title,
+    doc_type: dto.doc_type,
+    status: dto.status,
+    version: dto.current_version,
+    author_id: dto.created_by,
+    created_at: dto.created_at,
+    updated_at: dto.updated_at,
+  };
+}
+
 // ─── Documents ──────────────────────────────────────────────────────────────
 
 export const documentsApi = {
   list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>
-    apiClient.get<PaginatedResponse<Document>>("/documents/documents", { params }).then((r) => r.data),
+    apiClient
+      .get<ApiPaginated<DocumentDto>>("/documents", { params })
+      .then((r) => ({
+        items: r.data.data.map(mapDocument),
+        total: r.data.pagination.total,
+        page: r.data.pagination.page,
+        page_size: r.data.pagination.page_size,
+      })),
 
   get: (id: string) =>
-    apiClient.get<Document>(`/documents/documents/${id}`).then((r) => r.data),
+    apiClient.get<ApiSuccess<DocumentDto>>(`/documents/${id}`).then((r) => mapDocument(r.data.data)),
 
   create: (data: { title: string; doc_type: string; content?: string }) =>
-    apiClient.post<Document>("/documents/documents", data).then((r) => r.data),
+    apiClient
+      .post<ApiSuccess<DocumentDto>>("/documents", {
+        title: data.title,
+        doc_type: data.doc_type,
+        description: data.content,
+      })
+      .then((r) => mapDocument(r.data.data)),
 
   submit: (id: string) =>
-    apiClient.post<Document>(`/documents/documents/${id}/submit`).then((r) => r.data),
+    apiClient
+      .post<ApiSuccess<DocumentDto>>(`/documents/${id}/submit-for-review`, {})
+      .then((r) => mapDocument(r.data.data)),
 
   approve: (id: string, data: { signature: string; comments?: string }) =>
-    apiClient.post<Document>(`/documents/documents/${id}/approve`, data).then((r) => r.data),
+    apiClient
+      .post<ApiSuccess<DocumentDto>>(`/documents/${id}/approve`, {
+        signature: data.signature,
+        comment: data.comments,
+      })
+      .then((r) => mapDocument(r.data.data)),
 };
 
 // ─── Quality Events ─────────────────────────────────────────────────────────

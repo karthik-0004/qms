@@ -3,12 +3,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PUBLIC_PATHS = new Set(["/login", "/register", "/api/auth"]);
+const PUBLIC_PREFIXES = ["/api/"];
 
 export default auth((req: NextRequest & { auth: unknown }) => {
   const { pathname } = req.nextUrl;
 
   const isPublic =
     PUBLIC_PATHS.has(pathname) ||
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon");

@@ -1,5 +1,7 @@
 """Document Service — Document lifecycle API routes."""
 
+from datetime import datetime, timezone
+from uuid import uuid4
 from typing import Annotated
 
 import structlog
@@ -67,9 +69,14 @@ async def create_document(
     payload: CreateDocumentRequest,
     current_user: CurrentUser,
     service: Annotated[DocumentDomainService, Depends(_get_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> SuccessResponse[DocumentResponse]:
+    doc_number = payload.doc_number
+    if not doc_number:
+        now = datetime.now(timezone.utc)
+        doc_number = f"{settings.document_number_prefix}-{now:%Y%m%d}-{uuid4().hex[:8].upper()}"
     doc = await service.create_document(
-        doc_number=payload.doc_number,
+        doc_number=doc_number,
         title=payload.title,
         doc_type=payload.doc_type,
         created_by=current_user.sub,

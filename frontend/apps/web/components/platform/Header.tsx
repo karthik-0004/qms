@@ -7,6 +7,8 @@ import { LogOut, User, Search, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { NotificationBell } from "@/components/platform/notification-bell";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface HeaderProps {
   session: Session;
@@ -14,6 +16,37 @@ interface HeaderProps {
 
 export function Header({ session }: HeaderProps) {
   const { theme, setTheme } = useUIStore();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const urlQuery = searchParams.get("q") ?? "";
+  const [query, setQuery] = useState(urlQuery);
+
+  const baseParams = useMemo(() => {
+    // `useSearchParams()` returns a readonly instance; clone to safely mutate.
+    return new URLSearchParams(searchParams.toString());
+  }, [searchParams]);
+
+  useEffect(() => {
+    // Keep input in sync if navigation changes URL params.
+    setQuery(urlQuery);
+  }, [urlQuery]);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = new URLSearchParams(baseParams);
+      const trimmed = query.trim();
+
+      if (trimmed) next.set("q", trimmed);
+      else next.delete("q");
+
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [baseParams, pathname, query, router]);
 
   const handleSignOut = async () => {
     toast.promise(signOut({ callbackUrl: "/login" }), {
@@ -36,6 +69,8 @@ export function Header({ session }: HeaderProps) {
             type="search"
             placeholder="Search..."
             className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted border-0 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
         </div>
       </div>

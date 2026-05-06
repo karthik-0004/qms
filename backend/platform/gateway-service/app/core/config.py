@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     tenant_service_url: str = "http://tenant-service:8002"
     user_service_url: str = "http://user-service:8003"
     audit_service_url: str = "http://audit-service:8004"
+    document_service_url: str = "http://document-service:8020"
 
     # JWT settings (for validation)
     jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"
