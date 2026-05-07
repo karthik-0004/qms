@@ -1,4 +1,4 @@
-"""Alembic env.py — async migrations for document-service."""
+ok"""Alembic env.py — async migrations for document-service."""
 
 import asyncio
 import os

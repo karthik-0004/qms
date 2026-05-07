@@ -42,7 +42,9 @@ export function Header({ session }: HeaderProps) {
       else next.delete("q");
 
       const qs = next.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // Next.js typed routes can reject dynamic, param-built URLs at type-level.
+      // Runtime is valid; cast keeps typecheck strict elsewhere.
+      router.replace((qs ? `${pathname}?${qs}` : pathname) as any, { scroll: false });
     }, 250);
 
     return () => window.clearTimeout(handle);

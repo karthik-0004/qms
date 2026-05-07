@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDocuments, useCreateDocument } from "@/lib/hooks/queries/qms";
 import type { Document } from "@/lib/api/services/qms";
+import { handleApiError } from "@/lib/api/client";
 import { toast } from "sonner";
 
 const Dialog = lazy(() => import("@/components/ui/dialog").then(m => ({ default: m.Dialog })));
@@ -72,9 +73,7 @@ export default function DocumentsPage() {
           setFormData({ doc_number: "", title: "", doc_type: "SOP", description: "" });
         },
         onError: (error: any) => {
-          const errorMessage = error?.response?.data?.detail || error?.message || "Failed to create document";
-          toast.error(errorMessage);
-          console.error("Error creating document:", error);
+          toast.error(handleApiError(error));
         },
       }
     );

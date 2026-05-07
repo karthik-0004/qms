@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from rainer_auth_lib.dependencies import CurrentUser
+from rainer_common.exceptions import RainerException
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
 
@@ -33,6 +34,14 @@ def _get_service(
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> DocumentDomainService:
+    # Tenant scoping is mandatory for all document queries. Without it we end up
+    # sending an invalid UUID to Postgres and returning a 500.
+    if not getattr(current_user, "tenant_id", None):
+        raise RainerException(
+            code="TENANT_REQUIRED",
+            message="Tenant context is required. Provide a tenant-scoped token or X-Tenant-ID header.",
+            status_code=400,
+        )
     return DocumentDomainService(
         doc_repo=DocumentRepository(db),
         version_repo=DocumentVersionRepository(db),

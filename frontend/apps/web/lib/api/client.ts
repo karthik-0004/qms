@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { getSession } from "next-auth/react";
+import { useAuthStore } from "@/lib/stores/auth.store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -33,10 +34,9 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    const tenantId = (session as unknown as Record<string, unknown>).tenant_id as string | undefined;
-    if (tenantId) {
-      config.headers["X-Tenant-ID"] = tenantId;
-    }
+    const tenantIdFromSession = (session as unknown as Record<string, unknown>).tenant_id as string | undefined | null;
+    const tenantId = tenantIdFromSession ?? useAuthStore.getState().tenant_id;
+    if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
   }
   config.headers["X-Request-ID"] = crypto.randomUUID();
   return config;
