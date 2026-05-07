@@ -1,7 +1,7 @@
 FROM python:3.12-slim AS builder
 WORKDIR /build
 COPY pyproject.toml .
-RUN pip install --upgrade pip && pip install --no-cache-dir .
+RUN pip install --no-cache-dir .
 
 FROM python:3.12-slim AS runtime
 RUN groupadd -r appuser && useradd -r -g appuser appuser
