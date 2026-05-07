@@ -10,30 +10,11 @@ import {
 
 export interface Document {
   id: string;
-  tenant_id: string;
   doc_number: string;
   title: string;
   doc_type: string;
-  department: string | null;
-  description: string | null;
   status: string;
-<<<<<<< HEAD
-  version: string;
-  author_id: string;
-=======
   current_version: string;
-  owner_id: string | null;
-  approver_id: string | null;
-  effective_date: string | null;
-  review_date: string | null;
-  expiry_date: string | null;
-  workflow_instance_id: string | null;
-  file_id: string | null;
-  tags: string[];
-  regulatory_frameworks: string[];
-  is_controlled: boolean;
-  created_by: string;
->>>>>>> ffc221eed48483e4fa7c1e09407208b63779887e
   created_at: string;
   updated_at: string;
 }
@@ -111,33 +92,6 @@ export interface PaginatedResponse<T> {
   page_size: number;
 }
 
-type ApiMeta = {
-  request_id: string;
-  timestamp: string;
-  service?: string | null;
-  version?: string | null;
-};
-
-type ApiSuccess<T> = {
-  success: true;
-  data: T;
-  meta: ApiMeta;
-};
-
-type ApiPaginated<T> = {
-  success: true;
-  data: T[];
-  pagination: {
-    page: number;
-    page_size: number;
-    total: number;
-    total_pages: number;
-    has_next: boolean;
-    has_prev: boolean;
-  };
-  meta: ApiMeta;
-};
-
 type DocumentDto = {
   id: string;
   doc_number: string;
@@ -153,64 +107,52 @@ type DocumentDto = {
 function mapDocument(dto: DocumentDto): Document {
   return {
     id: dto.id,
-    document_number: dto.doc_number,
+    doc_number: dto.doc_number,
     title: dto.title,
     doc_type: dto.doc_type,
     status: dto.status,
-    version: dto.current_version,
-    author_id: dto.created_by,
+    current_version: dto.current_version,
     created_at: dto.created_at,
     updated_at: dto.updated_at,
   };
+}
+
+function normalizePaginated<T>(raw: unknown, mapper?: (v: unknown) => T): PaginatedResponse<T> {
+  const value = raw as any;
+
+  if (value && typeof value === "object" && Array.isArray(value.items)) {
+    return {
+      items: (mapper ? value.items.map(mapper) : value.items) as T[],
+      total: Number(value.total ?? value.items.length ?? 0),
+      page: Number(value.page ?? 1),
+      page_size: Number(value.page_size ?? value.items.length ?? 0),
+    };
+  }
+
+  if (value && typeof value === "object" && Array.isArray(value.data) && value.pagination) {
+    return {
+      items: (mapper ? value.data.map(mapper) : value.data) as T[],
+      total: Number(value.pagination.total ?? value.data.length ?? 0),
+      page: Number(value.pagination.page ?? 1),
+      page_size: Number(value.pagination.page_size ?? value.data.length ?? 0),
+    };
+  }
+
+  return { items: [], total: 0, page: 1, page_size: 0 };
 }
 
 // ─── Documents ──────────────────────────────────────────────────────────────
 
 export const documentsApi = {
   list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>
-<<<<<<< HEAD
-    apiClient
-      .get<ApiPaginated<DocumentDto>>("/documents", { params })
-      .then((r) => ({
-        items: r.data.data.map(mapDocument),
-=======
     qmsApiClient
-      .get<PaginatedEnvelope<Document>>("/documents", { params })
-      .then((r) => ({
-        items: r.data.data,
->>>>>>> ffc221eed48483e4fa7c1e09407208b63779887e
-        total: r.data.pagination.total,
-        page: r.data.pagination.page,
-        page_size: r.data.pagination.page_size,
-      })),
+      .get<PaginatedResponse<DocumentDto> | PaginatedEnvelope<DocumentDto>>("/documents", { params })
+      .then((r) => normalizePaginated<Document>(r.data, (v) => mapDocument(v as DocumentDto))),
 
   get: (id: string) =>
-<<<<<<< HEAD
-    apiClient.get<ApiSuccess<DocumentDto>>(`/documents/${id}`).then((r) => mapDocument(r.data.data)),
-
-  create: (data: { title: string; doc_type: string; content?: string }) =>
-    apiClient
-      .post<ApiSuccess<DocumentDto>>("/documents", {
-        title: data.title,
-        doc_type: data.doc_type,
-        description: data.content,
-      })
-      .then((r) => mapDocument(r.data.data)),
-
-  submit: (id: string) =>
-    apiClient
-      .post<ApiSuccess<DocumentDto>>(`/documents/${id}/submit-for-review`, {})
-      .then((r) => mapDocument(r.data.data)),
-
-  approve: (id: string, data: { signature: string; comments?: string }) =>
-    apiClient
-      .post<ApiSuccess<DocumentDto>>(`/documents/${id}/approve`, {
-        signature: data.signature,
-        comment: data.comments,
-      })
-      .then((r) => mapDocument(r.data.data)),
-=======
-    qmsApiClient.get<SuccessEnvelope<Document>>(`/documents/${id}`).then((r) => r.data.data),
+    qmsApiClient
+      .get<SuccessEnvelope<DocumentDto> | DocumentDto>(`/documents/${id}`)
+      .then((r) => ("data" in (r.data as any) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
 
   create: (data: {
     doc_number: string;
@@ -222,30 +164,31 @@ export const documentsApi = {
     regulatory_frameworks?: string[];
     file_id?: string;
   }) =>
-    qmsApiClient.post<SuccessEnvelope<Document>>("/documents", {
-      doc_number: data.doc_number,
-      title: data.title,
-      doc_type: data.doc_type,
-      description: data.description,
-      department: data.department,
-      tags: data.tags ?? [],
-      regulatory_frameworks: data.regulatory_frameworks ?? [],
-      file_id: data.file_id ?? null,
-    }).then((r) => r.data.data),
+    qmsApiClient
+      .post<SuccessEnvelope<DocumentDto> | DocumentDto>("/documents", {
+        doc_number: data.doc_number,
+        title: data.title,
+        doc_type: data.doc_type,
+        description: data.description,
+        department: data.department,
+        tags: data.tags,
+        regulatory_frameworks: data.regulatory_frameworks,
+        file_id: data.file_id,
+      })
+      .then((r) => ("data" in (r.data as any) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
 
   submitForReview: (id: string, data?: { approver_id?: string; comment?: string }) =>
     qmsApiClient
-      .post<SuccessEnvelope<Document>>(`/documents/${id}/submit-for-review`, data ?? {})
-      .then((r) => r.data.data),
+      .post<SuccessEnvelope<DocumentDto> | DocumentDto>(`/documents/${id}/submit-for-review`, data ?? {})
+      .then((r) => ("data" in (r.data as any) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
 
   approve: (id: string, data: { signature: string; comments?: string }) =>
     qmsApiClient
-      .post<SuccessEnvelope<Document>>(`/documents/${id}/approve`, {
+      .post<SuccessEnvelope<DocumentDto> | DocumentDto>(`/documents/${id}/approve`, {
         signature: data.signature,
         comment: data.comments,
       })
-      .then((r) => r.data.data),
->>>>>>> ffc221eed48483e4fa7c1e09407208b63779887e
+      .then((r) => ("data" in (r.data as any) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
 };
 
 // ─── Quality Events ─────────────────────────────────────────────────────────
