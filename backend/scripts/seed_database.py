@@ -24,6 +24,13 @@ ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH")
 SEED_TENANT_NAME = os.getenv("SEED_TENANT_NAME")
 SEED_TENANT_SLUG = os.getenv("SEED_TENANT_SLUG")
 
+# Optional: seed tenant admin user (dev convenience).
+# Keep values env-driven (never hardcode credentials).
+TENANTADMIN_EMAIL = os.getenv("TENANTADMIN_EMAIL")
+TENANTADMIN_PASSWORD = os.getenv("TENANTADMIN_PASSWORD")
+TENANTADMIN_PASSWORD_HASH = os.getenv("TENANTADMIN_PASSWORD_HASH")
+TENANTADMIN_ROLE = (os.getenv("TENANTADMIN_ROLE") or "tenant_admin").strip()
+
 
 def _require_env(name: str) -> str:
     value = os.getenv(name)
@@ -42,6 +49,22 @@ def _get_admin_password_hash() -> str:
     except ImportError as exc:
         raise RuntimeError("bcrypt is required when using ADMIN_PASSWORD") from exc
     return bcrypt.hashpw(ADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def _get_tenantadmin_password_hash() -> str:
+    if TENANTADMIN_PASSWORD_HASH:
+        return TENANTADMIN_PASSWORD_HASH
+    if not TENANTADMIN_PASSWORD:
+        raise RuntimeError(
+            "Missing required env var: TENANTADMIN_PASSWORD or TENANTADMIN_PASSWORD_HASH"
+        )
+    try:
+        import bcrypt  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError("bcrypt is required when using TENANTADMIN_PASSWORD") from exc
+    return bcrypt.hashpw(
+        TENANTADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()
+    ).decode("utf-8")
 
 
 async def main():
@@ -128,6 +151,62 @@ async def main():
                 },
             )
             print(f"  ✅ Created admin user: {ADMIN_EMAIL} (id={user_id})")
+
+        # ── 3. Seed tenant admin user (optional) ─────────────────────────
+        # Only runs when TENANTADMIN_EMAIL is provided.
+        if TENANTADMIN_EMAIL:
+            try:
+                tenantadmin_password_hash = _get_tenantadmin_password_hash()
+            except RuntimeError as exc:
+                print(f"  ⚠️  Skipping tenant admin seed: {exc}")
+            else:
+                existing_tenantadmin = await conn.execute(
+                    text("SELECT id FROM platform_users WHERE email = :email"),
+                    {"email": TENANTADMIN_EMAIL},
+                )
+                row = existing_tenantadmin.fetchone()
+                if row:
+                    await conn.execute(
+                        text("""
+                            UPDATE platform_users
+                               SET tenant_id = :tenant_id,
+                                   password_hash = :password_hash,
+                                   role = :role,
+                                   status = 'active',
+                                   updated_at = :now
+                             WHERE email = :email
+                        """),
+                        {
+                            "tenant_id": tenant_id,
+                            "password_hash": tenantadmin_password_hash,
+                            "role": TENANTADMIN_ROLE,
+                            "now": now,
+                            "email": TENANTADMIN_EMAIL,
+                        },
+                    )
+                    print(f"  ✅ Updated tenant admin user: {TENANTADMIN_EMAIL}")
+                else:
+                    tenantadmin_user_id = str(uuid.uuid4())
+                    await conn.execute(
+                        text("""
+                            INSERT INTO platform_users (id, tenant_id, email, password_hash, role, status, mfa_enabled, failed_attempts, created_at, updated_at)
+                            VALUES (:id, :tenant_id, :email, :password_hash, :role, :status, :mfa_enabled, :failed_attempts, :now, :now)
+                        """),
+                        {
+                            "id": tenantadmin_user_id,
+                            "tenant_id": tenant_id,
+                            "email": TENANTADMIN_EMAIL,
+                            "password_hash": tenantadmin_password_hash,
+                            "role": TENANTADMIN_ROLE,
+                            "status": "active",
+                            "mfa_enabled": False,
+                            "failed_attempts": 0,
+                            "now": now,
+                        },
+                    )
+                    print(
+                        f"  ✅ Created tenant admin user: {TENANTADMIN_EMAIL} (id={tenantadmin_user_id})"
+                    )
 
     await engine.dispose()
     print("\n✅ Seed complete!")
