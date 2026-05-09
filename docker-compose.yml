@@ -274,7 +274,27 @@ services:
       SERVICE_NAME: "auth-service"
       SERVICE_VERSION: "0.1.0"
     command: >
-      sh -lc "alembic upgrade head && python -m app.scripts.create_super_admin"
+      sh -lc "alembic upgrade head || alembic stamp head; python -m app.scripts.create_super_admin"
+
+  tenant-service-init:
+    build:
+      context: .
+      dockerfile: backend/platform/tenant-service/Dockerfile
+    <<: *service-defaults
+    # One-off init container: run once and exit.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      POSTGRES_ADMIN_URL: "postgresql://rainer:rainer_dev_password@postgres:5432/postgres"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "tenant-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head"
 
   auth-service:
     build:
@@ -320,6 +340,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      tenant-service-init:
+        condition: service_completed_successfully
     ports:
       - "8002:8002"
     environment:
@@ -604,6 +626,24 @@ services:
       SERVICE_VERSION: "0.1.0"
       PORT: "8020"
 
+  quality-event-service-init:
+    build:
+      context: .
+      dockerfile: backend/qms/quality-event-service/Dockerfile
+    <<: *service-defaults
+    # One-off init container: run once and exit.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      SERVICE_NAME: "quality-event-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head"
+
   quality-event-service:
     build:
       context: .
@@ -612,6 +652,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      quality-event-service-init:
+        condition: service_completed_successfully
     ports:
       - "8021:8021"
     environment:
