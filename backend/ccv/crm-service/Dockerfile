@@ -4,7 +4,7 @@ WORKDIR /build
 
 COPY pyproject.toml .
 
-RUN pip install --upgrade pip && pip install --no-cache-dir .
+RUN pip install --no-cache-dir .
 
 
 
@@ -27,7 +27,6 @@ USER appuser
 EXPOSE 8040
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8040/health')"
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8040", "--workers", "1"]

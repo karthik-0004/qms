@@ -92,16 +92,22 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # Ensure Kafka listens on the same ports it advertises.
+      # Other services in this compose use `kafka:29092`.
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_LOG_RETENTION_HOURS: 168
     healthcheck:
-      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      # CLI-based checks can hang on some Windows/DockerDesktop setups; use a fast TCP socket probe instead.
+      test: [ "CMD-SHELL", "bash -lc \"echo > /dev/tcp/localhost/29092\"" ]
       interval: 30s
-      timeout: 10s
-      retries: 5
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.7.0
@@ -206,7 +212,7 @@ services:
       - prometheus
       - loki
     ports:
-      - "3001:3000"
+      - "${GRAFANA_PORT:-3001}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: rainer_grafana_dev
@@ -592,6 +598,8 @@ services:
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       WORKFLOW_SERVICE_URL: "http://workflow-engine:8007"
       FILE_SERVICE_URL: "http://file-service:8009"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "document-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8020"
@@ -699,8 +707,8 @@ services:
 
   image-service:
     build:
-      context: .
-      dockerfile: backend/em/image-service/Dockerfile
+      context: ./backend/em/image-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -754,8 +762,8 @@ services:
 
   job-service:
     build:
-      context: .
-      dockerfile: backend/em/job-service/Dockerfile
+      context: ./backend/em/job-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -780,8 +788,8 @@ services:
 
   qa-review-service:
     build:
-      context: .
-      dockerfile: backend/em/qa-review-service/Dockerfile
+      context: ./backend/em/qa-review-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -803,8 +811,8 @@ services:
   # ============================================================
   crm-service:
     build:
-      context: .
-      dockerfile: backend/ccv/crm-service/Dockerfile
+      context: ./backend/ccv/crm-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -884,8 +892,8 @@ services:
 
   billing-service:
     build:
-      context: .
-      dockerfile: backend/ccv/billing-service/Dockerfile
+      context: ./backend/ccv/billing-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:

@@ -23,6 +23,16 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH")
 SEED_TENANT_NAME = os.getenv("SEED_TENANT_NAME")
 SEED_TENANT_SLUG = os.getenv("SEED_TENANT_SLUG")
+SEED_TENANT_DB_HOST = os.getenv("SEED_TENANT_DB_HOST")
+SEED_TENANT_DB_PORT = os.getenv("SEED_TENANT_DB_PORT")
+SEED_TENANT_STATUS = os.getenv("SEED_TENANT_STATUS")
+SEED_TENANT_TIER = os.getenv("SEED_TENANT_TIER")
+SEED_TENANT_PRODUCTS = os.getenv("SEED_TENANT_PRODUCTS")
+SEED_TENANT_REGION = os.getenv("SEED_TENANT_REGION")
+SEED_PLATFORM_ADMIN_ROLE = os.getenv("SEED_PLATFORM_ADMIN_ROLE")
+SEED_PLATFORM_ADMIN_STATUS = os.getenv("SEED_PLATFORM_ADMIN_STATUS")
+SEED_PLATFORM_ADMIN_MFA_ENABLED = os.getenv("SEED_PLATFORM_ADMIN_MFA_ENABLED")
+SEED_PLATFORM_ADMIN_FAILED_ATTEMPTS = os.getenv("SEED_PLATFORM_ADMIN_FAILED_ATTEMPTS")
 
 # Optional: seed tenant admin user (dev convenience).
 # Keep values env-driven (never hardcode credentials).
@@ -37,6 +47,22 @@ def _require_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required env var: {name}")
     return value
+
+
+def _parse_int(value: str, *, name: str) -> int:
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise RuntimeError(f"Invalid int for {name}") from exc
+
+
+def _parse_bool(value: str, *, name: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "t", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "f", "no", "n", "off"}:
+        return False
+    raise RuntimeError(f"Invalid bool for {name}")
 
 
 def _get_admin_password_hash() -> str:
@@ -90,10 +116,29 @@ async def main():
     now = datetime.now(timezone.utc)
     tenant_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
-    tenant_slug = (SEED_TENANT_SLUG or "rainertek-default").strip()
-    tenant_name = (SEED_TENANT_NAME or "RainerTek (Default)").strip()
+
+    tenant_slug = (SEED_TENANT_SLUG or _require_env("SEED_TENANT_SLUG")).strip()
+    tenant_name = (SEED_TENANT_NAME or _require_env("SEED_TENANT_NAME")).strip()
     tenant_db_name = f"rainer_tenant_{tenant_slug.replace('-', '_')}"
     tenant_db_user = f"rainer_{tenant_slug.replace('-', '_')}"
+
+    tenant_db_host = (SEED_TENANT_DB_HOST or _require_env("SEED_TENANT_DB_HOST")).strip()
+    tenant_db_port = _parse_int((SEED_TENANT_DB_PORT or _require_env("SEED_TENANT_DB_PORT")).strip(), name="SEED_TENANT_DB_PORT")
+    tenant_status = (SEED_TENANT_STATUS or _require_env("SEED_TENANT_STATUS")).strip()
+    tenant_tier = (SEED_TENANT_TIER or _require_env("SEED_TENANT_TIER")).strip()
+    tenant_products = (SEED_TENANT_PRODUCTS or _require_env("SEED_TENANT_PRODUCTS")).strip()
+    tenant_region = (SEED_TENANT_REGION or _require_env("SEED_TENANT_REGION")).strip()
+
+    platform_admin_role = (SEED_PLATFORM_ADMIN_ROLE or _require_env("SEED_PLATFORM_ADMIN_ROLE")).strip()
+    platform_admin_status = (SEED_PLATFORM_ADMIN_STATUS or _require_env("SEED_PLATFORM_ADMIN_STATUS")).strip()
+    platform_admin_mfa_enabled = _parse_bool(
+        (SEED_PLATFORM_ADMIN_MFA_ENABLED or _require_env("SEED_PLATFORM_ADMIN_MFA_ENABLED")).strip(),
+        name="SEED_PLATFORM_ADMIN_MFA_ENABLED",
+    )
+    platform_admin_failed_attempts = _parse_int(
+        (SEED_PLATFORM_ADMIN_FAILED_ATTEMPTS or _require_env("SEED_PLATFORM_ADMIN_FAILED_ATTEMPTS")).strip(),
+        name="SEED_PLATFORM_ADMIN_FAILED_ATTEMPTS",
+    )
 
     async with engine.begin() as conn:
         # ── 1. Seed admin tenant ─────────────────────────────────────────
@@ -114,12 +159,12 @@ async def main():
                     "slug": tenant_slug,
                     "db_name": tenant_db_name,
                     "db_user": tenant_db_user,
-                    "db_host": "postgres",
-                    "db_port": 5432,
-                    "status": "active",
-                    "tier": "starter",
-                    "products": "[]",
-                    "region": "us-east-1",
+                    "db_host": tenant_db_host,
+                    "db_port": tenant_db_port,
+                    "status": tenant_status,
+                    "tier": tenant_tier,
+                    "products": tenant_products,
+                    "region": tenant_region,
                     "now": now,
                 },
             )
@@ -143,10 +188,10 @@ async def main():
                     "tenant_id": tenant_id,
                     "email": ADMIN_EMAIL,
                     "password_hash": admin_password_hash,
-                    "role": "admin",
-                    "status": "active",
-                    "mfa_enabled": False,
-                    "failed_attempts": 0,
+                    "role": platform_admin_role,
+                    "status": platform_admin_status,
+                    "mfa_enabled": platform_admin_mfa_enabled,
+                    "failed_attempts": platform_admin_failed_attempts,
                     "now": now,
                 },
             )

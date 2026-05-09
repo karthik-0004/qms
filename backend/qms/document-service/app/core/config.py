@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     audit_service_url: str = "http://audit-service:8004"
 
     # Document lifecycle settings
+    document_number_prefix: str = "DOC"
     periodic_review_days_warning: int = 30
     max_document_versions: int = 100
 
