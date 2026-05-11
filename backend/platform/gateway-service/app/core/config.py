@@ -39,10 +39,12 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     rainer_master_secret: str = "dev-master-secret-change-in-production"
-    cors_allowed_origins: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ]
+    # Comma-separated list (also settable via env CORS_ALLOWED_ORIGINS) — required when the
+    # web app is served from another host or LAN IP (see .env.example).
+    cors_allowed_origins: str = "http://localhost:3000,http://localhost:3001"
+
+    def cors_origins_as_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
 
 
 @lru_cache
