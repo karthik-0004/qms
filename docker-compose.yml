@@ -972,5 +972,6 @@ services:
       NEXTAUTH_URL: "http://localhost:3000"
       NEXTAUTH_SECRET: "dev-nextauth-secret-change-in-production"
       NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL: "http://quality-event-service:8021"
       AUTH_SERVICE_URL: "http://auth-service:8001"
       NODE_ENV: "development"

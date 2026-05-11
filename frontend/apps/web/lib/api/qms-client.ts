@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import { getSession } from "next-auth/react";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { getSessionFast } from "@/lib/api/session";
 
 /**
  * Prefer routing QMS traffic through the platform gateway to avoid CORS / mixed-content
@@ -8,15 +8,16 @@ import { useAuthStore } from "@/lib/stores/auth.store";
  */
 const DEFAULT_GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+const DEFAULT_QUALITY_EVENT_URL = process.env.NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL ?? "http://localhost:8021";
+
 const QMS_SERVICE_BASE_URLS = {
   document:
     process.env.NEXT_PUBLIC_QMS_DOCUMENT_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
     DEFAULT_GATEWAY_URL,
   qualityEvent:
-    process.env.NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
-    DEFAULT_GATEWAY_URL,
+    DEFAULT_QUALITY_EVENT_URL,
   capa:
     process.env.NEXT_PUBLIC_QMS_CAPA_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
@@ -46,14 +47,16 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
   });
 
   client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-    const session = await getSession();
-    if (session) {
-      const token = (session as unknown as Record<string, unknown>).access_token as string | undefined;
-      if (token) config.headers.Authorization = `Bearer ${token}`;
-      const tenantIdFromSession = (session as unknown as Record<string, unknown>).tenant_id as string | undefined | null;
-      const tenantId = tenantIdFromSession ?? useAuthStore.getState().tenant_id;
-      if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
-    }
+    const session = await getSessionFast();
+
+    const tokenFromSession = session?.access_token as string | undefined;
+    const token = tokenFromSession ?? undefined;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+
+    const tenantIdFromSession = (session?.tenant_id as string | undefined | null) ?? null;
+    const tenantId = tenantIdFromSession ?? useAuthStore.getState().tenant_id;
+    if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
+
     config.headers["X-Request-ID"] = crypto.randomUUID();
     return config;
   });

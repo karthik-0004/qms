@@ -194,17 +194,38 @@ export const documentsApi = {
 // ─── Quality Events ─────────────────────────────────────────────────────────
 
 export const qualityEventsApi = {
-  list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>
-    qmsQualityEventApiClient.get<PaginatedResponse<QualityEvent>>("/quality-events/events", { params }).then((r) => r.data),
+  list: (params?: {
+    status?: string;
+    event_type?: string;
+    severity?: string;
+    assigned_to?: string;
+    department?: string;
+    page?: number;
+    page_size?: number;
+  }) => qmsQualityEventApiClient.get<PaginatedEnvelope<QualityEvent>>("/quality-events", { params }).then((r) => normalizePaginated(r.data)),
 
   get: (id: string) =>
-    qmsQualityEventApiClient.get<QualityEvent>(`/quality-events/events/${id}`).then((r) => r.data),
+    qmsQualityEventApiClient.get<SuccessEnvelope<QualityEvent>>(`/quality-events/${id}`).then((r) => r.data.data),
 
-  create: (data: { title: string; event_type: string; severity: string; description?: string }) =>
-    qmsQualityEventApiClient.post<QualityEvent>("/quality-events/events", data).then((r) => r.data),
-
-  transition: (id: string, data: { action: string; comments?: string }) =>
-    qmsQualityEventApiClient.post<QualityEvent>(`/quality-events/events/${id}/transition`, data).then((r) => r.data),
+  create: (data: {
+    event_number: string;
+    title: string;
+    event_type: string;
+    description: string;
+    detected_at: string;
+    severity?: string;
+    priority?: string;
+    department?: string | null;
+    location?: string | null;
+    assigned_to?: string | null;
+    immediate_action?: string | null;
+    capa_required?: boolean;
+    due_date?: string | null;
+    tags?: string[];
+  }) =>
+    qmsQualityEventApiClient
+      .post<SuccessEnvelope<QualityEvent>>("/quality-events", data)
+      .then((r) => r.data.data),
 };
 
 // ─── CAPA ───────────────────────────────────────────────────────────────────
