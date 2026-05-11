@@ -543,6 +543,10 @@ services:
       - auth-service
       - redis
       - crm-service
+      - contract-service
+      - workorder-service
+      - technician-service
+      - billing-service
     ports:
       - "8000:8000"
     environment:
@@ -551,6 +555,10 @@ services:
       TENANT_SERVICE_URL: "http://tenant-service:8002"
       NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
       CRM_SERVICE_URL: "http://crm-service:8040"
+      CONTRACT_SERVICE_URL: "http://contract-service:8041"
+      WORKORDER_SERVICE_URL: "http://workorder-service:8042"
+      TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
+      BILLING_SERVICE_URL: "http://billing-service:8044"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"

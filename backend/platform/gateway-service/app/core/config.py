@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     notification_service_url: str = "http://notification-service:8005"
     document_service_url: str = "http://document-service:8020"
     crm_service_url: str = "http://crm-service:8040"
+    contract_service_url: str = "http://contract-service:8041"
+    workorder_service_url: str = "http://workorder-service:8042"
+    technician_service_url: str = "http://technician-service:8043"
+    billing_service_url: str = "http://billing-service:8044"
 
     # JWT settings (for validation)
     jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"
