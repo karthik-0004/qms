@@ -104,14 +104,30 @@ class CRMDomainService:
             raise LookupError(f"Customer {customer_id} not found")
         return customer
 
+    async def count_customers(
+        self,
+        tenant_id: uuid.UUID,
+        status: str | None = None,
+        search: str | None = None,
+    ) -> int:
+        return await self._customers.count(tenant_id, status=status, search=search)
+
     async def list_customers(
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,
+        search: str | None = None,
         skip: int = 0,
         limit: int = 50,
     ) -> list[Customer]:
-        return await self._customers.list(tenant_id, status=status, skip=skip, limit=limit)
+        return await self._customers.list(
+            tenant_id, status=status, search=search, skip=skip, limit=limit
+        )
+
+    async def contact_counts_for_customers(
+        self, tenant_id: uuid.UUID, customer_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, int]:
+        return await self._customers.contact_counts_for_customers(tenant_id, customer_ids)
 
     async def transition_status(
         self,

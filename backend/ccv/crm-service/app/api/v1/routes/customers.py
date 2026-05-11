@@ -16,7 +16,12 @@ from app.schemas.requests import (
     TransitionStatusRequest,
     UpdateCustomerRequest,
 )
-from app.schemas.responses import ContactResponse, CustomerResponse, InteractionResponse
+from app.schemas.responses import (
+    ContactResponse,
+    CustomerPageResponse,
+    CustomerResponse,
+    InteractionResponse,
+)
 
 router = APIRouter(prefix="/customers", tags=["Customers"])
 logger = structlog.get_logger(__name__)
@@ -29,16 +34,30 @@ def _get_service(db: Annotated[AsyncSession, Depends(get_db)]) -> CRMDomainServi
     return CRMDomainService(db)
 
 
-@router.get("", response_model=list[CustomerResponse], summary="List customers")
+@router.get("", response_model=CustomerPageResponse, summary="List customers")
 async def list_customers(
     tenant_id: TenantId,
     service: Annotated[CRMDomainService, Depends(_get_service)],
     status: str | None = Query(default=None),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=200),
-) -> list[CustomerResponse]:
-    customers = await service.list_customers(tenant_id=tenant_id, status=status, skip=skip, limit=limit)
-    return [CustomerResponse.from_model(c) for c in customers]
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+) -> CustomerPageResponse:
+    skip = (page - 1) * page_size
+    total = await service.count_customers(tenant_id=tenant_id, status=status, search=search)
+    customers = await service.list_customers(
+        tenant_id=tenant_id,
+        status=status,
+        search=search,
+        skip=skip,
+        limit=page_size,
+    )
+    ids = [c.id for c in customers]
+    counts = await service.contact_counts_for_customers(tenant_id, ids)
+    items = [
+        CustomerResponse.from_model(c, contact_count=counts.get(c.id, 0)) for c in customers
+    ]
+    return CustomerPageResponse(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.post("", response_model=CustomerResponse, status_code=201, summary="Create customer")

@@ -23,12 +23,13 @@ class CustomerResponse(BaseModel):
     postal_code: str | None
     notes: str | None
     tags: list
+    contact_count: int = 0
     created_by: UUID
     created_at: datetime
     updated_at: datetime
 
     @classmethod
-    def from_model(cls, customer: Customer) -> "CustomerResponse":
+    def from_model(cls, customer: Customer, *, contact_count: int = 0) -> "CustomerResponse":
         billing = customer.billing_address or {}
         return cls(
             id=customer.id,
@@ -46,10 +47,18 @@ class CustomerResponse(BaseModel):
             postal_code=billing.get("postal_code"),
             notes=customer.notes,
             tags=customer.tags or [],
+            contact_count=contact_count,
             created_by=customer.created_by,
             created_at=customer.created_at,
             updated_at=customer.updated_at,
         )
+
+
+class CustomerPageResponse(BaseModel):
+    items: list[CustomerResponse]
+    total: int
+    page: int
+    page_size: int
 
 
 class ContactResponse(BaseModel):
