@@ -52,7 +52,15 @@ async def register_technician(
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> TechnicianResponse:
     fields = payload.model_dump(
-        exclude={"employee_number", "first_name", "last_name", "email", "service_area", "notes"}
+        exclude={
+            "user_id",
+            "employee_number",
+            "first_name",
+            "last_name",
+            "email",
+            "service_area",
+            "notes",
+        }
     )
     service_regions = [payload.service_area] if payload.service_area else None
     tech = await service.register_technician(
