@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 FROM base AS builder
 COPY pyproject.toml .
-RUN pip install --upgrade pip && pip install hatchling && pip install -e ".[dev]"
+RUN pip install hatchling && pip install -e ".[dev]"
 
 FROM base AS runtime
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages

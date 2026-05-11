@@ -127,3 +127,21 @@ class TestDeleteTenant:
         tenant_repo.soft_delete.return_value = None
         await svc.delete_tenant(tenant.id)
         tenant_repo.soft_delete.assert_called_with(tenant.id)
+
+
+class TestUpdateTenant:
+    @pytest.mark.asyncio
+    async def test_raises_conflict_if_name_exists_for_other_tenant(self, svc, tenant_repo):
+        other_tenant = make_tenant(id=str(uuid4()), tenant_name="Existing Corp")
+        tenant_repo.get_by_name.return_value = other_tenant
+
+        with pytest.raises(ConflictError):
+            await svc.update_tenant("some-tenant-id", tenant_name="Existing Corp")
+
+    @pytest.mark.asyncio
+    async def test_updates_when_name_is_same_tenant(self, svc, tenant_repo):
+        same_tenant = make_tenant(id="same-id", tenant_name="Same Corp")
+        tenant_repo.get_by_name.return_value = same_tenant
+
+        await svc.update_tenant("same-id", tenant_name="Same Corp")
+        tenant_repo.update.assert_called_once()

@@ -1,6 +1,7 @@
 """Auth Service — Core authentication domain service."""
 
 from datetime import datetime, timedelta, timezone
+import time
 
 import pyotp
 import structlog
@@ -68,7 +69,11 @@ class AuthDomainService:
         Authenticate user with email/password (+ optional MFA).
         Returns access_token, refresh_token, and user info.
         """
+        perf_enabled = bool(self._settings.enable_perf_logs)
+        t0 = time.perf_counter()
+        t_db_user_start = time.perf_counter()
         user = await self._users.get_by_email(email)
+        t_db_user_ms = (time.perf_counter() - t_db_user_start) * 1000
 
         if not user:
             logger.warning("login_user_not_found", email=email)
@@ -82,7 +87,10 @@ class AuthDomainService:
         if user.status != "active":
             raise ForbiddenError("Account is not active.")
 
-        if not verify_password(password, user.password_hash):
+        t_verify_start = time.perf_counter()
+        password_ok = verify_password(password, user.password_hash)
+        t_verify_ms = (time.perf_counter() - t_verify_start) * 1000
+        if not password_ok:
             attempts = await self._users.increment_failed_attempts(user.id)
             logger.warning("login_failed", user_id=user.id, attempts=attempts)
 
@@ -110,6 +118,7 @@ class AuthDomainService:
                 raise UnauthorizedError("Invalid MFA code")
 
         # Issue tokens
+        t_issue_tokens_start = time.perf_counter()
         access_token, access_jti = create_access_token(
             subject=user.id,
             email=user.email,
@@ -121,10 +130,12 @@ class AuthDomainService:
             subject=user.id,
             settings=self._jwt_settings,
         )
+        t_issue_tokens_ms = (time.perf_counter() - t_issue_tokens_start) * 1000
 
         expires_at = datetime.now(timezone.utc) + timedelta(
             days=self._settings.jwt_refresh_token_expire_days
         )
+        t_db_writes_start = time.perf_counter()
         await self._tokens.create(
             user_id=user.id,
             raw_token=raw_refresh,
@@ -140,8 +151,21 @@ class AuthDomainService:
             ip_address=ip_address,
             user_agent=user_agent,
         )
+        t_db_writes_ms = (time.perf_counter() - t_db_writes_start) * 1000
 
         logger.info("user_logged_in", user_id=user.id, tenant_id=user.tenant_id)
+        if perf_enabled:
+            total_ms = (time.perf_counter() - t0) * 1000
+            logger.info(
+                "login_perf",
+                user_id=user.id,
+                tenant_id=user.tenant_id,
+                db_user_ms=round(t_db_user_ms, 2),
+                verify_ms=round(t_verify_ms, 2),
+                issue_tokens_ms=round(t_issue_tokens_ms, 2),
+                db_writes_ms=round(t_db_writes_ms, 2),
+                total_ms=round(total_ms, 2),
+            )
 
         return {
             "access_token": access_token,

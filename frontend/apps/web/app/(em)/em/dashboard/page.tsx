@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   Activity,
   AlertTriangle,
@@ -9,6 +10,8 @@ import {
   ImageIcon,
   Layers,
   RefreshCw,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export default function EMDashboardPage() {
+  const router = useRouter();
   const { data: platesData, isLoading: platesLoading } = usePlates({ page: 1, page_size: 5 });
   const { data: kpiData, isLoading: kpiLoading } = usePlatformKPIs();
   const recentPlates = platesData?.items ?? [];
@@ -64,6 +68,31 @@ export default function EMDashboardPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <Home className="h-4 w-4 mr-1" />
+          Home
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-foreground font-medium">EM Dashboard</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

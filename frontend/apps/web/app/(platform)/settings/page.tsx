@@ -1,24 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, Save, Bell, Shield, Globe, Palette } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Settings, Save, Bell, Shield, Globe, Palette, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useUIStore } from "@/lib/stores/ui.store";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { theme, setTheme } = useUIStore();
   const [orgName, setOrgName] = useState("Rainer Technologies");
   const [timezone, setTimezone] = useState("America/New_York");
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [auditLogging, setAuditLogging] = useState(true);
   const [mfaEnforced, setMfaEnforced] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <Home className="h-4 w-4 mr-1" />
+          Home
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-foreground font-medium">Platform Settings</span>
+      </div>
+
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Settings className="h-6 w-6" />
@@ -103,7 +131,7 @@ export default function SettingsPage() {
               <p className="text-sm font-medium">Dark Mode</p>
               <p className="text-xs text-muted-foreground">Use dark color scheme</p>
             </div>
-            <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+            <Switch checked={theme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
           </div>
         </CardContent>
       </Card>

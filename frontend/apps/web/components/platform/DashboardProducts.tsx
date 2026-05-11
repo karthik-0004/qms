@@ -3,6 +3,8 @@
 import { ProductCard } from "./ProductCard";
 import { usePlatformKPIs } from "@/lib/hooks/queries/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface DashboardProductsProps {
   productAccess: string[];
@@ -12,6 +14,8 @@ interface DashboardProductsProps {
 export function DashboardProducts({ productAccess, userName }: DashboardProductsProps) {
   const { data: kpiData, isLoading } = usePlatformKPIs();
   const kpis = kpiData?.kpis;
+  const searchParams = useSearchParams();
+  const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
   const fmt = (n: number | undefined) => (n !== undefined ? String(n) : "—");
 
@@ -60,6 +64,14 @@ export function DashboardProducts({ productAccess, userName }: DashboardProducts
     },
   ];
 
+  const filteredProducts = useMemo(() => {
+    if (!query) return products;
+    return products.filter((p) => {
+      const haystack = `${p.id} ${p.name} ${p.description}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [products, query]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -72,7 +84,7 @@ export function DashboardProducts({ productAccess, userName }: DashboardProducts
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>

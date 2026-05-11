@@ -5,9 +5,49 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from rainer_common.exceptions import ConflictError
+
 from .models import Tenant, TenantSettings
+
+
+_UNIQUE_CONSTRAINT_TO_FIELD: dict[str, str] = {
+    # tenants table
+    "tenants_tenant_name_key": "tenant_name",
+    "tenants_slug_key": "slug",
+    "tenants_db_name_key": "db_name",
+    "tenants_db_user_key": "db_user",
+    # tenant_settings table
+    "tenant_settings_tenant_id_key": "tenant_id",
+}
+
+
+def _extract_unique_constraint_name(exc: IntegrityError) -> str | None:
+    """
+    Extract Postgres unique constraint name from SQLAlchemy IntegrityError.
+
+    Works with asyncpg + psycopg style drivers where the underlying exception
+    may carry a `constraint_name` attribute.
+    """
+    orig = getattr(exc, "orig", None)
+    constraint_name = getattr(orig, "constraint_name", None)
+    if isinstance(constraint_name, str) and constraint_name:
+        return constraint_name
+
+    # Fallback to parsing error text if the driver doesn't expose attributes.
+    msg = str(orig) if orig is not None else str(exc)
+    m = re.search(r'constraint "([^"]+)"', msg)
+    return m.group(1) if m else None
+
+
+def _raise_conflict_from_integrity_error(exc: IntegrityError) -> None:
+    constraint = _extract_unique_constraint_name(exc)
+    field = _UNIQUE_CONSTRAINT_TO_FIELD.get(constraint or "", None)
+    if field:
+        raise ConflictError(f"{field} already exists") from exc
+    raise exc
 
 
 class TenantRepository:
@@ -90,7 +130,10 @@ class TenantRepository:
             updated_at=now,
         )
         self._db.add(tenant)
-        await self._db.flush()
+        try:
+            await self._db.flush()
+        except IntegrityError as exc:
+            _raise_conflict_from_integrity_error(exc)
         return tenant
 
     async def update_status(self, tenant_id: str, status: str) -> None:
@@ -102,9 +145,10 @@ class TenantRepository:
 
     async def update(self, tenant_id: str, **fields) -> None:
         fields["updated_at"] = datetime.now(timezone.utc)
-        await self._db.execute(
-            update(Tenant).where(Tenant.id == tenant_id).values(**fields)
-        )
+        try:
+            await self._db.execute(update(Tenant).where(Tenant.id == tenant_id).values(**fields))
+        except IntegrityError as exc:
+            _raise_conflict_from_integrity_error(exc)
 
     async def soft_delete(self, tenant_id: str) -> None:
         now = datetime.now(timezone.utc)
@@ -149,16 +193,20 @@ class TenantSettingsRepository:
             updated_at=now,
         )
         self._db.add(settings)
-        await self._db.flush()
+        try:
+            await self._db.flush()
+        except IntegrityError as exc:
+            _raise_conflict_from_integrity_error(exc)
         return settings
 
     async def update(self, tenant_id: str, **fields) -> None:
         fields["updated_at"] = datetime.now(__import__('datetime').timezone.utc)
-        await self._db.execute(
-            update(TenantSettings)
-            .where(TenantSettings.tenant_id == tenant_id)
-            .values(**fields)
-        )
+        try:
+            await self._db.execute(
+                update(TenantSettings).where(TenantSettings.tenant_id == tenant_id).values(**fields)
+            )
+        except IntegrityError as exc:
+            _raise_conflict_from_integrity_error(exc)
 
 
 def _slugify(name: str) -> str:

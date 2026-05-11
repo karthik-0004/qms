@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ArrowRight, FlaskConical, Shield, Wrench, type LucideIcon } from "lucide-react";
@@ -89,7 +90,7 @@ export function ProductCard({ product }: ProductCardProps) {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       <Link
-        href={product.href}
+        href={product.href as Route}
         onClick={() => setActiveProduct(product.id)}
         className={cn(
           "block rounded-xl border p-6 transition-all duration-200 group",

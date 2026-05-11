@@ -1,5 +1,7 @@
 "use client";
 
+import type { Session } from "next-auth";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -55,7 +57,7 @@ const PLATFORM_NAV = [
 ];
 
 interface SidebarProps {
-  session: Record<string, unknown>;
+  session: Session;
 }
 
 export function Sidebar({ session }: SidebarProps) {
@@ -104,7 +106,7 @@ export function Sidebar({ session }: SidebarProps) {
         {PLATFORM_NAV.map((item) => (
           <NavItem
             key={item.href}
-            href={item.href}
+            href={item.href as Route}
             icon={item.icon}
             label={item.label}
             isActive={pathname === item.href}
@@ -118,7 +120,7 @@ export function Sidebar({ session }: SidebarProps) {
             {productNav.map((item) => (
               <NavItem
                 key={item.href}
-                href={item.href}
+                href={item.href as Route}
                 icon={item.icon}
                 label={item.label}
                 isActive={pathname.startsWith(item.href)}
@@ -134,14 +136,16 @@ export function Sidebar({ session }: SidebarProps) {
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-medium">
-              {(session?.user as { email?: string } | undefined)?.email?.charAt(0).toUpperCase() ?? "U"}
+              {session.user?.email?.charAt(0).toUpperCase() ?? "U"}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {(session?.user as { email?: string } | undefined)?.email ?? ""}
+                {session.user?.email ?? ""}
               </p>
               <p className="text-xs text-slate-400 truncate">
-                {String((session as Record<string, unknown>)?.role ?? "")}
+                {String(
+                  (session.user as { role?: string } | undefined)?.role ?? ""
+                )}
               </p>
             </div>
           </div>
@@ -158,7 +162,7 @@ function NavItem({
   isActive,
   collapsed,
 }: {
-  href: string;
+  href: Route;
   icon: React.ElementType;
   label: string;
   isActive: boolean;

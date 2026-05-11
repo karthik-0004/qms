@@ -14,6 +14,23 @@ from ..infra.db.models import Tenant
 
 logger = structlog.get_logger(__name__)
 
+# Postgres DDL (e.g. CREATE USER) does not accept bind params for PASSWORD.
+# We still avoid injection by strictly validating identifiers and escaping literals.
+_PG_IDENT_RE = __import__("re").compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+
+def _pg_ident(name: str) -> str:
+    """Return a safely quoted Postgres identifier."""
+    if not _PG_IDENT_RE.fullmatch(name):
+        raise ConflictError("Generated database identifier is invalid")
+    return f'"{name}"'
+
+
+def _pg_literal(value: str) -> str:
+    """Return a safely quoted Postgres string literal."""
+    return "'" + value.replace("'", "''") + "'"
+
+
 # Base tenant DB schema — applied when a new tenant is created
 BASE_TENANT_SCHEMA_SQL = """
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -56,7 +73,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID NOT NULL DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
     action VARCHAR(150) NOT NULL,
     resource_type VARCHAR(100) NOT NULL,
@@ -69,7 +86,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     product VARCHAR(20),
     module VARCHAR(100),
     signature VARCHAR(255),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 CREATE TABLE IF NOT EXISTS audit_logs_default PARTITION OF audit_logs DEFAULT;
@@ -145,7 +163,7 @@ class TenantDomainService:
         # Check uniqueness
         existing = await self._tenants.get_by_name(tenant_name)
         if existing:
-            raise ConflictError(f"Tenant with name '{tenant_name}' already exists")
+            raise ConflictError("tenant_name already exists")
 
         # Create Master DB record
         tenant = await self._tenants.create(
@@ -177,6 +195,18 @@ class TenantDomainService:
             logger.error("tenant_provisioning_failed", tenant_id=tenant.id, error=str(exc))
             await self._tenants.update_status(tenant.id, "provisioning_failed")
             raise
+
+    async def update_tenant(self, tenant_id: str, **fields) -> None:
+        """
+        Update tenant fields while preventing unique constraint violations from
+        surfacing as INTERNAL_SERVER_ERROR.
+        """
+        if "tenant_name" in fields and fields["tenant_name"]:
+            existing = await self._tenants.get_by_name(fields["tenant_name"])
+            if existing and existing.id != tenant_id:
+                raise ConflictError("tenant_name already exists")
+
+        await self._tenants.update(tenant_id, **fields)
 
     async def get_tenant(self, tenant_id: str) -> Tenant:
         tenant = await self._tenants.get_by_id(tenant_id)
@@ -228,6 +258,9 @@ class TenantDomainService:
         from rainer_tenant_lib.credentials import derive_tenant_password
 
         db_password = derive_tenant_password(tenant.id, self._config.rainer_master_secret)
+        db_user_ident = _pg_ident(tenant.db_user)
+        db_name_ident = _pg_ident(tenant.db_name)
+        db_password_lit = _pg_literal(db_password)
 
         # Connect as admin to postgres to create DB/user
         admin_engine = create_async_engine(
@@ -239,17 +272,30 @@ class TenantDomainService:
 
         try:
             async with admin_engine.connect() as conn:
-                # Create user
-                await conn.execute(
-                    text(
-                        f"CREATE USER {tenant.db_user} WITH PASSWORD :password"
-                    ),
-                    {"password": db_password},
+                # Ensure role exists (idempotent) and has expected password
+                role_exists = await conn.execute(
+                    text("SELECT 1 FROM pg_roles WHERE rolname = :name"),
+                    {"name": tenant.db_user},
                 )
-                # Create database
-                await conn.execute(
-                    text(f"CREATE DATABASE {tenant.db_name} OWNER {tenant.db_user}")
+                if role_exists.scalar_one_or_none() is None:
+                    await conn.execute(
+                        text(f"CREATE USER {db_user_ident} WITH PASSWORD {db_password_lit}")
+                    )
+                else:
+                    # Keep provisioning stable across retries
+                    await conn.execute(
+                        text(f"ALTER ROLE {db_user_ident} WITH PASSWORD {db_password_lit}")
+                    )
+
+                # Ensure database exists (idempotent)
+                db_exists = await conn.execute(
+                    text("SELECT 1 FROM pg_database WHERE datname = :name"),
+                    {"name": tenant.db_name},
                 )
+                if db_exists.scalar_one_or_none() is None:
+                    await conn.execute(
+                        text(f"CREATE DATABASE {db_name_ident} OWNER {db_user_ident}")
+                    )
         finally:
             await admin_engine.dispose()
 
@@ -261,7 +307,13 @@ class TenantDomainService:
         tenant_engine = create_async_engine(tenant_dsn, isolation_level="AUTOCOMMIT")
         try:
             async with tenant_engine.connect() as conn:
-                await conn.execute(text(BASE_TENANT_SCHEMA_SQL))
+                # asyncpg disallows multiple statements per prepared statement.
+                # Execute the schema one statement at a time for compatibility.
+                for stmt in BASE_TENANT_SCHEMA_SQL.split(";"):
+                    statement = stmt.strip()
+                    if not statement:
+                        continue
+                    await conn.execute(text(statement))
         finally:
             await tenant_engine.dispose()
 

@@ -49,6 +49,7 @@ def _set_refresh_cookie(response: JSONResponse, token: str, settings: Settings) 
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
         path=settings.cookie_path,
+        domain=settings.cookie_domain,
     )
 
 

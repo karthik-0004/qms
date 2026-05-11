@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class CreateDocumentRequest(BaseModel):
-    doc_number: str = Field(min_length=1, max_length=50)
+    doc_number: str | None = Field(default=None, min_length=1, max_length=50)
     title: str = Field(min_length=1, max_length=255)
     doc_type: str = Field(min_length=1, max_length=100)
     description: str | None = None

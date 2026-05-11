@@ -22,6 +22,9 @@ help: ## Show this help
 up: ## Start full local dev stack
 	docker-compose up -d
 
+up-platform: ## Start ONLY Platform services (minimal - infra + 12 platform services)
+	docker-compose -f docker-compose.platform.yml up -d
+
 up-infra: ## Start only infrastructure services (postgres, redis, kafka, minio, etc.)
 	docker-compose up -d postgres redis kafka schema-registry minio opensearch mailhog vault
 
@@ -30,6 +33,9 @@ up-observability: ## Start observability stack (prometheus, grafana, loki, jaege
 
 down: ## Stop all services
 	docker-compose down
+
+down-platform: ## Stop ONLY Platform services
+	docker-compose -f docker-compose.platform.yml down
 
 down-volumes: ## Stop all services and remove volumes (DESTRUCTIVE)
 	docker-compose down -v

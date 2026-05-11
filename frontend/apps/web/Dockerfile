@@ -4,7 +4,15 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+# Some networks block/timeout on registry.npmjs.org during docker builds.
+# Allow swapping registry via build-arg and increase timeouts/retries.
+ARG NPM_REGISTRY=https://registry.npmmirror.com/
+RUN npm config set registry ${NPM_REGISTRY} \
+  && npm config set fetch-retries 5 \
+  && npm config set fetch-retry-mintimeout 20000 \
+  && npm config set fetch-retry-maxtimeout 120000 \
+  && npm config set fetch-timeout 300000 \
+  && npm ci --prefer-offline --no-audit --no-fund
 
 FROM base AS builder
 WORKDIR /app

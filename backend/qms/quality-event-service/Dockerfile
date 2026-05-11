@@ -17,5 +17,5 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app /app
 EXPOSE 8021
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8021/health/live || exit 1
+    CMD python -c "import sys, urllib.request; urllib.request.urlopen('http://localhost:8021/health/live', timeout=3).read(); sys.exit(0)"
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8021", "--workers", "2"]

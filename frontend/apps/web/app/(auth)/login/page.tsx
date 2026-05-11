@@ -16,11 +16,27 @@ const loginSchema = z.object({
 });
 
 const mfaSchema = z.object({
-  mfa_code: z.string().length(6, "MFA code must be 6 digits"),
+  mfa_code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "MFA code must be exactly 6 digits"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type MFAFormData = z.infer<typeof mfaSchema>;
+
+function signInFailureMessage(code: string | undefined): string {
+  switch (code) {
+    case "auth_timeout":
+      return "Sign-in timed out waiting for the auth service. Check that it is running and AUTH_SERVICE_URL in .env.local.";
+    case "auth_unreachable":
+      return "Could not reach the auth service. Confirm AUTH_SERVICE_URL (e.g. http://localhost:8001 when running auth-service locally).";
+    case "auth_misconfigured":
+      return "Server is missing AUTH_SERVICE_URL. Set it in .env.local (see .env.example).";
+    default:
+      return "Invalid email or password";
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,18 +59,20 @@ export default function LoginPage() {
         redirect: false,
       });
 
-      if (result?.error === "MFA_REQUIRED") {
+      if (result?.code === "MFA_REQUIRED") {
         setSavedCredentials(data);
         setRequiresMFA(true);
         return;
       }
 
       if (result?.error) {
-        toast.error("Invalid email or password");
+        toast.error(signInFailureMessage(result.code ?? undefined));
         return;
       }
 
-      router.push(callbackUrl);
+      // `typedRoutes` is enabled; `callbackUrl` comes from `searchParams` (string at runtime).
+      // Casting keeps navigation working without constraining runtime callback URLs.
+      router.push(callbackUrl as any);
       router.refresh();
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
@@ -74,11 +92,19 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        toast.error("Invalid MFA code. Please try again.");
+        if (
+          result.code === "auth_timeout" ||
+          result.code === "auth_unreachable" ||
+          result.code === "auth_misconfigured"
+        ) {
+          toast.error(signInFailureMessage(result.code));
+        } else {
+          toast.error("Invalid MFA code. Please try again.");
+        }
         return;
       }
 
-      router.push(callbackUrl);
+      router.push(callbackUrl as any);
       router.refresh();
     } catch {
       toast.error("An unexpected error occurred");

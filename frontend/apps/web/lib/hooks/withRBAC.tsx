@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { usePermission, type Permission } from "./usePermission";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,14 +8,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface WithRBACOptions {
   required: Permission | Permission[];
   mode?: "any" | "all";
-  fallbackUrl?: string;
+  fallbackUrl?: Route;
 }
 
 export function withRBAC<P extends object>(
   WrappedComponent: React.ComponentType<P>,
   options: WithRBACOptions
 ) {
-  const { required, mode = "any", fallbackUrl = "/dashboard" } = options;
+  const {
+    required,
+    mode = "any",
+    fallbackUrl = "/dashboard" as Route,
+  } = options;
   const permissions = Array.isArray(required) ? required : [required];
 
   function RBACGuard(props: P) {

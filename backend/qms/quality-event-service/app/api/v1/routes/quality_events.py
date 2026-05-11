@@ -1,6 +1,7 @@
 """Quality Event Service — Quality event API routes."""
 
 from typing import Annotated
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, Query
@@ -19,6 +20,15 @@ from ....schemas.responses import QualityEventResponse, QualityEventSummaryRespo
 router = APIRouter(prefix="/quality-events", tags=["Quality Events"])
 logger = structlog.get_logger(__name__)
 
+def _clean_query_str(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    # Swagger/curl users sometimes send `"open"` instead of `open` in query params.
+    if len(cleaned) >= 2 and cleaned[0] == '"' and cleaned[-1] == '"':
+        cleaned = cleaned[1:-1].strip()
+    return cleaned or None
+
 
 def _get_service(current_user: CurrentUser, db: Annotated[AsyncSession, Depends(get_db)]) -> QualityEventDomainService:
     return QualityEventDomainService(repo=QualityEventRepository(db), tenant_id=current_user.tenant_id or "")
@@ -32,12 +42,15 @@ async def list_events(
     status: str | None = Query(default=None),
     event_type: str | None = Query(default=None),
     severity: str | None = Query(default=None),
-    assigned_to: str | None = Query(default=None),
+    assigned_to: UUID | None = Query(default=None),
     department: str | None = Query(default=None),
 ) -> PaginatedResponse[QualityEventResponse]:
     events, total = await service.list_events(
-        status=status, event_type=event_type, severity=severity,
-        assigned_to=assigned_to, department=department,
+        status=_clean_query_str(status),
+        event_type=_clean_query_str(event_type),
+        severity=_clean_query_str(severity),
+        assigned_to=str(assigned_to) if assigned_to else None,
+        department=_clean_query_str(department),
         page=pagination.page, page_size=pagination.page_size,
     )
     return PaginatedResponse.of(

@@ -1,9 +1,9 @@
-import { auth } from "@/lib/auth/config";
+import { getCachedSession } from "@/lib/auth/get-cached-session";
 import { redirect } from "next/navigation";
 import { DashboardProducts } from "@/components/platform/DashboardProducts";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await getCachedSession();
   if (!session?.user) redirect("/login");
 
   const productAccess =

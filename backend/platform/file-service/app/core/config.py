@@ -45,6 +45,25 @@ class Settings(BaseSettings):
     rainer_master_secret: str = "dev-master-secret-change-in-production"
     cors_allowed_origins: list[str] = ["http://localhost:3000"]
 
+    # JWT — same env names / defaults as auth-service; rainer_auth_lib.JWTSettings() only reads os.environ
+    jwt_secret_key: str = "dev-secret-change-in-production-min-32-chars"
+    jwt_algorithm: str = "HS256"
+
+
+def ensure_jwt_environment() -> None:
+    """Expose JWT to os.environ so rainer_auth_lib.JWTSettings() matches tokens from auth-service.
+
+    rainer_auth_lib only reads OS env for JWT (not file-service .env). Must run before any import
+    that triggers get_settings()/database setup if JWT_* is only defined in .env.
+    """
+    import os
+
+    s = Settings()
+    if not os.environ.get("JWT_SECRET_KEY", "").strip():
+        os.environ["JWT_SECRET_KEY"] = s.jwt_secret_key
+    if not os.environ.get("JWT_ALGORITHM", "").strip():
+        os.environ["JWT_ALGORITHM"] = s.jwt_algorithm
+
 
 @lru_cache
 def get_settings() -> Settings:

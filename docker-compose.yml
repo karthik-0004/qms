@@ -11,6 +11,9 @@ x-common-env: &common-env
   LOG_LEVEL: "DEBUG"
   JSON_LOGS: "false"
   RAINER_ENV: "development"
+  # JWT settings must be consistent across all services that validate access tokens
+  JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+  JWT_ALGORITHM: "HS256"
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
@@ -89,16 +92,22 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # Ensure Kafka listens on the same ports it advertises.
+      # Other services in this compose use `kafka:29092`.
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_LOG_RETENTION_HOURS: 168
     healthcheck:
-      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      # CLI-based checks can hang on some Windows/DockerDesktop setups; use a fast TCP socket probe instead.
+      test: [ "CMD-SHELL", "bash -lc \"echo > /dev/tcp/localhost/29092\"" ]
       interval: 30s
-      timeout: 10s
-      retries: 5
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.7.0
@@ -203,7 +212,7 @@ services:
       - prometheus
       - loki
     ports:
-      - "3001:3000"
+      - "${GRAFANA_PORT:-3001}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: rainer_grafana_dev
@@ -245,6 +254,48 @@ services:
   # ============================================================
   # PLATFORM SERVICES (backend)
   # ============================================================
+  auth-service-init:
+    build:
+      context: .
+      dockerfile: backend/platform/auth-service/Dockerfile
+    <<: *service-defaults
+    # One-off init container: run once and exit.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      # Dev-only super admin bootstrap (override in your local .env if desired)
+      AUTH_SUPERADMIN_EMAIL: "admin@rainertek.com"
+      AUTH_SUPERADMIN_PASSWORD: "RainerAdmin123!"
+      SERVICE_NAME: "auth-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head; python -m app.scripts.create_super_admin"
+
+  tenant-service-init:
+    build:
+      context: .
+      dockerfile: backend/platform/tenant-service/Dockerfile
+    <<: *service-defaults
+    # One-off init container: run once and exit.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      POSTGRES_ADMIN_URL: "postgresql://rainer:rainer_dev_password@postgres:5432/postgres"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "tenant-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head"
+
   auth-service:
     build:
       context: .
@@ -255,6 +306,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      auth-service-init:
+        condition: service_completed_successfully
     ports:
       - "8001:8001"
     environment:
@@ -262,6 +315,7 @@ services:
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      ALLOW_RESERVED_EMAIL_DOMAINS: "true"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "15"
@@ -286,6 +340,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      tenant-service-init:
+        condition: service_completed_successfully
     ports:
       - "8002:8002"
     environment:
@@ -295,6 +351,8 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       POSTGRES_ADMIN_URL: "postgresql://rainer:rainer_dev_password@postgres:5432/postgres"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "tenant-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8002"
@@ -319,6 +377,8 @@ services:
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       AUTH_SERVICE_URL: "http://auth-service:8001"
       TENANT_SERVICE_URL: "http://tenant-service:8002"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "user-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8003"
@@ -340,6 +400,8 @@ services:
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "audit-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8004"
@@ -436,6 +498,8 @@ services:
       S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
       S3_BUCKET_NAME: "rainer-files"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "file-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8009"
@@ -527,6 +591,8 @@ services:
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "analytics-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8011"
@@ -554,9 +620,29 @@ services:
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       WORKFLOW_SERVICE_URL: "http://workflow-engine:8007"
       FILE_SERVICE_URL: "http://file-service:8009"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
       SERVICE_NAME: "document-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8020"
+
+  quality-event-service-init:
+    build:
+      context: .
+      dockerfile: backend/qms/quality-event-service/Dockerfile
+    <<: *service-defaults
+    # One-off init container: run once and exit.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      SERVICE_NAME: "quality-event-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head"
 
   quality-event-service:
     build:
@@ -566,6 +652,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      quality-event-service-init:
+        condition: service_completed_successfully
     ports:
       - "8021:8021"
     environment:
@@ -661,8 +749,8 @@ services:
 
   image-service:
     build:
-      context: .
-      dockerfile: backend/em/image-service/Dockerfile
+      context: ./backend/em/image-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -716,8 +804,8 @@ services:
 
   job-service:
     build:
-      context: .
-      dockerfile: backend/em/job-service/Dockerfile
+      context: ./backend/em/job-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -742,8 +830,8 @@ services:
 
   qa-review-service:
     build:
-      context: .
-      dockerfile: backend/em/qa-review-service/Dockerfile
+      context: ./backend/em/qa-review-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -765,8 +853,8 @@ services:
   # ============================================================
   crm-service:
     build:
-      context: .
-      dockerfile: backend/ccv/crm-service/Dockerfile
+      context: ./backend/ccv/crm-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -846,8 +934,8 @@ services:
 
   billing-service:
     build:
-      context: .
-      dockerfile: backend/ccv/billing-service/Dockerfile
+      context: ./backend/ccv/billing-service
+      dockerfile: Dockerfile
     <<: *service-defaults
     depends_on:
       postgres:
@@ -884,5 +972,6 @@ services:
       NEXTAUTH_URL: "http://localhost:3000"
       NEXTAUTH_SECRET: "dev-nextauth-secret-change-in-production"
       NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL: "http://quality-event-service:8021"
       AUTH_SERVICE_URL: "http://auth-service:8001"
       NODE_ENV: "development"

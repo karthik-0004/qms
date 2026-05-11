@@ -1,28 +1,15 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { getCachedSession } from "@/lib/auth/get-cached-session";
+import { PlatformShell } from "@/components/platform/PlatformShell";
 
-export default function CCVLayout({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default async function CCVLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getCachedSession();
+  if (!session?.user) redirect("/login");
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!session) return null;
-
-  return <>{children}</>;
+  return <PlatformShell session={session}>{children}</PlatformShell>;
 }

@@ -1,19 +1,54 @@
 "use client";
 
+import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import { useUIStore } from "@/lib/stores/ui.store";
-import { Bell, LogOut, User, Search, Moon, Sun } from "lucide-react";
+import { LogOut, User, Search, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { toast } from "sonner";
+import { NotificationBell } from "@/components/platform/notification-bell";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface HeaderProps {
-  session: Record<string, unknown>;
+  session: Session;
 }
 
 export function Header({ session }: HeaderProps) {
   const { theme, setTheme } = useUIStore();
-  const [notifOpen, setNotifOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const urlQuery = searchParams.get("q") ?? "";
+  const [query, setQuery] = useState(urlQuery);
+
+  const baseParams = useMemo(() => {
+    // `useSearchParams()` returns a readonly instance; clone to safely mutate.
+    return new URLSearchParams(searchParams.toString());
+  }, [searchParams]);
+
+  useEffect(() => {
+    // Keep input in sync if navigation changes URL params.
+    setQuery(urlQuery);
+  }, [urlQuery]);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = new URLSearchParams(baseParams);
+      const trimmed = query.trim();
+
+      if (trimmed) next.set("q", trimmed);
+      else next.delete("q");
+
+      const qs = next.toString();
+      // Next.js typed routes can reject dynamic, param-built URLs at type-level.
+      // Runtime is valid; cast keeps typecheck strict elsewhere.
+      router.replace((qs ? `${pathname}?${qs}` : pathname) as any, { scroll: false });
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [baseParams, pathname, query, router]);
 
   const handleSignOut = async () => {
     toast.promise(signOut({ callbackUrl: "/login" }), {
@@ -36,6 +71,8 @@ export function Header({ session }: HeaderProps) {
             type="search"
             placeholder="Search..."
             className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted border-0 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
         </div>
       </div>
@@ -50,17 +87,7 @@ export function Header({ session }: HeaderProps) {
           {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            className="p-2 rounded-lg hover:bg-muted transition relative"
-            title="Notifications"
-          >
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-          </button>
-        </div>
+        <NotificationBell />
 
         {/* User menu */}
         <div className="flex items-center gap-2 pl-2 border-l border-border">
@@ -69,10 +96,12 @@ export function Header({ session }: HeaderProps) {
           </div>
           <div className="hidden sm:block">
             <p className="text-sm font-medium leading-none">
-              {(session?.user as { email?: string } | undefined)?.email?.split("@")[0] ?? "User"}
+              {session.user?.email?.split("@")[0] ?? "User"}
             </p>
             <p className="text-xs text-muted-foreground capitalize">
-              {String((session as Record<string, unknown>)?.role ?? "user")}
+              {String(
+                (session.user as { role?: string } | undefined)?.role ?? "user"
+              )}
             </p>
           </div>
           <button
