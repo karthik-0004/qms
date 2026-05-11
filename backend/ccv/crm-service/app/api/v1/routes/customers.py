@@ -131,7 +131,7 @@ async def list_interactions(
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[InteractionResponse]:
     interactions = await service.list_interactions(customer_id, tenant_id, limit=limit)
-    return [InteractionResponse.model_validate(i, from_attributes=True) for i in interactions]
+    return [InteractionResponse.from_model(i) for i in interactions]
 
 
 @router.post("/{customer_id}/interactions", response_model=InteractionResponse, status_code=201,
@@ -148,4 +148,4 @@ async def log_interaction(
         customer_id=customer_id, tenant_id=tenant_id, created_by=user_id,
         interaction_type=payload.interaction_type, subject=payload.subject, **fields,
     )
-    return InteractionResponse.model_validate(interaction, from_attributes=True)
+    return InteractionResponse.from_model(interaction)

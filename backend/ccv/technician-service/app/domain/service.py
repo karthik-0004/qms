@@ -70,10 +70,13 @@ class TechnicianDomainService:
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,
+        is_available: bool | None = None,
         skip: int = 0,
         limit: int = 50,
     ) -> list[Technician]:
-        return await self._technicians.list(tenant_id, status=status, skip=skip, limit=limit)
+        return await self._technicians.list(
+            tenant_id, status=status, is_available=is_available, skip=skip, limit=limit
+        )
 
     async def transition_status(
         self,

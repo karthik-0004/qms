@@ -86,7 +86,7 @@ async def get_history(
     service: Annotated[ContractDomainService, Depends(_get_service)],
 ) -> list[ContractHistoryResponse]:
     history = await service.get_history(contract_id, tenant_id)
-    return [ContractHistoryResponse.model_validate(h, from_attributes=True) for h in history]
+    return [ContractHistoryResponse.from_model(h) for h in history]
 
 
 # ─── Line Items ──────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, time, timezone
 from uuid import UUID
 from pydantic import BaseModel
 
@@ -61,3 +61,23 @@ class CertificationResponse(BaseModel):
     issued_date: datetime | None
     expiry_date: datetime | None
     created_at: datetime
+
+    @classmethod
+    def from_model(cls, cert) -> "CertificationResponse":
+        def as_dt(d: date | datetime | None) -> datetime | None:
+            if d is None:
+                return None
+            if isinstance(d, datetime):
+                return d
+            return datetime.combine(d, time.min, tzinfo=timezone.utc)
+
+        return cls(
+            id=cert.id,
+            technician_id=cert.technician_id,
+            name=cert.certification_name,
+            issuing_body=cert.issuing_body,
+            certificate_number=cert.certificate_number,
+            issued_date=as_dt(cert.issued_date),
+            expiry_date=as_dt(cert.expiry_date),
+            created_at=cert.created_at,
+        )

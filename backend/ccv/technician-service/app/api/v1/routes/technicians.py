@@ -1,5 +1,6 @@
 """Technician Service — Technician management API routes."""
 
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from uuid import UUID
 
@@ -123,10 +124,18 @@ async def set_availability(
     tenant_id: TenantId,
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> TechnicianResponse:
-    tech = await service.set_availability(
-        tech_id, tenant_id, is_available=payload.is_available,
-        unavailable_reason=payload.unavailable_reason, available_from=payload.available_from,
+    start = payload.available_from or datetime.now(timezone.utc)
+    end = start + timedelta(hours=8)
+    avail_type = "available" if payload.is_available else "unavailable"
+    await service.set_availability(
+        tech_id,
+        tenant_id,
+        availability_type=avail_type,
+        start_dt=start,
+        end_dt=end,
+        notes=payload.unavailable_reason,
     )
+    tech = await service.get_technician(tech_id, tenant_id)
     return TechnicianResponse.from_model(tech)
 
 
@@ -140,7 +149,7 @@ async def list_certifications(
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> list[CertificationResponse]:
     certs = await service.list_certifications(tech_id, tenant_id)
-    return [CertificationResponse.model_validate(c, from_attributes=True) for c in certs]
+    return [CertificationResponse.from_model(c) for c in certs]
 
 
 @router.post("/{tech_id}/certifications", response_model=CertificationResponse, status_code=201,
@@ -150,10 +159,20 @@ async def add_certification(
     payload: AddCertificationRequest,
     tenant_id: TenantId,
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
+    x_user_id: UUID | None = Header(default=None, alias="x-user-id"),
 ) -> CertificationResponse:
+    tech = await service.get_technician(tech_id, tenant_id)
+    created_by = x_user_id or tech.user_id or tech.created_by
+    issued = payload.issued_date.date() if payload.issued_date else None
+    expires = payload.expiry_date.date() if payload.expiry_date else None
     cert = await service.add_certification(
-        tech_id, tenant_id, name=payload.name, issuing_body=payload.issuing_body,
+        tech_id,
+        tenant_id,
+        created_by=created_by,
+        certification_name=payload.name,
+        issuing_body=payload.issuing_body,
         certificate_number=payload.certificate_number,
-        issued_date=payload.issued_date, expiry_date=payload.expiry_date,
+        issued_date=issued,
+        expiry_date=expires,
     )
-    return CertificationResponse.model_validate(cert, from_attributes=True)
+    return CertificationResponse.from_model(cert)

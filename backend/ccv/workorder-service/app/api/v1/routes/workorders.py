@@ -44,7 +44,7 @@ async def list_workorders(
         tenant_id=tenant_id, status=status, customer_id=customer_id,
         technician_id=technician_id, skip=skip, limit=limit,
     )
-    return [WorkOrderResponse.model_validate(w, from_attributes=True) for w in workorders]
+    return [WorkOrderResponse.from_model(w) for w in workorders]
 
 
 @router.post("", response_model=WorkOrderResponse, status_code=201, summary="Create work order")
@@ -54,12 +54,26 @@ async def create_workorder(
     user_id: UserId,
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> WorkOrderResponse:
-    fields = payload.model_dump(exclude={"customer_id", "title", "work_type"})
-    wo = await service.create_work_order(
-        tenant_id=tenant_id, customer_id=payload.customer_id, created_by=user_id,
-        title=payload.title, work_type=payload.work_type, **fields,
+    fields = payload.model_dump(
+        exclude={
+            "customer_id",
+            "title",
+            "work_type",
+            "work_order_number",
+            "priority",
+        }
     )
-    return WorkOrderResponse.model_validate(wo, from_attributes=True)
+    wo = await service.create_work_order(
+        tenant_id=tenant_id,
+        customer_id=payload.customer_id,
+        created_by=user_id,
+        work_order_number=payload.work_order_number,
+        title=payload.title,
+        work_order_type=payload.work_type,
+        priority=payload.priority,
+        **fields,
+    )
+    return WorkOrderResponse.from_model(wo)
 
 
 @router.get("/{wo_id}", response_model=WorkOrderResponse, summary="Get work order")
@@ -69,7 +83,7 @@ async def get_workorder(
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> WorkOrderResponse:
     wo = await service.get_work_order(wo_id, tenant_id)
-    return WorkOrderResponse.model_validate(wo, from_attributes=True)
+    return WorkOrderResponse.from_model(wo)
 
 
 @router.post("/{wo_id}/status", response_model=WorkOrderResponse, summary="Transition work order status")
@@ -81,7 +95,7 @@ async def transition_status(
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> WorkOrderResponse:
     wo = await service.transition_status(wo_id, tenant_id, payload.new_status, user_id, comment=payload.comment)
-    return WorkOrderResponse.model_validate(wo, from_attributes=True)
+    return WorkOrderResponse.from_model(wo)
 
 
 @router.post("/{wo_id}/assign", response_model=WorkOrderResponse, summary="Assign technician")
@@ -93,7 +107,7 @@ async def assign_technician(
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> WorkOrderResponse:
     wo = await service.assign_technician(wo_id, tenant_id, payload.technician_id, user_id)
-    return WorkOrderResponse.model_validate(wo, from_attributes=True)
+    return WorkOrderResponse.from_model(wo)
 
 
 # ─── Tasks ────────────────────────────────────────────────────────────────
@@ -105,7 +119,7 @@ async def list_tasks(
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> list[WorkOrderTaskResponse]:
     tasks = await service.list_tasks(wo_id, tenant_id)
-    return [WorkOrderTaskResponse.model_validate(t, from_attributes=True) for t in tasks]
+    return [WorkOrderTaskResponse.from_model(t) for t in tasks]
 
 
 @router.post("/{wo_id}/tasks", response_model=WorkOrderTaskResponse, status_code=201, summary="Add task")
@@ -118,7 +132,7 @@ async def add_task(
     task = await service.add_task(
         wo_id, tenant_id, title=payload.title, description=payload.description, sort_order=payload.sort_order,
     )
-    return WorkOrderTaskResponse.model_validate(task, from_attributes=True)
+    return WorkOrderTaskResponse.from_model(task)
 
 
 @router.post("/{wo_id}/tasks/{task_id}/complete", response_model=WorkOrderTaskResponse,
@@ -131,8 +145,8 @@ async def complete_task(
     user_id: UserId,
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> WorkOrderTaskResponse:
-    task = await service.complete_task(wo_id, tenant_id, task_id, user_id, notes=payload.notes)
-    return WorkOrderTaskResponse.model_validate(task, from_attributes=True)
+    task = await service.complete_task(wo_id, tenant_id, task_id, user_id)
+    return WorkOrderTaskResponse.from_model(task)
 
 
 # ─── Notes ────────────────────────────────────────────────────────────────
@@ -144,7 +158,7 @@ async def list_notes(
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> list[WorkOrderNoteResponse]:
     notes = await service.list_notes(wo_id, tenant_id)
-    return [WorkOrderNoteResponse.model_validate(n, from_attributes=True) for n in notes]
+    return [WorkOrderNoteResponse.from_model(n) for n in notes]
 
 
 @router.post("/{wo_id}/notes", response_model=WorkOrderNoteResponse, status_code=201, summary="Add note")
@@ -156,4 +170,4 @@ async def add_note(
     service: Annotated[WorkOrderDomainService, Depends(_get_service)],
 ) -> WorkOrderNoteResponse:
     note = await service.add_note(wo_id, tenant_id, user_id, body=payload.body, is_internal=payload.is_internal)
-    return WorkOrderNoteResponse.model_validate(note, from_attributes=True)
+    return WorkOrderNoteResponse.from_model(note)

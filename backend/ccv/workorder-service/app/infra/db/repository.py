@@ -44,6 +44,7 @@ class WorkOrderRepository:
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,
+        customer_id: uuid.UUID | None = None,
         technician_id: uuid.UUID | None = None,
         skip: int = 0,
         limit: int = 50,
@@ -53,6 +54,8 @@ class WorkOrderRepository:
         )
         if status:
             stmt = stmt.where(WorkOrder.status == status)
+        if customer_id:
+            stmt = stmt.where(WorkOrder.customer_id == customer_id)
         if technician_id:
             stmt = stmt.where(WorkOrder.assigned_technician_id == technician_id)
         stmt = stmt.offset(skip).limit(limit).order_by(WorkOrder.created_at.desc())

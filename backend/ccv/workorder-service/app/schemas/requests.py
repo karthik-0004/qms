@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class CreateWorkOrderRequest(BaseModel):
     customer_id: UUID
     contract_id: UUID | None = None
+    work_order_number: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=255)
     work_type: str = Field(min_length=1)
     description: str | None = None

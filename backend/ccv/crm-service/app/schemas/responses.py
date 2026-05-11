@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel
 
-from app.infra.db.models import Customer
+from app.infra.db.models import Customer, Interaction
 
 
 class CustomerResponse(BaseModel):
@@ -77,3 +77,25 @@ class InteractionResponse(BaseModel):
     contact_id: UUID | None
     created_by: UUID
     created_at: datetime
+
+    @classmethod
+    def from_model(cls, interaction: Interaction) -> "InteractionResponse":
+        meta = interaction.metadata_ if isinstance(interaction.metadata_, dict) else {}
+        raw_cid = meta.get("contact_id")
+        contact_id: UUID | None = None
+        if raw_cid is not None:
+            try:
+                contact_id = UUID(str(raw_cid))
+            except ValueError:
+                contact_id = None
+        return cls(
+            id=interaction.id,
+            tenant_id=interaction.tenant_id,
+            customer_id=interaction.customer_id,
+            interaction_type=interaction.interaction_type,
+            subject=interaction.subject,
+            body=interaction.body,
+            contact_id=contact_id,
+            created_by=interaction.created_by,
+            created_at=interaction.created_at,
+        )

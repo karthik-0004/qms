@@ -20,6 +20,30 @@ VALID_INTERACTION_TYPES = {
 }
 
 
+def _map_interaction_api_to_columns(extra: dict) -> dict:
+    """Strip/map request-only keys onto Interaction columns (metadata JSON)."""
+    row = dict(extra)
+    contact_id = row.pop("contact_id", None)
+    scheduled_at = row.pop("scheduled_at", None)
+    duration_minutes = row.pop("duration_minutes", None)
+    meta_extra: dict = {}
+    if contact_id is not None:
+        meta_extra["contact_id"] = str(contact_id)
+    if scheduled_at is not None:
+        meta_extra["scheduled_at"] = scheduled_at
+    if duration_minutes is not None:
+        meta_extra["duration_minutes"] = duration_minutes
+    if meta_extra:
+        meta = row.get("metadata_")
+        if not isinstance(meta, dict):
+            meta = {}
+        else:
+            meta = dict(meta)
+        meta.update(meta_extra)
+        row["metadata_"] = meta
+    return row
+
+
 class CRMDomainService:
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -196,13 +220,14 @@ class CRMDomainService:
             raise ValueError(f"Invalid interaction_type: {interaction_type}")
         await self.get_customer(customer_id, tenant_id)
 
+        row = _map_interaction_api_to_columns(kwargs)
         interaction = await self._interactions.create({
             "tenant_id": tenant_id,
             "customer_id": customer_id,
             "created_by": created_by,
             "interaction_type": interaction_type,
             "subject": subject,
-            **kwargs,
+            **row,
         })
         logger.info(
             "interaction.logged",

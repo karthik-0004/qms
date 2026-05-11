@@ -56,6 +56,7 @@ class TechnicianRepository:
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,
+        is_available: bool | None = None,
         skip: int = 0,
         limit: int = 50,
     ) -> list[Technician]:
@@ -64,6 +65,10 @@ class TechnicianRepository:
         )
         if status:
             stmt = stmt.where(Technician.status == status)
+        if is_available is True:
+            stmt = stmt.where(Technician.status == "available")
+        elif is_available is False:
+            stmt = stmt.where(Technician.status != "available")
         stmt = stmt.offset(skip).limit(limit).order_by(Technician.last_name)
         result = await self._session.execute(stmt)
         return list(result.scalars().all())

@@ -28,6 +28,32 @@ VALID_WO_TYPES = {
 VALID_PRIORITIES = {"low", "normal", "high", "urgent"}
 
 
+def _prepare_work_order_create_kwargs(extra: dict) -> dict:
+    """Map API fields to SQLAlchemy WorkOrder columns (site JSON, metadata notes)."""
+    row = dict(extra)
+    line = row.pop("site_address", None)
+    city = row.pop("site_city", None)
+    state = row.pop("site_state", None)
+    postal = row.pop("site_postal_code", None)
+    if any(x is not None for x in (line, city, state, postal)):
+        row["site_address"] = {
+            "line1": line,
+            "city": city,
+            "state": state,
+            "postal_code": postal,
+        }
+    notes = row.pop("notes", None)
+    if notes is not None:
+        meta = row.get("metadata_")
+        if not isinstance(meta, dict):
+            meta = {}
+        else:
+            meta = dict(meta)
+        meta["notes"] = notes
+        row["metadata_"] = meta
+    return row
+
+
 class WorkOrderDomainService:
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -55,6 +81,7 @@ class WorkOrderDomainService:
         if existing:
             raise ValueError(f"Work order number '{work_order_number}' already exists")
 
+        row = _prepare_work_order_create_kwargs(kwargs)
         wo = await self._work_orders.create({
             "tenant_id": tenant_id,
             "customer_id": customer_id,
@@ -64,7 +91,7 @@ class WorkOrderDomainService:
             "work_order_type": work_order_type,
             "priority": priority,
             "status": "pending",
-            **kwargs,
+            **row,
         })
         logger.info("workorder.created", wo_id=str(wo.id))
         return wo
@@ -79,12 +106,18 @@ class WorkOrderDomainService:
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,
+        customer_id: uuid.UUID | None = None,
         technician_id: uuid.UUID | None = None,
         skip: int = 0,
         limit: int = 50,
     ) -> list[WorkOrder]:
         return await self._work_orders.list(
-            tenant_id, status=status, technician_id=technician_id, skip=skip, limit=limit
+            tenant_id,
+            status=status,
+            customer_id=customer_id,
+            technician_id=technician_id,
+            skip=skip,
+            limit=limit,
         )
 
     async def assign_technician(

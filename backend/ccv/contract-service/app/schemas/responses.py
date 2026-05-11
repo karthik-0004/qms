@@ -86,3 +86,16 @@ class ContractHistoryResponse(BaseModel):
     changed_by: UUID
     comment: str | None
     created_at: datetime
+
+    @classmethod
+    def from_model(cls, h) -> "ContractHistoryResponse":
+        """ORM column is `changed_at`; response field is `created_at`."""
+        return cls(
+            id=h.id,
+            contract_id=h.contract_id,
+            from_status=h.from_status,
+            to_status=h.to_status,
+            changed_by=h.changed_by,
+            comment=h.comment,
+            created_at=h.changed_at,
+        )
