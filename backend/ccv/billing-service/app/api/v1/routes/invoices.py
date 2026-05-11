@@ -1,5 +1,6 @@
 """Billing Service — Invoice lifecycle API routes."""
 
+from datetime import date, datetime, timezone
 from typing import Annotated
 from uuid import UUID
 
@@ -40,7 +41,7 @@ async def list_invoices(
     invoices = await service.list_invoices(
         tenant_id=tenant_id, status=status, customer_id=customer_id, skip=skip, limit=limit,
     )
-    return [InvoiceResponse.model_validate(i, from_attributes=True) for i in invoices]
+    return [InvoiceResponse.from_model(i) for i in invoices]
 
 
 @router.post("", response_model=InvoiceResponse, status_code=201, summary="Create invoice")
@@ -55,7 +56,7 @@ async def create_invoice(
         tenant_id=tenant_id, customer_id=payload.customer_id, created_by=user_id,
         invoice_number=payload.invoice_number, **fields,
     )
-    return InvoiceResponse.model_validate(invoice, from_attributes=True)
+    return InvoiceResponse.from_model(invoice)
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponse, summary="Get invoice")
@@ -65,7 +66,7 @@ async def get_invoice(
     service: Annotated[BillingDomainService, Depends(_get_service)],
 ) -> InvoiceResponse:
     invoice = await service.get_invoice(invoice_id, tenant_id)
-    return InvoiceResponse.model_validate(invoice, from_attributes=True)
+    return InvoiceResponse.from_model(invoice)
 
 
 @router.post("/{invoice_id}/status", response_model=InvoiceResponse, summary="Transition invoice status")
@@ -79,7 +80,7 @@ async def transition_status(
     invoice = await service.transition_status(
         invoice_id, tenant_id, payload.new_status, user_id, comment=payload.comment,
     )
-    return InvoiceResponse.model_validate(invoice, from_attributes=True)
+    return InvoiceResponse.from_model(invoice)
 
 
 # ─── Line Items ──────────────────────────────────────────────────────────
@@ -92,7 +93,7 @@ async def list_line_items(
     service: Annotated[BillingDomainService, Depends(_get_service)],
 ) -> list[InvoiceLineItemResponse]:
     items = await service.list_line_items(invoice_id, tenant_id)
-    return [InvoiceLineItemResponse.model_validate(i, from_attributes=True) for i in items]
+    return [InvoiceLineItemResponse.from_model(i) for i in items]
 
 
 @router.post("/{invoice_id}/line-items", response_model=InvoiceLineItemResponse, status_code=201,
@@ -104,12 +105,15 @@ async def add_line_item(
     service: Annotated[BillingDomainService, Depends(_get_service)],
 ) -> InvoiceLineItemResponse:
     item = await service.add_line_item(
-        invoice_id=invoice_id, tenant_id=tenant_id,
-        description=payload.description, unit_price=payload.unit_price,
-        quantity=payload.quantity, unit=payload.unit, tax_rate=payload.tax_rate,
+        invoice_id=invoice_id,
+        tenant_id=tenant_id,
+        description=payload.description,
+        unit_price=payload.unit_price,
+        quantity=payload.quantity,
+        unit=payload.unit,
         sort_order=payload.sort_order,
     )
-    return InvoiceLineItemResponse.model_validate(item, from_attributes=True)
+    return InvoiceLineItemResponse.from_model(item)
 
 
 # ─── Payments ─────────────────────────────────────────────────────────────
@@ -121,7 +125,7 @@ async def list_payments(
     service: Annotated[BillingDomainService, Depends(_get_service)],
 ) -> list[PaymentResponse]:
     payments = await service.list_payments(invoice_id, tenant_id)
-    return [PaymentResponse.model_validate(p, from_attributes=True) for p in payments]
+    return [PaymentResponse.from_model(p) for p in payments]
 
 
 @router.post("/{invoice_id}/payments", response_model=PaymentResponse, status_code=201,
@@ -133,10 +137,23 @@ async def record_payment(
     user_id: UserId,
     service: Annotated[BillingDomainService, Depends(_get_service)],
 ) -> PaymentResponse:
+    pay_date: date
+    if payload.payment_date is not None:
+        pay_date = (
+            payload.payment_date.date()
+            if isinstance(payload.payment_date, datetime)
+            else payload.payment_date
+        )
+    else:
+        pay_date = datetime.now(timezone.utc).date()
     payment = await service.record_payment(
-        invoice_id=invoice_id, tenant_id=tenant_id, recorded_by=user_id,
-        amount=payload.amount, payment_method=payload.payment_method,
-        reference_number=payload.reference_number, payment_date=payload.payment_date,
+        invoice_id=invoice_id,
+        tenant_id=tenant_id,
+        created_by=user_id,
+        payment_method=payload.payment_method,
+        amount=payload.amount,
+        payment_date=pay_date,
+        reference_number=payload.reference_number,
         notes=payload.notes,
     )
-    return PaymentResponse.model_validate(payment, from_attributes=True)
+    return PaymentResponse.from_model(payment)
