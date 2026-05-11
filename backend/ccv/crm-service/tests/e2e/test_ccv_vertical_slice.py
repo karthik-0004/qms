@@ -90,9 +90,9 @@ async def test_create_customer():
         "notes": "E2E test customer",
     }
     async with httpx.AsyncClient() as client:
-        r = await client.post(f"{CRM_URL}/api/v1/customers", json=payload, headers=HEADERS)
+        r = await client.post(f"{CRM_URL}/api/v1/crm/customers", json=payload, headers=HEADERS)
     assert r.status_code == 201
-    data = r.json()["data"]
+    data = r.json()
     assert data["status"] == "prospect"
     assert data["company_name"] == payload["company_name"]
     _state["customer_id"] = data["id"]
@@ -108,12 +108,12 @@ async def test_add_primary_contact():
     }
     async with httpx.AsyncClient() as client:
         r = await client.post(
-            f"{CRM_URL}/api/v1/customers/{_state['customer_id']}/contacts",
+            f"{CRM_URL}/api/v1/crm/customers/{_state['customer_id']}/contacts",
             json=payload,
             headers=HEADERS,
         )
     assert r.status_code == 201
-    data = r.json()["data"]
+    data = r.json()
     assert data["is_primary"] is True
     _state["contact_id"] = data["id"]
 
@@ -127,7 +127,7 @@ async def test_log_interaction():
     }
     async with httpx.AsyncClient() as client:
         r = await client.post(
-            f"{CRM_URL}/api/v1/customers/{_state['customer_id']}/interactions",
+            f"{CRM_URL}/api/v1/crm/customers/{_state['customer_id']}/interactions",
             json=payload,
             headers=HEADERS,
         )
@@ -138,24 +138,24 @@ async def test_log_interaction():
 async def test_qualify_customer():
     async with httpx.AsyncClient() as client:
         r = await client.post(
-            f"{CRM_URL}/api/v1/customers/{_state['customer_id']}/transition",
-            json={"status": "qualified"},
+            f"{CRM_URL}/api/v1/crm/customers/{_state['customer_id']}/status",
+            json={"new_status": "qualified"},
             headers=HEADERS,
         )
     assert r.status_code == 200
-    assert r.json()["data"]["status"] == "qualified"
+    assert r.json()["status"] == "qualified"
 
 
 @pytest.mark.asyncio
 async def test_convert_to_customer():
     async with httpx.AsyncClient() as client:
         r = await client.post(
-            f"{CRM_URL}/api/v1/customers/{_state['customer_id']}/transition",
-            json={"status": "customer"},
+            f"{CRM_URL}/api/v1/crm/customers/{_state['customer_id']}/status",
+            json={"new_status": "customer"},
             headers=HEADERS,
         )
     assert r.status_code == 200
-    assert r.json()["data"]["status"] == "customer"
+    assert r.json()["status"] == "customer"
 
 
 # ─── TC-CCV-011: Create contract ─────────────────────────────────────────────
