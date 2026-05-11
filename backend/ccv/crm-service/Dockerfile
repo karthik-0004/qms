@@ -4,7 +4,7 @@ WORKDIR /build
 
 COPY pyproject.toml .
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir setuptools wheel && pip install --no-cache-dir .
 
 
 
@@ -19,6 +19,8 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY app/ ./app/
+COPY alembic.ini ./alembic.ini
+COPY migrations/ ./migrations/
 
 RUN chown -R appuser:appuser /app
 

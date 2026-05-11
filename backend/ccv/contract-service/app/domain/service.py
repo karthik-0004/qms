@@ -27,6 +27,23 @@ VALID_CONTRACT_TYPES = {
 }
 
 
+def _map_api_fields_to_contract_columns(extra: dict) -> dict:
+    """Map CreateContractRequest keys to SQLAlchemy Contract column names."""
+    row = dict(extra)
+    if "total_value" in row:
+        row["value"] = row.pop("total_value")
+    notes = row.pop("notes", None)
+    if notes is not None:
+        metadata = row.get("metadata_")
+        if not isinstance(metadata, dict):
+            metadata = {}
+        else:
+            metadata = dict(metadata)
+        metadata["notes"] = notes
+        row["metadata_"] = metadata
+    return row
+
+
 class ContractDomainService:
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -52,6 +69,7 @@ class ContractDomainService:
         if existing:
             raise ValueError(f"Contract number '{contract_number}' already exists")
 
+        row = _map_api_fields_to_contract_columns(kwargs)
         contract = await self._contracts.create({
             "tenant_id": tenant_id,
             "customer_id": customer_id,
@@ -60,7 +78,7 @@ class ContractDomainService:
             "title": title,
             "contract_type": contract_type,
             "status": "draft",
-            **kwargs,
+            **row,
         })
         await self._history.create({
             "contract_id": contract.id,

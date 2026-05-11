@@ -274,7 +274,7 @@ services:
       SERVICE_NAME: "auth-service"
       SERVICE_VERSION: "0.1.0"
     command: >
-      sh -lc "alembic upgrade head || alembic stamp head; python -m app.scripts.create_super_admin"
+      sh -lc "set -e; alembic upgrade head; python -m app.scripts.create_super_admin"
 
   tenant-service-init:
     build:
@@ -294,7 +294,7 @@ services:
       SERVICE_NAME: "tenant-service"
       SERVICE_VERSION: "0.1.0"
     command: >
-      sh -lc "alembic upgrade head || alembic stamp head"
+      sh -lc "set -e; alembic upgrade head"
 
   auth-service:
     build:

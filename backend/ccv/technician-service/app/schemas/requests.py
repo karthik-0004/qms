@@ -7,9 +7,10 @@ from pydantic import BaseModel, Field
 
 class RegisterTechnicianRequest(BaseModel):
     user_id: UUID
+    employee_number: str = Field(min_length=1, max_length=50)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
-    email: str | None = None
+    email: str = Field(min_length=3, max_length=255)
     phone: str | None = None
     specializations: list[str] = []
     service_area: str | None = None

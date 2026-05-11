@@ -38,7 +38,7 @@ async def list_customers(
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[CustomerResponse]:
     customers = await service.list_customers(tenant_id=tenant_id, status=status, skip=skip, limit=limit)
-    return [CustomerResponse.model_validate(c, from_attributes=True) for c in customers]
+    return [CustomerResponse.from_model(c) for c in customers]
 
 
 @router.post("", response_model=CustomerResponse, status_code=201, summary="Create customer")
@@ -52,7 +52,7 @@ async def create_customer(
     customer = await service.create_customer(
         tenant_id=tenant_id, created_by=user_id, company_name=payload.company_name, **fields,
     )
-    return CustomerResponse.model_validate(customer, from_attributes=True)
+    return CustomerResponse.from_model(customer)
 
 
 @router.get("/{customer_id}", response_model=CustomerResponse, summary="Get customer")
@@ -62,7 +62,7 @@ async def get_customer(
     service: Annotated[CRMDomainService, Depends(_get_service)],
 ) -> CustomerResponse:
     customer = await service.get_customer(customer_id, tenant_id)
-    return CustomerResponse.model_validate(customer, from_attributes=True)
+    return CustomerResponse.from_model(customer)
 
 
 @router.patch("/{customer_id}", response_model=CustomerResponse, summary="Update customer")
@@ -75,7 +75,7 @@ async def update_customer(
 ) -> CustomerResponse:
     fields = payload.model_dump(exclude_none=True)
     customer = await service.update_customer(customer_id, tenant_id, changed_by=user_id, **fields)
-    return CustomerResponse.model_validate(customer, from_attributes=True)
+    return CustomerResponse.from_model(customer)
 
 
 @router.post("/{customer_id}/status", response_model=CustomerResponse, summary="Transition customer status")
@@ -87,7 +87,7 @@ async def transition_status(
     service: Annotated[CRMDomainService, Depends(_get_service)],
 ) -> CustomerResponse:
     customer = await service.transition_status(customer_id, tenant_id, payload.new_status, user_id)
-    return CustomerResponse.model_validate(customer, from_attributes=True)
+    return CustomerResponse.from_model(customer)
 
 
 # ─── Contacts ────────────────────────────────────────────────────────────

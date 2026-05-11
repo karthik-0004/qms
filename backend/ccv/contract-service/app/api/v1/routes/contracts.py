@@ -35,7 +35,7 @@ async def list_contracts(
     contracts = await service.list_contracts(
         tenant_id=tenant_id, customer_id=customer_id, status=status, skip=skip, limit=limit,
     )
-    return [ContractResponse.model_validate(c, from_attributes=True) for c in contracts]
+    return [ContractResponse.from_model(c) for c in contracts]
 
 
 @router.post("", response_model=ContractResponse, status_code=201, summary="Create contract")
@@ -51,7 +51,7 @@ async def create_contract(
         contract_number=payload.contract_number, title=payload.title,
         contract_type=payload.contract_type, **fields,
     )
-    return ContractResponse.model_validate(contract, from_attributes=True)
+    return ContractResponse.from_model(contract)
 
 
 @router.get("/{contract_id}", response_model=ContractResponse, summary="Get contract")
@@ -61,7 +61,7 @@ async def get_contract(
     service: Annotated[ContractDomainService, Depends(_get_service)],
 ) -> ContractResponse:
     contract = await service.get_contract(contract_id, tenant_id)
-    return ContractResponse.model_validate(contract, from_attributes=True)
+    return ContractResponse.from_model(contract)
 
 
 @router.post("/{contract_id}/status", response_model=ContractResponse, summary="Transition contract status")
@@ -75,7 +75,7 @@ async def transition_status(
     contract = await service.transition_status(
         contract_id, tenant_id, payload.new_status, user_id, comment=payload.comment,
     )
-    return ContractResponse.model_validate(contract, from_attributes=True)
+    return ContractResponse.from_model(contract)
 
 
 @router.get("/{contract_id}/history", response_model=list[ContractHistoryResponse],

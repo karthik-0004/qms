@@ -40,13 +40,37 @@ class CRMDomainService:
         if existing:
             raise ValueError(f"Customer with company name '{company_name}' already exists")
 
-        customer = await self._customers.create({
-            "tenant_id": tenant_id,
-            "created_by": created_by,
-            "company_name": company_name,
-            "status": "prospect",
-            **kwargs,
-        })
+        # API payload includes contact/address convenience fields that are not
+        # first-class columns on Customer. Normalize them into billing_address.
+        billing_address_fields = {
+            "email",
+            "phone",
+            "address",
+            "city",
+            "state",
+            "country",
+            "postal_code",
+        }
+        billing_address: dict | None = None
+        for k in list(kwargs.keys()):
+            if k in billing_address_fields and kwargs.get(k) is not None:
+                billing_address = billing_address or {}
+                billing_address[k] = kwargs.pop(k)
+
+        # Only pass valid Customer model fields through to SQLAlchemy.
+        allowed_customer_fields = set(Customer.__mapper__.attrs.keys())
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_customer_fields}
+
+        customer = await self._customers.create(
+            {
+                "tenant_id": tenant_id,
+                "created_by": created_by,
+                "company_name": company_name,
+                "status": "prospect",
+                "billing_address": billing_address,
+                **filtered_kwargs,
+            }
+        )
         logger.info("customer.created", tenant_id=str(tenant_id), customer_id=str(customer.id))
         return customer
 
@@ -97,8 +121,30 @@ class CRMDomainService:
         **kwargs,
     ) -> Customer:
         customer = await self.get_customer(customer_id, tenant_id)
-        kwargs["changed_by"] = changed_by
-        return await self._customers.update(customer, kwargs)
+        billing_address_fields = {
+            "email",
+            "phone",
+            "address",
+            "city",
+            "state",
+            "country",
+            "postal_code",
+        }
+        billing_address_updates: dict | None = None
+        for k in list(kwargs.keys()):
+            if k in billing_address_fields and kwargs.get(k) is not None:
+                billing_address_updates = billing_address_updates or {}
+                billing_address_updates[k] = kwargs.pop(k)
+
+        allowed_customer_fields = set(Customer.__mapper__.attrs.keys())
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_customer_fields}
+        filtered_kwargs["changed_by"] = changed_by
+
+        if billing_address_updates:
+            existing = customer.billing_address or {}
+            filtered_kwargs["billing_address"] = {**existing, **billing_address_updates}
+
+        return await self._customers.update(customer, filtered_kwargs)
 
     # ─── Contacts ────────────────────────────────────────────────────────────
 

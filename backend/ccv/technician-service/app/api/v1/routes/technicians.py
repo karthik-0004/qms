@@ -41,7 +41,7 @@ async def list_technicians(
     technicians = await service.list_technicians(
         tenant_id=tenant_id, status=status, is_available=is_available, skip=skip, limit=limit,
     )
-    return [TechnicianResponse.model_validate(t, from_attributes=True) for t in technicians]
+    return [TechnicianResponse.from_model(t) for t in technicians]
 
 
 @router.post("", response_model=TechnicianResponse, status_code=201, summary="Register technician")
@@ -51,12 +51,22 @@ async def register_technician(
     user_id: UserId,
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> TechnicianResponse:
-    fields = payload.model_dump(exclude={"user_id", "first_name", "last_name"})
-    tech = await service.register_technician(
-        tenant_id=tenant_id, created_by=user_id, user_id=payload.user_id,
-        first_name=payload.first_name, last_name=payload.last_name, **fields,
+    fields = payload.model_dump(
+        exclude={"employee_number", "first_name", "last_name", "email", "service_area", "notes"}
     )
-    return TechnicianResponse.model_validate(tech, from_attributes=True)
+    service_regions = [payload.service_area] if payload.service_area else None
+    tech = await service.register_technician(
+        tenant_id=tenant_id,
+        created_by=user_id,
+        employee_number=payload.employee_number,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        email=payload.email,
+        user_id=payload.user_id,
+        service_regions=service_regions,
+        **fields,
+    )
+    return TechnicianResponse.from_model(tech)
 
 
 @router.get("/{tech_id}", response_model=TechnicianResponse, summary="Get technician")
@@ -66,7 +76,7 @@ async def get_technician(
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> TechnicianResponse:
     tech = await service.get_technician(tech_id, tenant_id)
-    return TechnicianResponse.model_validate(tech, from_attributes=True)
+    return TechnicianResponse.from_model(tech)
 
 
 @router.patch("/{tech_id}", response_model=TechnicianResponse, summary="Update technician")
@@ -78,8 +88,12 @@ async def update_technician(
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> TechnicianResponse:
     fields = payload.model_dump(exclude_none=True)
+    if "service_area" in fields:
+        service_area = fields.pop("service_area")
+        fields["service_regions"] = [service_area] if service_area else None
+    fields.pop("notes", None)
     tech = await service.update_technician(tech_id, tenant_id, changed_by=user_id, **fields)
-    return TechnicianResponse.model_validate(tech, from_attributes=True)
+    return TechnicianResponse.from_model(tech)
 
 
 @router.post("/{tech_id}/status", response_model=TechnicianResponse, summary="Transition technician status")
@@ -91,7 +105,7 @@ async def transition_status(
     service: Annotated[TechnicianDomainService, Depends(_get_service)],
 ) -> TechnicianResponse:
     tech = await service.transition_status(tech_id, tenant_id, payload.new_status, user_id)
-    return TechnicianResponse.model_validate(tech, from_attributes=True)
+    return TechnicianResponse.from_model(tech)
 
 
 @router.post("/{tech_id}/availability", response_model=TechnicianResponse, summary="Set availability")
@@ -105,7 +119,7 @@ async def set_availability(
         tech_id, tenant_id, is_available=payload.is_available,
         unavailable_reason=payload.unavailable_reason, available_from=payload.available_from,
     )
-    return TechnicianResponse.model_validate(tech, from_attributes=True)
+    return TechnicianResponse.from_model(tech)
 
 
 # ─── Certifications ──────────────────────────────────────────────────────
