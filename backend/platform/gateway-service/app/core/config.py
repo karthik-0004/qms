@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     audit_service_url: str = "http://audit-service:8004"
     notification_service_url: str = "http://notification-service:8005"
     document_service_url: str = "http://document-service:8020"
+    crm_service_url: str = "http://crm-service:8040"
 
     # JWT settings (for validation)
     jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"

@@ -542,6 +542,7 @@ services:
     depends_on:
       - auth-service
       - redis
+      - crm-service
     ports:
       - "8000:8000"
     environment:
@@ -549,6 +550,7 @@ services:
       AUTH_SERVICE_URL: "http://auth-service:8001"
       TENANT_SERVICE_URL: "http://tenant-service:8002"
       NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
+      CRM_SERVICE_URL: "http://crm-service:8040"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
