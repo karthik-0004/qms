@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "ax
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { getSessionFast, resolveSessionAuthContext } from "@/lib/api/session";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const SERVER_API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1`;
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -19,7 +19,6 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 };
 
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -28,6 +27,9 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  // Browser: always use Next.js `/api/platform/*` rewrite → gateway `/api/v1/*` so a mis-set
+  // NEXT_PUBLIC_API_URL (e.g. auth :8001) cannot break CRM/CCV/platform JSON calls.
+  config.baseURL = typeof window === "undefined" ? SERVER_API_BASE : "/api/platform";
   const session = await getSessionFast();
   const { bearerToken, tenantId: tenantFromSession } = resolveSessionAuthContext(session);
   if (bearerToken) config.headers.Authorization = `Bearer ${bearerToken}`;

@@ -12,6 +12,8 @@ logger = structlog.get_logger(__name__)
 
 crm_router = APIRouter(prefix="/crm", tags=["CRM (proxy)"])
 
+_CRM_METHODS = ["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"]
+
 
 def _join_url(base: str, path: str) -> str:
     if not path:
@@ -61,10 +63,7 @@ async def _forward(
     )
 
 
-@crm_router.api_route(
-    "/{full_path:path}",
-    methods=["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"],
-)
+@crm_router.api_route("/{full_path:path}", methods=_CRM_METHODS)
 async def proxy_crm(
     request: Request,
     settings: Annotated[Settings, Depends(get_settings)],
@@ -75,6 +74,21 @@ async def proxy_crm(
         upstream_base=upstream_base,
         request=request,
         full_path=full_path,
+        upstream_label="crm-service",
+    )
+
+
+@crm_router.api_route("", methods=_CRM_METHODS)
+@crm_router.api_route("/", methods=_CRM_METHODS)
+async def proxy_crm_root(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> Response:
+    upstream_base = _join_url(settings.crm_service_url, "/api/v1/crm")
+    return await _forward(
+        upstream_base=upstream_base,
+        request=request,
+        full_path="",
         upstream_label="crm-service",
     )
 
