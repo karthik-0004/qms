@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     tenant_service_url: str = "http://tenant-service:8002"
     user_service_url: str = "http://user-service:8003"
     audit_service_url: str = "http://audit-service:8004"
+    notification_service_url: str = "http://notification-service:8005"
     document_service_url: str = "http://document-service:8020"
 
     # JWT settings (for validation)

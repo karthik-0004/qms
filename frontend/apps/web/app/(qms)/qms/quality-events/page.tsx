@@ -70,10 +70,12 @@ export default function QualityEventsPage() {
     
     createEvent.mutate(
       {
+        event_number: `QE-${Date.now()}`,
         title: formData.title,
         event_type: formData.event_type,
         severity: formData.severity,
         description: formData.description,
+        detected_at: new Date().toISOString(),
       },
       {
         onSuccess: () => {
@@ -81,10 +83,11 @@ export default function QualityEventsPage() {
           setDialogOpen(false);
           setFormData({ title: "", description: "", severity: "minor", event_type: "deviation" });
         },
-        onError: (error: any) => {
-          const errorMessage = error?.response?.data?.detail || error?.message || "Failed to create quality event";
-          toast.error(errorMessage);
-          console.error("Error creating event:", error);
+        onError: (error: unknown) => {
+          const err = error as { response?: { data?: { detail?: string } }; message?: string };
+          const errorMessage =
+            err?.response?.data?.detail || err?.message || "Failed to create quality event";
+          toast.error(String(errorMessage));
         },
       }
     );

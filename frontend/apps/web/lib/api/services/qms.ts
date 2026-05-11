@@ -195,6 +195,7 @@ export const documentsApi = {
 
 export const qualityEventsApi = {
   list: (params?: {
+    search?: string;
     status?: string;
     event_type?: string;
     severity?: string;
@@ -202,7 +203,10 @@ export const qualityEventsApi = {
     department?: string;
     page?: number;
     page_size?: number;
-  }) => qmsQualityEventApiClient.get<PaginatedEnvelope<QualityEvent>>("/quality-events", { params }).then((r) => normalizePaginated(r.data)),
+  }) =>
+    qmsQualityEventApiClient
+      .get<PaginatedEnvelope<QualityEvent>>("/quality-events", { params })
+      .then((r) => normalizePaginated<QualityEvent>(r.data)),
 
   get: (id: string) =>
     qmsQualityEventApiClient.get<SuccessEnvelope<QualityEvent>>(`/quality-events/${id}`).then((r) => r.data.data),

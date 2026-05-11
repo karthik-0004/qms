@@ -296,6 +296,24 @@ services:
     command: >
       sh -lc "set -e; alembic upgrade head"
 
+  notification-service-init:
+    build:
+      context: .
+      dockerfile: backend/platform/notification-service/Dockerfile
+    <<: *service-defaults
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "notification-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head"
+
   auth-service:
     build:
       context: .
@@ -351,8 +369,12 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       POSTGRES_ADMIN_URL: "postgresql://rainer:rainer_dev_password@postgres:5432/postgres"
+      AUTH_SERVICE_URL: "http://auth-service:8001"
+      USER_SERVICE_URL: "http://user-service:8003"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
+      PUBLIC_WEB_LOGIN_URL: "${PUBLIC_WEB_LOGIN_URL:-http://localhost:3000/login}"
       SERVICE_NAME: "tenant-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8002"
@@ -416,6 +438,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      notification-service-init:
+        condition: service_completed_successfully
     ports:
       - "8005:8005"
     environment:
@@ -423,9 +447,15 @@ services:
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
-      SMTP_HOST: "mailhog"
-      SMTP_PORT: "1025"
-      SMTP_USE_TLS: "false"
+      SMTP_HOST: "${SMTP_HOST:-mailhog}"
+      SMTP_PORT: "${SMTP_PORT:-1025}"
+      SMTP_USE_TLS: "${SMTP_USE_TLS:-false}"
+      SMTP_START_TLS: "${SMTP_START_TLS:-false}"
+      # Root .env often uses SMTP_USER / SMTP_PASS / SMTP_FROM compose must map into names pydantic+Docker receive
+      SMTP_USERNAME: "${SMTP_USERNAME:-${SMTP_USER:-}}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD:-${SMTP_PASS:-}}"
+      SMTP_FROM_EMAIL: "${SMTP_FROM_EMAIL:-${SMTP_FROM:-noreply@rainer.io}}"
+      SMTP_FROM_NAME: "${SMTP_FROM_NAME:-Rainer Platform}"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       SERVICE_NAME: "notification-service"
       SERVICE_VERSION: "0.1.0"
@@ -518,6 +548,7 @@ services:
       <<: *common-env
       AUTH_SERVICE_URL: "http://auth-service:8001"
       TENANT_SERVICE_URL: "http://tenant-service:8002"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"

@@ -71,7 +71,15 @@ class TestTenantEndpointsRequireAuth:
     async def test_create_tenant_requires_auth(self, integration_client):
         resp = await integration_client.post(
             "/api/v1/tenants",
-            json={"tenant_name": "Test Corp", "products": ["qms"]},
+            json={
+                "tenant_name": "Test Corp",
+                "products": ["qms"],
+                "primary_contact": {
+                    "first_name": "A",
+                    "last_name": "B",
+                    "email": "a@example.com",
+                },
+            },
         )
         assert resp.status_code == 401
 
@@ -79,7 +87,15 @@ class TestTenantEndpointsRequireAuth:
     async def test_create_tenant_validates_products(self, integration_client):
         resp = await integration_client.post(
             "/api/v1/tenants",
-            json={"tenant_name": "Test Corp", "products": ["invalid_product"]},
+            json={
+                "tenant_name": "Test Corp",
+                "products": ["invalid_product"],
+                "primary_contact": {
+                    "first_name": "A",
+                    "last_name": "B",
+                    "email": "a@example.com",
+                },
+            },
             headers={"Authorization": "Bearer fake-token"},
         )
         assert resp.status_code in (401, 422)

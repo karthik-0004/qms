@@ -5,12 +5,20 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 import httpx
+import structlog
 from fastapi import APIRouter, Depends, Request, Response, status
 
 from ....core.config import Settings, get_settings
 from ....infra.auth_service_client import AuthServiceClient, AuthServiceClientConfig
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+logger = structlog.get_logger(__name__)
+
+
+def _join_url(base: str, path: str) -> str:
+    if not path:
+        return base.rstrip("/")
+    return f"{base.rstrip('/')}/{path.lstrip('/')}"
 
 
 def _get_auth_client(settings: Annotated[Settings, Depends(get_settings)]) -> AuthServiceClient:
@@ -123,4 +131,57 @@ async def logout_all(
         media_type=upstream.headers.get("content-type", "application/json"),
     )
     _copy_set_cookie_headers(upstream, downstream)
+    return downstream
+
+
+# Registered after explicit routes so /login, /refresh, /logout, /logout-all keep precedence.
+@router.api_route(
+    "/{full_path:path}",
+    methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    summary="Proxy: forward remaining auth-service paths (e.g. bootstrap, tenant-admin)",
+)
+async def proxy_auth_forward(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    full_path: str,
+) -> Response:
+    """Server-to-server calls often set AUTH_SERVICE_URL to the gateway; without this, unknown /auth/* paths 404."""
+    upstream_base = _join_url(settings.auth_service_url, "/api/v1/auth")
+    upstream_url = _join_url(upstream_base, full_path)
+
+    headers = dict(request.headers)
+    headers.pop("host", None)
+
+    body = await request.body()
+    params = dict(request.query_params)
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        upstream_resp = await client.request(
+            method=request.method,
+            url=upstream_url,
+            headers=headers,
+            params=params,
+            content=body if body else None,
+            cookies=request.cookies,
+        )
+
+    logger.info(
+        "gateway_proxy",
+        upstream="auth-service",
+        method=request.method,
+        path=str(request.url.path),
+        upstream_status=upstream_resp.status_code,
+    )
+
+    downstream = Response(
+        content=upstream_resp.content,
+        status_code=upstream_resp.status_code,
+        media_type=upstream_resp.headers.get("content-type"),
+        headers={
+            k: v
+            for k, v in upstream_resp.headers.items()
+            if k.lower() in {"content-type", "cache-control", "location"}
+        },
+    )
+    _copy_set_cookie_headers(upstream_resp, downstream)
     return downstream

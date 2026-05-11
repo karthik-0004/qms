@@ -1,7 +1,12 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { usersApi, auditApi, tenantsApi } from "@/lib/api/services/platform";
+import {
+  auditApi,
+  tenantsApi,
+  type UpdateTenantSettingsPayload,
+  usersApi,
+} from "@/lib/api/services/platform";
 
 // ─── Users ──────────────────────────────────────────────────────────────────
 
@@ -111,7 +116,11 @@ export function useCreateTenant() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: tenantsApi.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tenants"] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: ["tenants", "by-slug", data.slug] });
+    },
   });
 }
 
@@ -120,7 +129,10 @@ export function useUpdateTenant() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof tenantsApi.update>[1] }) =>
       tenantsApi.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tenants"] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+      qc.invalidateQueries({ queryKey: ["tenants", "by-slug", data.slug] });
+    },
   });
 }
 
@@ -137,5 +149,43 @@ export function useActivateTenant() {
   return useMutation({
     mutationFn: tenantsApi.activate,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tenants"] }),
+  });
+}
+
+export function useResendTenantWelcomeEmail() {
+  return useMutation({
+    mutationFn: tenantsApi.resendWelcomeEmail,
+  });
+}
+
+export function useTenantSettings(tenantId: string | undefined) {
+  return useQuery({
+    queryKey: ["tenants", "settings", tenantId],
+    queryFn: () => tenantsApi.getSettings(tenantId!),
+    enabled: Boolean(tenantId),
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateTenantSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tenantId, data }: { tenantId: string; data: UpdateTenantSettingsPayload }) =>
+      tenantsApi.updateSettings(tenantId, data),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ["tenants", "settings", vars.tenantId] });
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+    },
+  });
+}
+
+export function useDeleteTenant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: tenantsApi.delete,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
   });
 }

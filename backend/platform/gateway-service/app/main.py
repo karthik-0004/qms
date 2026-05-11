@@ -1,6 +1,7 @@
 """Gateway Service — FastAPI application factory with reverse-proxy, auth, rate limiting."""
 
 from contextlib import asynccontextmanager
+from typing import Any
 
 import structlog
 from fastapi import FastAPI, Request
@@ -24,6 +25,49 @@ from .core.config import get_settings
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
+
+
+def _safe_rainer_details(raw: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """ErrorDetail requires `message`; upstream RainerException details may omit it."""
+    out: list[dict[str, Any]] = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            out.append({"message": str(item)})
+            continue
+        if item.get("message") is not None:
+            d: dict[str, Any] = {"message": str(item["message"])}
+            if item.get("field") is not None:
+                d["field"] = str(item["field"])
+            if item.get("code") is not None:
+                d["code"] = str(item["code"])
+            out.append(d)
+            continue
+        upstream = item.get("upstream")
+        if upstream is not None:
+            out.append({"message": str(upstream)})
+        else:
+            parts = ", ".join(f"{k}={v}" for k, v in sorted(item.items()))
+            out.append({"message": parts or "unknown detail"})
+    return out
+
+
+def _error_response_payload(
+    code: str,
+    message: str,
+    details: list[dict[str, Any]] | None,
+    request_id: str | None,
+) -> dict[str, Any]:
+    try:
+        return ErrorResponse.of(code, message, details, request_id).model_dump()
+    except Exception as build_err:
+        logger.error("error_response_build_failed", error=str(build_err), code=code)
+        fallback_msg = f"{message} (serialization fallback: {build_err!s})"
+        return ErrorResponse.of(
+            code,
+            fallback_msg,
+            [{"message": str(build_err)[:500]}],
+            request_id,
+        ).model_dump()
 
 
 @asynccontextmanager
@@ -61,12 +105,12 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(RainerException)
     async def rainer_handler(request: Request, exc: RainerException) -> JSONResponse:
+        rid = getattr(request.state, "request_id", None)
         return JSONResponse(
             status_code=exc.status_code,
-            content=ErrorResponse.of(
-                exc.code, exc.message, exc.details,
-                getattr(request.state, "request_id", None),
-            ).model_dump(),
+            content=_error_response_payload(
+                exc.code, exc.message, _safe_rainer_details(exc.details), rid
+            ),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -86,9 +130,18 @@ def create_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.error("unhandled_exception", error=str(exc), exc_info=True)
+        details: list[dict[str, str]] = []
+        if settings.rainer_env != "production":
+            details = [{"message": f"{type(exc).__name__}: {str(exc)[:800]}"}]
+        rid = getattr(request.state, "request_id", None)
         return JSONResponse(
             status_code=500,
-            content=ErrorResponse.of("INTERNAL_SERVER_ERROR", "An unexpected error occurred").model_dump(),
+            content=_error_response_payload(
+                "INTERNAL_SERVER_ERROR",
+                "An unexpected error occurred",
+                details,
+                rid,
+            ),
         )
 
     app.include_router(

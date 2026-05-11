@@ -5,6 +5,10 @@ from pydantic import BaseModel, EmailStr, Field
 
 class CreateUserRequest(BaseModel):
     platform_user_id: str
+    tenant_id: str | None = Field(
+        default=None,
+        description="Target tenant (super_admin provisioning only; otherwise ignored)",
+    )
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     display_name: str | None = None

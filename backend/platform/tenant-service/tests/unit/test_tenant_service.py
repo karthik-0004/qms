@@ -26,6 +26,12 @@ def make_tenant(**kwargs) -> Tenant:
         tier="starter",
         products=["qms"],
         region="us-east-1",
+        company_profile={},
+        billing_profile={},
+        primary_contact_email=None,
+        primary_contact_first_name=None,
+        primary_contact_last_name=None,
+        primary_contact_phone=None,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
         deleted_at=None,
@@ -84,7 +90,10 @@ class TestCreateTenant:
             result = await svc.create_tenant("New Corp", ["qms", "ccv"])
 
         tenant_repo.create.assert_called_once()
-        settings_repo.create.assert_called_once_with(tenant_id=mock_tenant.id)
+        kw = settings_repo.create.call_args.kwargs
+        assert kw["tenant_id"] == mock_tenant.id
+        assert kw["timezone"] == "UTC"
+        assert kw["locale"] == "en-US"
 
 
 class TestGetTenant:

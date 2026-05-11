@@ -151,6 +151,15 @@ class TenantDomainService:
         products: list[str],
         tier: str = "starter",
         region: str = "us-east-1",
+        *,
+        company_profile: dict | None = None,
+        billing_profile: dict | None = None,
+        primary_contact_first_name: str | None = None,
+        primary_contact_last_name: str | None = None,
+        primary_contact_email: str | None = None,
+        primary_contact_phone: str | None = None,
+        settings_timezone: str = "UTC",
+        settings_locale: str = "en-US",
     ) -> Tenant:
         """
         Provision a new tenant:
@@ -173,6 +182,12 @@ class TenantDomainService:
             region=region,
             db_host=self._config.default_tenant_db_host,
             db_port=self._config.default_tenant_db_port,
+            company_profile=company_profile,
+            billing_profile=billing_profile,
+            primary_contact_first_name=primary_contact_first_name,
+            primary_contact_last_name=primary_contact_last_name,
+            primary_contact_email=primary_contact_email,
+            primary_contact_phone=primary_contact_phone,
         )
 
         logger.info("tenant_created_in_master", tenant_id=tenant.id, tenant_name=tenant_name)
@@ -185,8 +200,12 @@ class TenantDomainService:
             await self._tenants.update_status(tenant.id, "active")
             tenant.status = "active"
 
-            # Create settings
-            await self._settings.create(tenant_id=tenant.id)
+            # Create settings with tenant defaults
+            await self._settings.create(
+                tenant_id=tenant.id,
+                timezone=settings_timezone,
+                locale=settings_locale,
+            )
 
             logger.info("tenant_provisioned", tenant_id=tenant.id, db_name=tenant.db_name)
             return tenant
@@ -284,14 +303,12 @@ class TenantDomainService:
                     {"name": tenant.db_user},
                 )
                 if role_exists.scalar_one_or_none() is None:
-                    await conn.execute(
-                        text(f"CREATE USER {db_user_ident} WITH PASSWORD {db_password_lit}")
-                    )
+                    # NOTE: Postgres does not accept a bind parameter for CREATE/ALTER ROLE password;
+                    # it must be a SQL literal. `_pg_literal` ensures safe quoting.
+                    await conn.execute(text(f"CREATE USER {db_user_ident} WITH PASSWORD {db_password_lit}"))
                 else:
                     # Keep provisioning stable across retries
-                    await conn.execute(
-                        text(f"ALTER ROLE {db_user_ident} WITH PASSWORD {db_password_lit}")
-                    )
+                    await conn.execute(text(f"ALTER ROLE {db_user_ident} WITH PASSWORD {db_password_lit}"))
 
                 # Ensure database exists (idempotent)
                 db_exists = await conn.execute(

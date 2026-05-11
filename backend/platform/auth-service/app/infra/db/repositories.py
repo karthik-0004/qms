@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import PlatformAuditLog, PlatformUser, RefreshToken, ServiceAccessKey, Tenant
@@ -28,6 +28,18 @@ class UserRepository:
             select(PlatformUser).where(
                 PlatformUser.email == email.lower().strip(),
                 PlatformUser.deleted_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_tenant_admin_for_tenant(self, tenant_id: str) -> PlatformUser | None:
+        result = await self._db.execute(
+            select(PlatformUser).where(
+                and_(
+                    PlatformUser.tenant_id == tenant_id,
+                    PlatformUser.role == "tenant_admin",
+                    PlatformUser.deleted_at.is_(None),
+                )
             )
         )
         return result.scalar_one_or_none()

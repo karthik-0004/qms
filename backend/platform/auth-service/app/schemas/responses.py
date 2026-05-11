@@ -34,6 +34,17 @@ class MFASetupResponse(BaseModel):
     qr_code_url: str
 
 
+class BootstrapTenantAdminResponse(BaseModel):
+    platform_user_id: str
+    temporary_password: str
+
+
+class ResendTenantAdminWelcomeResponse(BaseModel):
+    platform_user_id: str
+    temporary_password: str
+    admin_email: str
+
+
 class AccessKeyResponse(BaseModel):
     id: str
     raw_key: str

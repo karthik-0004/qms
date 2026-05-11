@@ -8,6 +8,19 @@ from ..core.security import is_strong_password
 from ..core.validators import validate_request_email
 
 
+class BootstrapTenantAdminRequest(BaseModel):
+    tenant_id: str = Field(min_length=1)
+    email: str
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    role: str = Field(default="tenant_admin", max_length=50)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_request_email(v)
+
+
 def _normalize_and_validate_mfa_code(value: str) -> str:
     code = value.strip().replace(" ", "")
     if len(code) != 6 or not code.isdigit():

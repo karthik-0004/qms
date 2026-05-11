@@ -1,6 +1,7 @@
 """Tenant Service — FastAPI application factory."""
 
 from contextlib import asynccontextmanager
+from typing import Any
 
 import structlog
 from fastapi import FastAPI, Request, status
@@ -25,6 +26,30 @@ from .core.database import check_db_health, dispose_engine
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
+
+
+def _safe_rainer_details(raw: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """ErrorResponse.ErrorDetail requires `message`; legacy details used tenant_id/upstream only."""
+    out: list[dict[str, Any]] = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            out.append({"message": str(item)})
+            continue
+        if item.get("message") is not None:
+            d: dict[str, Any] = {"message": str(item["message"])}
+            if item.get("field") is not None:
+                d["field"] = str(item["field"])
+            if item.get("code") is not None:
+                d["code"] = str(item["code"])
+            out.append(d)
+            continue
+        upstream = item.get("upstream")
+        if upstream is not None:
+            out.append({"message": str(upstream)})
+        else:
+            parts = ", ".join(f"{k}={v}" for k, v in sorted(item.items()))
+            out.append({"message": parts or "unknown detail"})
+    return out
 
 
 @asynccontextmanager
@@ -70,7 +95,7 @@ def create_app() -> FastAPI:
             content=ErrorResponse.of(
                 code=exc.code,
                 message=exc.message,
-                details=exc.details,
+                details=_safe_rainer_details(exc.details),
                 request_id=getattr(request.state, "request_id", None),
             ).model_dump(),
         )
@@ -94,11 +119,15 @@ def create_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.error("unhandled_exception", error=str(exc), exc_info=True)
+        details: list[dict[str, str]] = []
+        if settings.rainer_env != "production":
+            details = [{"message": f"{type(exc).__name__}: {str(exc)[:800]}"}]
         return JSONResponse(
             status_code=500,
             content=ErrorResponse.of(
                 code="INTERNAL_SERVER_ERROR",
                 message="An unexpected error occurred",
+                details=details,
                 request_id=getattr(request.state, "request_id", None),
             ).model_dump(),
         )

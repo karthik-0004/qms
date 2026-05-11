@@ -34,7 +34,14 @@ class Settings(BaseSettings):
     default_tenant_db_host: str = "postgres"
     default_tenant_db_port: int = 5432
 
-    cors_allowed_origins: list[str] = ["http://localhost:3000"]
+    # In docker-compose these resolve via service DNS.
+    # Local dev can still override via env to point at localhost ports.
+    auth_service_url: str = "http://auth-service:8001"
+    user_service_url: str = "http://user-service:8003"
+    notification_service_url: str = "http://notification-service:8005"
+    public_web_login_url: str = "http://localhost:3000/login"
+
+    cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     @property
     def is_testing(self) -> bool:

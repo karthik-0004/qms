@@ -109,6 +109,13 @@ class TenantRepository:
         region: str = "us-east-1",
         db_host: str = "postgres",
         db_port: int = 5432,
+        *,
+        company_profile: dict | None = None,
+        billing_profile: dict | None = None,
+        primary_contact_first_name: str | None = None,
+        primary_contact_last_name: str | None = None,
+        primary_contact_email: str | None = None,
+        primary_contact_phone: str | None = None,
     ) -> Tenant:
         slug = _slugify(tenant_name)
         db_name = f"tenant_{slug.replace('-', '_')}_db"
@@ -126,6 +133,12 @@ class TenantRepository:
             tier=tier,
             products=products,
             region=region,
+            company_profile=dict(company_profile or {}),
+            billing_profile=dict(billing_profile or {}),
+            primary_contact_first_name=primary_contact_first_name,
+            primary_contact_last_name=primary_contact_last_name,
+            primary_contact_email=primary_contact_email.lower().strip() if primary_contact_email else None,
+            primary_contact_phone=primary_contact_phone,
             created_at=now,
             updated_at=now,
         )

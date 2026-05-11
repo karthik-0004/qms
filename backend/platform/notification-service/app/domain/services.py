@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import aiosmtplib
 import structlog
+from rainer_common.exceptions import RainerException
 
 from ..core.config import Settings
 from ..infra.db.models import NotificationLog
@@ -52,11 +53,29 @@ class NotificationDomainService:
 
         try:
             await self._send_smtp(recipient_email, subject, body_html, body_text)
-            await self._logs.mark_sent(log.id)
+            try:
+                await self._logs.mark_sent(log.id)
+            except Exception as log_exc:
+                logger.warning("notification_log_mark_sent_failed", log_id=log.id, error=str(log_exc))
             logger.info("email_sent", recipient=recipient_email, template=template_name)
         except Exception as exc:
-            await self._logs.mark_failed(log.id, str(exc))
-            logger.error("email_send_failed", recipient=recipient_email, error=str(exc))
+            err_note = str(exc)[:8000]
+            try:
+                await self._logs.mark_failed(log.id, err_note)
+            except Exception as log_exc:
+                logger.warning(
+                    "notification_log_mark_failed_skipped",
+                    log_id=log.id,
+                    error=str(log_exc),
+                    smtp_error=err_note[:500],
+                )
+            logger.error("email_send_failed", recipient=recipient_email, error=err_note[:500])
+            raise RainerException(
+                code="SMTP_SEND_FAILED",
+                message="Outbound email could not be delivered. Check SMTP host, port, TLS, and credentials.",
+                status_code=502,
+                details=[{"message": err_note[:2000]}],
+            ) from exc
 
         return log
 
@@ -106,11 +125,14 @@ class NotificationDomainService:
             msg.attach(MIMEText(body_text, "plain"))
         msg.attach(MIMEText(body_html, "html"))
 
+        # When False, omit STARTTLS (None = aiosmtplib default; matches plain SMTP / MailHog).
+        start_tls = self._settings.smtp_start_tls if self._settings.smtp_start_tls else None
         await aiosmtplib.send(
             msg,
             hostname=self._settings.smtp_host,
             port=self._settings.smtp_port,
             use_tls=self._settings.smtp_use_tls,
+            start_tls=start_tls,
             username=self._settings.smtp_username,
             password=self._settings.smtp_password,
         )

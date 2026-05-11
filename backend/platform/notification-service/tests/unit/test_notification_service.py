@@ -17,6 +17,7 @@ def make_settings() -> Settings:
         smtp_host="localhost",
         smtp_port=1025,
         smtp_use_tls=False,
+        smtp_start_tls=False,
         smtp_from_email="test@rainer.io",
         smtp_from_name="Test",
     )

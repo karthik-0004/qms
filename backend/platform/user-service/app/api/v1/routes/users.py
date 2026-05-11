@@ -71,9 +71,25 @@ async def create_user(
     current_user: Annotated[CurrentUser, Depends(require_role("super_admin", "tenant_admin"))],
     service: Annotated[UserDomainService, Depends(_get_service)],
 ) -> SuccessResponse[UserResponse]:
+    if current_user.role == "super_admin" and payload.tenant_id:
+        target_tenant_id = payload.tenant_id
+    else:
+        target_tenant_id = current_user.tenant_id or ""
+
+    if not target_tenant_id:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "BAD_REQUEST",
+                "message": "tenant_id required for provisioning when caller has no tenant context",
+            },
+        )
+
     user = await service.create_user(
         platform_user_id=payload.platform_user_id,
-        tenant_id=current_user.tenant_id or "",
+        tenant_id=target_tenant_id,
         first_name=payload.first_name,
         last_name=payload.last_name,
         display_name=payload.display_name,

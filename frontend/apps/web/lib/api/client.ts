@@ -52,9 +52,17 @@ export const extractData = <T>(response: { data: { data: T } }): T =>
 
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const prefix = status ? `[${status}] ` : "";
     const errData = error.response?.data as Record<string, unknown> | undefined;
     const apiError = errData?.error as Record<string, unknown> | undefined;
-    return (apiError?.message as string) ?? error.message ?? "An unexpected error occurred";
+    const main = (apiError?.message as string) ?? error.message ?? "An unexpected error occurred";
+    const details = apiError?.details as Array<{ message?: string }> | undefined;
+    const firstDetail = details?.find((d) => d?.message)?.message;
+    if (firstDetail && firstDetail !== main) {
+      return `${prefix}${main} — ${firstDetail}`;
+    }
+    return `${prefix}${main}`;
   }
   if (error instanceof Error) return error.message;
   return "An unexpected error occurred";

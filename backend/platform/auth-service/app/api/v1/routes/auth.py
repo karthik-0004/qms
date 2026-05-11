@@ -5,14 +5,19 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser
+from rainer_auth_lib.dependencies import CurrentUser, require_super_admin
+from rainer_common.exceptions import ConflictError, NotFoundError
 from rainer_common.responses import MessageResponse, SuccessResponse
 
+from ....core.bootstrap_password import generate_temporary_password
 from ....core.config import Settings, get_settings
 from ....core.database import get_db
+from ....core.security import hash_password
 from ....domain.services import AuthDomainService
+from ....infra.db.models import Tenant
 from ....infra.db.repositories import (
     AccessKeyRepository,
     AuditLogRepository,
@@ -20,6 +25,7 @@ from ....infra.db.repositories import (
     UserRepository,
 )
 from ....schemas.requests import (
+    BootstrapTenantAdminRequest,
     CreateAccessKeyRequest,
     LoginRequest,
     LogoutRequest,
@@ -29,8 +35,10 @@ from ....schemas.requests import (
 )
 from ....schemas.responses import (
     AccessKeyResponse,
+    BootstrapTenantAdminResponse,
     MFASetupResponse,
     RefreshResponse,
+    ResendTenantAdminWelcomeResponse,
     TokenResponse,
 )
 
@@ -209,6 +217,98 @@ async def disable_mfa(
 ) -> MessageResponse:
     await service.disable_mfa(current_user.sub, payload.password)
     return MessageResponse(message="MFA disabled successfully")
+
+
+@router.post(
+    "/bootstrap/tenant-admin",
+    response_model=SuccessResponse[BootstrapTenantAdminResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Provision platform user for tenant admin (super_admin only)",
+)
+async def bootstrap_tenant_admin(
+    payload: BootstrapTenantAdminRequest,
+    _: Annotated[CurrentUser, Depends(require_super_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SuccessResponse[BootstrapTenantAdminResponse]:
+    if payload.role not in ("tenant_admin", "tenant_user"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "VALIDATION_ERROR", "message": "Unsupported role for bootstrap"},
+        )
+
+    row = await db.execute(
+        select(Tenant).where(Tenant.id == payload.tenant_id, Tenant.deleted_at.is_(None))
+    )
+    tenant = row.scalar_one_or_none()
+    if not tenant:
+        raise NotFoundError("Tenant", payload.tenant_id)
+
+    repo = UserRepository(db)
+    if await repo.get_by_email(payload.email):
+        raise ConflictError("Email already registered")
+
+    temporary_password = generate_temporary_password()
+    user = await repo.create(
+        email=payload.email,
+        password_hash=hash_password(temporary_password),
+        tenant_id=payload.tenant_id,
+        role=payload.role,
+    )
+    logger.info(
+        "tenant_admin_bootstrapped",
+        tenant_id=payload.tenant_id,
+        platform_user_id=user.id,
+    )
+    return SuccessResponse.of(
+        BootstrapTenantAdminResponse(
+            platform_user_id=user.id,
+            temporary_password=temporary_password,
+        )
+    )
+
+
+@router.post(
+    "/tenants/{tenant_id}/tenant-admin/resend-welcome-credentials",
+    response_model=SuccessResponse[ResendTenantAdminWelcomeResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Reset tenant admin password and return credentials for resending welcome email (super_admin only)",
+)
+async def resend_tenant_admin_welcome_credentials(
+    tenant_id: str,
+    _: Annotated[CurrentUser, Depends(require_super_admin)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SuccessResponse[ResendTenantAdminWelcomeResponse]:
+    row = await db.execute(
+        select(Tenant).where(Tenant.id == tenant_id, Tenant.deleted_at.is_(None))
+    )
+    tenant = row.scalar_one_or_none()
+    if not tenant:
+        raise NotFoundError("Tenant", tenant_id)
+
+    user_repo = UserRepository(db)
+    refresh_repo = RefreshTokenRepository(db)
+    user = await user_repo.get_tenant_admin_for_tenant(tenant_id)
+    if not user:
+        raise NotFoundError("Tenant admin user", tenant_id)
+
+    temporary_password = generate_temporary_password()
+    await user_repo.update_password(user.id, hash_password(temporary_password))
+    await refresh_repo.revoke_all_for_user(user.id)
+    await db.commit()
+
+    logger.info(
+        "tenant_admin_welcome_credentials_reset",
+        tenant_id=tenant_id,
+        platform_user_id=user.id,
+    )
+
+    return SuccessResponse.of(
+        ResendTenantAdminWelcomeResponse(
+            platform_user_id=user.id,
+            temporary_password=temporary_password,
+            admin_email=user.email,
+        )
+    )
 
 
 @router.post(
