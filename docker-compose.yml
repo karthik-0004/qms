@@ -963,6 +963,23 @@ services:
       SERVICE_VERSION: "0.1.0"
       PORT: "8043"
 
+  billing-service-init:
+    build:
+      context: ./backend/ccv/billing-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      SERVICE_NAME: "billing-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "set -e; alembic upgrade head"
+
   billing-service:
     build:
       context: ./backend/ccv/billing-service
@@ -971,6 +988,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      billing-service-init:
+        condition: service_completed_successfully
     ports:
       - "8044:8044"
     environment:

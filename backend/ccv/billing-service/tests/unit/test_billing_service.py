@@ -101,6 +101,17 @@ async def test_add_line_item_to_sent_raises(svc):
         await svc.add_line_item(INVOICE_ID, TENANT_ID, "Service", 1000.0)
 
 
+@pytest.mark.asyncio
+async def test_list_line_items_returns_items(svc):
+    svc._invoices.get_by_id = AsyncMock(return_value=_mock_invoice())
+    li = _mock_line_item()
+    svc._line_items.list_for_invoice = AsyncMock(return_value=[li])
+
+    items = await svc.list_line_items(INVOICE_ID, TENANT_ID)
+    assert len(items) == 1
+    svc._line_items.list_for_invoice.assert_called_once_with(INVOICE_ID)
+
+
 # ─── Send invoice ─────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
@@ -126,11 +137,33 @@ async def test_send_non_draft_invoice_raises(svc):
 
 
 @pytest.mark.asyncio
-async def test_send_zero_total_invoice_raises(svc):
-    svc._invoices.get_by_id = AsyncMock(return_value=_mock_invoice("draft", total=0))
+async def test_send_zero_total_invoice_allowed(svc):
+    inv = _mock_invoice("draft", total=0)
+    svc._invoices.get_by_id = AsyncMock(return_value=inv)
+    inv.status = "sent"
+    svc._invoices.update = AsyncMock(return_value=inv)
 
-    with pytest.raises(ValueError, match="zero total"):
-        await svc.send_invoice(INVOICE_ID, TENANT_ID, USER_ID)
+    result = await svc.send_invoice(INVOICE_ID, TENANT_ID, USER_ID)
+    assert result.status == "sent"
+    call_data = svc._invoices.update.call_args[0][1]
+    assert call_data["status"] == "sent"
+
+
+@pytest.mark.asyncio
+async def test_transition_draft_to_sent_zero_total_allowed(svc):
+    inv = _mock_invoice("draft", total=0)
+    svc._invoices.get_by_id = AsyncMock(return_value=inv)
+    inv.status = "sent"
+    svc._invoices.update = AsyncMock(return_value=inv)
+
+    result = await svc.transition_status(
+        INVOICE_ID, TENANT_ID, "sent", USER_ID, comment=None,
+    )
+    assert result.status == "sent"
+    call_data = svc._invoices.update.call_args[0][1]
+    assert call_data["status"] == "sent"
+    assert "sent_at" in call_data
+    assert "issue_date" in call_data
 
 
 # ─── Payments ────────────────────────────────────────────────────────────────

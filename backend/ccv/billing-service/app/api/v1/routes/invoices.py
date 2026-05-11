@@ -1,4 +1,8 @@
-"""Billing Service — Invoice lifecycle API routes."""
+"""Billing Service — Invoice lifecycle API routes.
+
+Route order: static path segments (e.g. `.../line-items`, `.../status`) are registered
+*before* `GET /{invoice_id}` so sub-routes are not shadowed by the generic invoice route.
+"""
 
 from datetime import date, datetime, timezone
 from typing import Annotated
@@ -59,14 +63,7 @@ async def create_invoice(
     return InvoiceResponse.from_model(invoice)
 
 
-@router.get("/{invoice_id}", response_model=InvoiceResponse, summary="Get invoice")
-async def get_invoice(
-    invoice_id: UUID,
-    tenant_id: TenantId,
-    service: Annotated[BillingDomainService, Depends(_get_service)],
-) -> InvoiceResponse:
-    invoice = await service.get_invoice(invoice_id, tenant_id)
-    return InvoiceResponse.from_model(invoice)
+# ─── Sub-routes (must stay before GET /{invoice_id}) ─────────────────────
 
 
 @router.post("/{invoice_id}/status", response_model=InvoiceResponse, summary="Transition invoice status")
@@ -82,8 +79,6 @@ async def transition_status(
     )
     return InvoiceResponse.from_model(invoice)
 
-
-# ─── Line Items ──────────────────────────────────────────────────────────
 
 @router.get("/{invoice_id}/line-items", response_model=list[InvoiceLineItemResponse],
             summary="List invoice line items")
@@ -115,8 +110,6 @@ async def add_line_item(
     )
     return InvoiceLineItemResponse.from_model(item)
 
-
-# ─── Payments ─────────────────────────────────────────────────────────────
 
 @router.get("/{invoice_id}/payments", response_model=list[PaymentResponse], summary="List payments")
 async def list_payments(
@@ -157,3 +150,13 @@ async def record_payment(
         notes=payload.notes,
     )
     return PaymentResponse.from_model(payment)
+
+
+@router.get("/{invoice_id}", response_model=InvoiceResponse, summary="Get invoice")
+async def get_invoice(
+    invoice_id: UUID,
+    tenant_id: TenantId,
+    service: Annotated[BillingDomainService, Depends(_get_service)],
+) -> InvoiceResponse:
+    invoice = await service.get_invoice(invoice_id, tenant_id)
+    return InvoiceResponse.from_model(invoice)

@@ -78,6 +78,12 @@ class BillingDomainService:
             tenant_id, customer_id=customer_id, status=status, skip=skip, limit=limit
         )
 
+    async def list_line_items(
+        self, invoice_id: uuid.UUID, tenant_id: uuid.UUID
+    ) -> list[InvoiceLineItem]:
+        await self.get_invoice(invoice_id, tenant_id)
+        return await self._line_items.list_for_invoice(invoice_id)
+
     async def add_line_item(
         self,
         invoice_id: uuid.UUID,
@@ -125,7 +131,11 @@ class BillingDomainService:
         if invoice.status != "draft":
             raise ValueError("Only draft invoices can be sent")
         if float(invoice.total_amount or 0) <= 0:
-            raise ValueError("Cannot send an invoice with zero total amount")
+            logger.warning(
+                "invoice.send_zero_total",
+                invoice_id=str(invoice_id),
+                total_amount=float(invoice.total_amount or 0),
+            )
 
         update_data: dict = {
             "status": "sent",
@@ -146,6 +156,7 @@ class BillingDomainService:
         tenant_id: uuid.UUID,
         new_status: str,
         changed_by: uuid.UUID,
+        comment: str | None = None,
     ) -> Invoice:
         invoice = await self.get_invoice(invoice_id, tenant_id)
         allowed = VALID_INVOICE_TRANSITIONS.get(invoice.status, [])
@@ -153,9 +164,25 @@ class BillingDomainService:
             raise ValueError(
                 f"Cannot transition invoice from '{invoice.status}' to '{new_status}'"
             )
-        invoice = await self._invoices.update(
-            invoice, {"status": new_status, "changed_by": changed_by}
-        )
+        update_data: dict = {"status": new_status, "changed_by": changed_by}
+        # Match send_invoice behaviour when marking draft → sent (issue date, timestamps).
+        if invoice.status == "draft" and new_status == "sent":
+            if float(invoice.total_amount or 0) <= 0:
+                logger.warning(
+                    "invoice.transition_sent_zero_total",
+                    invoice_id=str(invoice_id),
+                    total_amount=float(invoice.total_amount or 0),
+                )
+            update_data["sent_at"] = datetime.now(timezone.utc)
+            update_data["issue_date"] = date.today()
+        if comment:
+            logger.info(
+                "invoice.status_transition",
+                invoice_id=str(invoice_id),
+                new_status=new_status,
+                comment=comment,
+            )
+        invoice = await self._invoices.update(invoice, update_data)
         return invoice
 
     # ─── Payments ────────────────────────────────────────────────────────────

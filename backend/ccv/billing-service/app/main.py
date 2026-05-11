@@ -1,8 +1,12 @@
 from contextlib import asynccontextmanager
+
+import structlog
 from fastapi import FastAPI, Request
+from fastapi.exceptions import ResponseValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import structlog
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.api.v1 import api_v1_router
 from app.core.config import settings
 from app.core.database import dispose_engine
@@ -59,6 +63,28 @@ def create_app() -> FastAPI:
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError):
         return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+    @app.exception_handler(ResponseValidationError)
+    async def response_validation_handler(request: Request, exc: ResponseValidationError):
+        logger.warning(
+            "response_validation_failed",
+            path=str(request.url.path),
+            errors=exc.errors(),
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Response validation failed", "errors": exc.errors()},
+        )
+
+    @app.exception_handler(SQLAlchemyError)
+    async def sqlalchemy_handler(request: Request, exc: SQLAlchemyError):
+        logger.exception("database_error", path=str(request.url.path))
+        if settings.rainer_env == "development":
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(exc), "type": type(exc).__name__},
+            )
+        return JSONResponse(status_code=500, content={"detail": "Database error"})
 
     @app.get("/health", tags=["ops"])
     async def health():
