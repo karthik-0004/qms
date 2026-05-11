@@ -33,6 +33,8 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
   if (bearerToken) config.headers.Authorization = `Bearer ${bearerToken}`;
   const tenantId = tenantFromSession ?? useAuthStore.getState().tenant_id;
   if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
+  const userId = useAuthStore.getState().user?.id;
+  if (userId) config.headers["X-User-ID"] = userId;
   config.headers["X-Request-ID"] = crypto.randomUUID();
   return config;
 });
@@ -55,6 +57,15 @@ export const handleApiError = (error: unknown): string => {
     const status = error.response?.status;
     const prefix = status ? `[${status}] ` : "";
     const errData = error.response?.data as Record<string, unknown> | undefined;
+    const rawDetail = errData?.detail;
+    if (typeof rawDetail === "string" && rawDetail.trim()) {
+      return `${prefix}${rawDetail}`;
+    }
+    if (Array.isArray(rawDetail) && rawDetail.length > 0) {
+      const first = rawDetail[0] as Record<string, unknown>;
+      const msg = typeof first?.msg === "string" ? first.msg : null;
+      if (msg) return `${prefix}${msg}`;
+    }
     const apiError = errData?.error as Record<string, unknown> | undefined;
     const main = (apiError?.message as string) ?? error.message ?? "An unexpected error occurred";
     const details = apiError?.details as Array<{ message?: string }> | undefined;
