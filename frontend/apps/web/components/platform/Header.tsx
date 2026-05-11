@@ -98,11 +98,7 @@ export function Header({ session }: HeaderProps) {
             <p className="text-sm font-medium leading-none">
               {session.user?.email?.split("@")[0] ?? "User"}
             </p>
-            <p className="text-xs text-muted-foreground capitalize">
-              {String(
-                (session.user as { role?: string } | undefined)?.role ?? "user"
-              )}
-            </p>
+            <p className="text-xs text-muted-foreground capitalize">{session.user.role ?? "user"}</p>
           </div>
           <button
             onClick={handleSignOut}

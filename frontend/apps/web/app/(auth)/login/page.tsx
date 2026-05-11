@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +38,13 @@ function signInFailureMessage(code: string | undefined): string {
   }
 }
 
+function postLoginPath(callbackUrl: string, role: string | undefined): string {
+  if (role === "super_admin" && (callbackUrl === "/dashboard" || callbackUrl === "")) {
+    return "/admin";
+  }
+  return callbackUrl || "/dashboard";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,9 +77,10 @@ export default function LoginPage() {
         return;
       }
 
-      // `typedRoutes` is enabled; `callbackUrl` comes from `searchParams` (string at runtime).
-      // Casting keeps navigation working without constraining runtime callback URLs.
-      router.push(callbackUrl as any);
+      const session = await getSession();
+      const role = session?.user?.role;
+      const dest = postLoginPath(callbackUrl, role);
+      router.push(dest as Parameters<typeof router.push>[0]);
       router.refresh();
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
@@ -104,7 +112,10 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(callbackUrl as any);
+      const session = await getSession();
+      const role = session?.user?.role;
+      const dest = postLoginPath(callbackUrl, role);
+      router.push(dest as Parameters<typeof router.push>[0]);
       router.refresh();
     } catch {
       toast.error("An unexpected error occurred");

@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/lib/stores/auth.store";
-import { getSessionFast } from "@/lib/api/session";
+import { getSessionFast, resolveSessionAuthContext } from "@/lib/api/session";
 
 /**
  * Prefer routing QMS traffic through the platform gateway to avoid CORS / mixed-content
@@ -48,15 +48,10 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
 
   client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     const session = await getSessionFast();
-
-    const tokenFromSession = session?.access_token as string | undefined;
-    const token = tokenFromSession ?? undefined;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-
-    const tenantIdFromSession = (session?.tenant_id as string | undefined | null) ?? null;
-    const tenantId = tenantIdFromSession ?? useAuthStore.getState().tenant_id;
+    const { bearerToken, tenantId: tenantFromSession } = resolveSessionAuthContext(session);
+    if (bearerToken) config.headers.Authorization = `Bearer ${bearerToken}`;
+    const tenantId = tenantFromSession ?? useAuthStore.getState().tenant_id;
     if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
-
     config.headers["X-Request-ID"] = crypto.randomUUID();
     return config;
   });

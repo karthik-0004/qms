@@ -109,7 +109,8 @@ export function usePermission(): UsePermissionReturn {
 
   const role = useMemo(() => {
     if (!session?.user) return null;
-    return ((session.user as Record<string, unknown>).role as Role) ?? "tenant_user";
+    const r = session.user.role as Role | undefined;
+    return r ?? "tenant_user";
   }, [session]);
 
   const permissions = useMemo(() => {

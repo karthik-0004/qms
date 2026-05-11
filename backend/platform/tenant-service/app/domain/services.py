@@ -214,6 +214,12 @@ class TenantDomainService:
             raise NotFoundError("Tenant", tenant_id)
         return tenant
 
+    async def get_tenant_by_slug(self, slug: str) -> Tenant:
+        tenant = await self._tenants.get_by_slug(slug)
+        if not tenant:
+            raise NotFoundError("Tenant", slug)
+        return tenant
+
     async def list_tenants(
         self,
         status: str | None = None,

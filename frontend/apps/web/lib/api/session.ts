@@ -68,3 +68,36 @@ export async function getSessionFast(): Promise<SessionLike> {
   return session;
 }
 
+/**
+ * Token + tenant for API clients. Prefers NextAuth-augmented `session.user`;
+ * falls back to legacy top-level fields for older sessions/tools.
+ */
+export function resolveSessionAuthContext(session: SessionLike | null): {
+  bearerToken?: string;
+  tenantId?: string | null;
+} {
+  if (!session) return {};
+  const s = session as Record<string, unknown>;
+  const user = s.user as Record<string, unknown> | undefined;
+
+  const bearerFromUser = user?.access_token;
+  const bearerFromLegacy = s.access_token;
+  const bearerToken =
+    typeof bearerFromUser === "string"
+      ? bearerFromUser
+      : typeof bearerFromLegacy === "string"
+        ? bearerFromLegacy
+        : undefined;
+
+  const tenantFromUser = user?.tenant_id;
+  const tenantFromLegacy = s.tenant_id;
+  let tenantId: string | null | undefined;
+  if (typeof tenantFromUser === "string" || tenantFromUser === null) {
+    tenantId = tenantFromUser as string | null;
+  } else if (typeof tenantFromLegacy === "string" || tenantFromLegacy === null) {
+    tenantId = tenantFromLegacy as string | null;
+  }
+
+  return { bearerToken, tenantId };
+}
+

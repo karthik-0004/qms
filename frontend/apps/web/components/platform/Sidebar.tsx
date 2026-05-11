@@ -22,6 +22,8 @@ import {
   Users,
   HardHat,
   DollarSign,
+  Crown,
+  Building2,
 } from "lucide-react";
 import { useUIStore } from "@/lib/stores/ui.store";
 
@@ -50,11 +52,13 @@ const CCV_NAV = [
   { href: "/ccv/analytics", icon: BarChart3, label: "Analytics" },
 ];
 
-const PLATFORM_NAV = [
+const PLATFORM_NAV_ALL = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/settings/users", icon: Users, label: "Users" },
   { href: "/settings", icon: Settings, label: "Settings" },
-];
+] as const;
+
+const PLATFORM_NAV_SUPER_ADMIN = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" }] as const;
 
 interface SidebarProps {
   session: Session;
@@ -63,6 +67,11 @@ interface SidebarProps {
 export function Sidebar({ session }: SidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, setSidebarCollapsed, activeProduct } = useUIStore();
+
+  const userRole = session.user.role;
+  const isSuperAdmin = userRole === "super_admin";
+
+  const platformNavItems = isSuperAdmin ? PLATFORM_NAV_SUPER_ADMIN : PLATFORM_NAV_ALL;
 
   const productNav =
     activeProduct === "qms"
@@ -103,7 +112,7 @@ export function Sidebar({ session }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
-        {PLATFORM_NAV.map((item) => (
+        {platformNavItems.map((item) => (
           <NavItem
             key={item.href}
             href={item.href as Route}
@@ -114,7 +123,28 @@ export function Sidebar({ session }: SidebarProps) {
           />
         ))}
 
-        {productNav.length > 0 && (
+        {isSuperAdmin && (
+          <>
+            <div className="my-3 border-t border-slate-700" />
+            <NavItem
+              href={"/admin/tenants" as Route}
+              icon={Building2}
+              label="Tenants"
+              isActive={pathname.startsWith("/admin/tenants")}
+              collapsed={sidebarCollapsed}
+            />
+            <NavItem
+              href={"/admin" as Route}
+              icon={Crown}
+              label="Platform admin"
+              isActive={pathname === "/admin"}
+              collapsed={sidebarCollapsed}
+              highlight
+            />
+          </>
+        )}
+
+        {!isSuperAdmin && productNav.length > 0 && (
           <>
             <div className="my-3 border-t border-slate-700" />
             {productNav.map((item) => (
@@ -142,11 +172,7 @@ export function Sidebar({ session }: SidebarProps) {
               <p className="text-sm font-medium text-white truncate">
                 {session.user?.email ?? ""}
               </p>
-              <p className="text-xs text-slate-400 truncate">
-                {String(
-                  (session.user as { role?: string } | undefined)?.role ?? ""
-                )}
-              </p>
+              <p className="text-xs text-slate-400 truncate">{session.user.role}</p>
             </div>
           </div>
         </div>
@@ -161,12 +187,14 @@ function NavItem({
   label,
   isActive,
   collapsed,
+  highlight = false,
 }: {
   href: Route;
   icon: React.ElementType;
   label: string;
   isActive: boolean;
   collapsed: boolean;
+  highlight?: boolean;
 }) {
   return (
     <Link
@@ -175,8 +203,12 @@ function NavItem({
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
         isActive
-          ? "bg-blue-600 text-white"
-          : "text-slate-400 hover:bg-slate-800 hover:text-white",
+          ? highlight
+            ? "bg-red-600 text-white"
+            : "bg-blue-600 text-white"
+          : highlight
+            ? "text-red-400 hover:bg-red-900/30 hover:text-red-300"
+            : "text-slate-400 hover:bg-slate-800 hover:text-white",
         collapsed && "justify-center px-2"
       )}
     >

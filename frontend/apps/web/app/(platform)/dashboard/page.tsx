@@ -12,7 +12,13 @@ export default async function DashboardPage() {
   const userName =
     (session.user as { email?: string }).email?.split("@")[0] ?? "User";
 
+  const role = session.user.role;
+
   return (
-    <DashboardProducts productAccess={productAccess} userName={userName} />
+    <DashboardProducts
+      productAccess={productAccess}
+      userName={userName}
+      role={role ?? "tenant_user"}
+    />
   );
 }

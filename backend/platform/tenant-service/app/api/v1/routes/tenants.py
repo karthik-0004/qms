@@ -77,6 +77,24 @@ async def list_tenants(
 
 
 @router.get(
+    "/by-slug/{slug}",
+    response_model=SuccessResponse[TenantResponse],
+    summary="Get tenant by URL slug (super_admin or member of tenant)",
+)
+async def get_tenant_by_slug(
+    slug: str,
+    current_user: CurrentUser,
+    service: Annotated[TenantDomainService, Depends(_get_service)],
+) -> SuccessResponse[TenantResponse]:
+    tenant = await service.get_tenant_by_slug(slug)
+    if current_user.role != "super_admin" and current_user.tenant_id != tenant.id:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=403, detail={"code": "FORBIDDEN", "message": "Access denied"})
+    return SuccessResponse.of(TenantResponse.model_validate(tenant, from_attributes=True))
+
+
+@router.get(
     "/{tenant_id}",
     response_model=SuccessResponse[TenantResponse],
     summary="Get tenant details",

@@ -136,6 +136,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.sub = user.id;
         token.id = user.id;
         token.email = user.email;
         token.role = (user as Record<string, unknown>).role as string;
@@ -145,11 +146,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id as string;
-      session.user.email = token.email as string;
-      (session as unknown as Record<string, unknown>).role = token.role;
-      (session as unknown as Record<string, unknown>).tenant_id = token.tenant_id;
-      (session as unknown as Record<string, unknown>).access_token = token.access_token;
+      session.user.id = (token.id as string) ?? (token.sub ?? "");
+      session.user.email = (token.email as string) ?? session.user.email ?? "";
+      /** Must live on session.user so props survive Server Component → Client serialization. */
+      session.user.role =
+        typeof token.role === "string" ? token.role : "tenant_user";
+      session.user.tenant_id =
+        token.tenant_id === undefined ? null : (token.tenant_id as string | null);
+      session.user.access_token = (token.access_token as string) ?? "";
       return session;
     },
   },

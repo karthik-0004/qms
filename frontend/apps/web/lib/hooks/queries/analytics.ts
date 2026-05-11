@@ -5,11 +5,12 @@ import { analyticsApi } from "@/lib/api/services/analytics";
 
 // ─── Platform KPIs ─────────────────────────────────────────────────────────
 
-export function usePlatformKPIs() {
+export function usePlatformKPIs(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["analytics", "kpis"],
     queryFn: () => analyticsApi.getKPIs(),
     staleTime: 60_000,
+    enabled: options?.enabled !== false,
   });
 }
 
