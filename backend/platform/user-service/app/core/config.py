@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     rainer_master_secret: str = "dev-master-secret-change-in-production"
     auth_service_url: str = "http://auth-service:8001"
     tenant_service_url: str = "http://tenant-service:8002"
+    notification_service_url: str = "http://notification-service:8005"
+    frontend_url: str = "http://localhost:3000"
 
     cors_allowed_origins: list[str] = ["http://localhost:3000"]
 

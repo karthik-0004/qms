@@ -120,7 +120,7 @@ class CRMDomainService:
         skip: int = 0,
         limit: int = 50,
     ) -> list[Customer]:
-        return await self._customers.list(
+        return await self._customers.list_customers(
             tenant_id, status=status, search=search, skip=skip, limit=limit
         )
 

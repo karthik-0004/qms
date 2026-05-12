@@ -12,7 +12,7 @@ export default function AdminTenantsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <Button variant="outline" size="icon" className="shrink-0 min-h-11 min-w-11" asChild>
-            <Link href={"/admin" as Route} aria-label="Back to admin overview">
+            <Link href={"/super-admin" as Route} aria-label="Back to admin overview">
               <ChevronLeft className="h-4 w-4" />
             </Link>
           </Button>

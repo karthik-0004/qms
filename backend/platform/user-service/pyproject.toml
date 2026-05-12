@@ -14,13 +14,14 @@ dependencies = [
     "asyncpg>=0.29.0",
     "aiosqlite>=0.20.0",
     "alembic>=1.13.0",
-    "pydantic>=2.8.0",
+    "pydantic[email]>=2.8.0",
     "pydantic-settings>=2.5.0",
     "redis[hiredis]>=5.0.0",
     "structlog>=24.4.0",
     "rainer-common>=0.1.0",
     "rainer-auth-lib>=0.1.0",
     "rainer-tenant-lib>=0.1.0",
+    "httpx>=0.27.0",
 ]
 
 [project.optional-dependencies]

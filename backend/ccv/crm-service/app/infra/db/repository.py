@@ -71,7 +71,7 @@ class CustomerRepository:
         result = await self._session.execute(stmt)
         return int(result.scalar_one() or 0)
 
-    async def list(
+    async def list_customers(
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,

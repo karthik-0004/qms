@@ -9,6 +9,7 @@ class UserResponse(BaseModel):
     id: str
     platform_user_id: str
     tenant_id: str
+    company_id: str | None
     first_name: str
     last_name: str
     display_name: str | None
@@ -28,6 +29,8 @@ class RoleResponse(BaseModel):
     permissions: list[str]
     is_system_role: bool
     product: str | None
+    scope: str
+    company_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -44,3 +47,30 @@ class UserRoleResponse(BaseModel):
 class UserPermissionsResponse(BaseModel):
     user_id: str
     permissions: list[str]
+
+
+class CompanyResponse(BaseModel):
+    id: str
+    tenant_id: str
+    name: str
+    email: str
+    phone: str | None
+    address: str | None
+    company_code: str
+    status: str
+    admin_id: str | None
+    employee_limit: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class CompanyWithAdminResponse(BaseModel):
+    company: CompanyResponse
+    admin: UserResponse
+    temporary_password: str
+
+
+class CompanyUserCreatedResponse(BaseModel):
+    user: UserResponse
+    temporary_password: str

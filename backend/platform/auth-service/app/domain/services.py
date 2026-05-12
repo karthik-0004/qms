@@ -124,6 +124,7 @@ class AuthDomainService:
             email=user.email,
             settings=self._jwt_settings,
             tenant_id=user.tenant_id,
+            company_id=user.company_id,
             role=user.role,
         )
         raw_refresh, refresh_jti = create_refresh_token(
@@ -177,6 +178,7 @@ class AuthDomainService:
                 "email": user.email,
                 "role": user.role,
                 "tenant_id": user.tenant_id,
+                "company_id": user.company_id,
                 "mfa_enabled": user.mfa_enabled,
             },
         }
@@ -202,6 +204,7 @@ class AuthDomainService:
             email=user.email,
             settings=self._jwt_settings,
             tenant_id=user.tenant_id,
+            company_id=user.company_id,
             role=user.role,
         )
         raw_new_refresh, _ = create_refresh_token(

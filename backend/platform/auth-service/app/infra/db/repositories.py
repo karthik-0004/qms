@@ -2,7 +2,8 @@
 
 import hashlib
 from datetime import datetime, timezone
-from uuid import uuid4
+
+from rainer_common.uuid_utils import uuid7
 
 from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,13 +51,15 @@ class UserRepository:
         password_hash: str,
         tenant_id: str | None = None,
         role: str = "tenant_user",
+        company_id: str | None = None,
     ) -> PlatformUser:
         now = datetime.now(timezone.utc)
         user = PlatformUser(
-            id=str(uuid4()),
+            id=uuid7(),
             email=email.lower().strip(),
             password_hash=password_hash,
             tenant_id=tenant_id,
+            company_id=company_id,
             role=role,
             status="active",
             mfa_enabled=False,
@@ -138,7 +141,7 @@ class RefreshTokenRepository:
     ) -> RefreshToken:
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         token = RefreshToken(
-            id=str(uuid4()),
+            id=uuid7(),
             user_id=user_id,
             token_hash=token_hash,
             expires_at=expires_at,
@@ -194,7 +197,7 @@ class AccessKeyRepository:
         expires_at: datetime | None = None,
     ) -> ServiceAccessKey:
         key = ServiceAccessKey(
-            id=str(uuid4()),
+            id=uuid7(),
             service_name=service_name,
             key_hash=key_hash,
             key_prefix=key_prefix,
@@ -247,7 +250,7 @@ class AuditLogRepository:
         severity: str = "info",
     ) -> PlatformAuditLog:
         log = PlatformAuditLog(
-            id=str(uuid4()),
+            id=uuid7(),
             tenant_id=tenant_id,
             user_id=user_id,
             action=action,

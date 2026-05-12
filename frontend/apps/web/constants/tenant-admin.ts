@@ -128,4 +128,6 @@ export const TENANT_ADMIN_LABELS = {
   role_super_admin: "Super Admin",
   role_tenant_admin: "Tenant Admin",
   role_tenant_user: "User",
+  role_company_admin: "Company Admin",
+  role_company_user: "Company User",
 } as const;

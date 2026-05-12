@@ -162,7 +162,7 @@ function OverviewTab({
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-3">
         <Link
-          href={"/admin/tenants" as Route}
+          href={"/super-admin/tenants" as Route}
           className="inline-flex items-center rounded-lg border bg-card px-4 py-2 text-sm font-medium text-primary hover:bg-muted/60 transition-colors min-h-11"
         >
           Tenant directory — create and open tenants by slug

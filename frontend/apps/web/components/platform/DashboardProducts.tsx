@@ -78,7 +78,7 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
             ))
           ) : (
             <>
-              <Link href={"/admin/tenants" as Route} className="group block min-h-[44px]">
+              <Link href={"/super-admin/tenants" as Route} className="group block min-h-[44px]">
                 <Card
                   className={cn(
                     "h-full transition-all border-border bg-card shadow-sm",
@@ -111,7 +111,7 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
                 </Card>
               </Link>
 
-              <Link href={"/admin/tenants" as Route} className="group block min-h-[44px]">
+              <Link href={"/super-admin/tenants" as Route} className="group block min-h-[44px]">
                 <Card
                   className={cn(
                     "h-full transition-all border-border bg-card shadow-sm",
@@ -140,7 +140,7 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
                 </Card>
               </Link>
 
-              <Link href={"/admin" as Route} className="group block min-h-[44px]">
+              <Link href={"/super-admin" as Route} className="group block min-h-[44px]">
                 <Card
                   className={cn(
                     "h-full transition-all border-border bg-card shadow-sm",
@@ -169,7 +169,7 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
                 </Card>
               </Link>
 
-              <Link href={"/admin" as Route} className="group block min-h-[44px]">
+              <Link href={"/super-admin" as Route} className="group block min-h-[44px]">
                 <Card
                   className={cn(
                     "h-full transition-all border-border bg-card shadow-sm",
@@ -205,7 +205,7 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
 
         <div className="flex flex-col sm:flex-row flex-wrap gap-3">
           <Button size="lg" variant="outline" className="min-h-11 justify-between gap-2" asChild>
-            <Link href={"/admin/tenants" as Route}>
+            <Link href={"/super-admin/tenants" as Route}>
               <span className="inline-flex items-center gap-2">
                 <Building2 className="h-4 w-4" /> Manage tenants
               </span>
@@ -213,7 +213,7 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
             </Link>
           </Button>
           <Button size="lg" variant="outline" className="min-h-11 justify-between gap-2" asChild>
-            <Link href={"/admin" as Route}>
+            <Link href={"/super-admin" as Route}>
               <span className="inline-flex items-center gap-2">
                 <Crown className="h-4 w-4 text-red-600" /> Platform admin
               </span>

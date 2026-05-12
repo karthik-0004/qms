@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
 
-export type Role = "super_admin" | "tenant_admin" | "tenant_user";
+export type Role = "super_admin" | "tenant_admin" | "tenant_user" | "company_admin" | "company_user";
 
 export type Permission =
   // Platform
@@ -12,6 +12,9 @@ export type Permission =
   | "role:read" | "role:write"
   | "audit:read" | "audit:export"
   | "config:read" | "config:write"
+  // Company management
+  | "company:read" | "company:write" | "company:delete"
+  | "company_user:read" | "company_user:write" | "company_user:delete"
   // QMS
   | "document:read" | "document:write" | "document:approve" | "document:delete"
   | "quality_event:read" | "quality_event:write"
@@ -39,6 +42,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "role:read", "role:write",
     "audit:read", "audit:export",
     "config:read", "config:write",
+    "company:read", "company:write", "company:delete",
+    "company_user:read", "company_user:write", "company_user:delete",
     "document:read", "document:write", "document:approve", "document:delete",
     "quality_event:read", "quality_event:write",
     "capa:read", "capa:write", "capa:approve",
@@ -60,6 +65,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "role:read", "role:write",
     "audit:read", "audit:export",
     "config:read", "config:write",
+    "company:read", "company:write", "company:delete",
+    "company_user:read", "company_user:write", "company_user:delete",
     "document:read", "document:write", "document:approve", "document:delete",
     "quality_event:read", "quality_event:write",
     "capa:read", "capa:write", "capa:approve",
@@ -92,6 +99,43 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "report:read",
     "analytics:read",
   ],
+  company_admin: [
+    "company:read",
+    "company_user:read", "company_user:write", "company_user:delete",
+    "role:read", "role:write",
+    "audit:read",
+    "document:read", "document:write", "document:approve", "document:delete",
+    "quality_event:read", "quality_event:write",
+    "capa:read", "capa:write", "capa:approve",
+    "training:read", "training:write", "training:assign",
+    "equipment:read", "equipment:write",
+    "plate:read", "plate:write",
+    "job:read", "job:write",
+    "qa_review:read", "qa_review:write", "qa_review:approve",
+    "crm:read", "crm:write",
+    "contract:read", "contract:write",
+    "workorder:read", "workorder:write", "workorder:execute",
+    "certificate:read", "certificate:write", "certificate:issue",
+    "billing:read",
+    "report:read", "report:generate",
+    "analytics:read",
+  ],
+  company_user: [
+    "document:read",
+    "quality_event:read",
+    "capa:read",
+    "training:read",
+    "equipment:read",
+    "plate:read",
+    "job:read",
+    "qa_review:read",
+    "crm:read",
+    "contract:read",
+    "workorder:read",
+    "certificate:read",
+    "report:read",
+    "analytics:read",
+  ],
 };
 
 interface UsePermissionReturn {
@@ -101,6 +145,8 @@ interface UsePermissionReturn {
   hasAllPermissions: (permissions: Permission[]) => boolean;
   isSuperAdmin: boolean;
   isTenantAdmin: boolean;
+  isCompanyAdmin: boolean;
+  isCompanyUser: boolean;
   isLoading: boolean;
 }
 
@@ -129,6 +175,8 @@ export function usePermission(): UsePermissionReturn {
     hasAllPermissions,
     isSuperAdmin: role === "super_admin",
     isTenantAdmin: role === "tenant_admin" || role === "super_admin",
+    isCompanyAdmin: role === "company_admin",
+    isCompanyUser: role === "company_user",
     isLoading: status === "loading",
   };
 }

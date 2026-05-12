@@ -4,7 +4,7 @@ import { DashboardProducts } from "@/components/platform/DashboardProducts";
 
 export default async function DashboardPage() {
   const session = await getCachedSession();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/signin");
 
   const productAccess =
     ((session as unknown as Record<string, unknown>).product_access as string[]) ?? [];

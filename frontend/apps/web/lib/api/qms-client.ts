@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/lib/stores/auth.store";
-import { getSessionFast, resolveSessionAuthContext } from "@/lib/api/session";
+import { getSessionFast, clearSessionCache, resolveSessionAuthContext } from "@/lib/api/session";
 
 /**
  * Prefer routing QMS traffic through the platform gateway to avoid CORS / mixed-content
@@ -59,8 +59,17 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      if (error.response?.status === 401) {
-        window.location.href = "/login?session=expired";
+      const originalConfig = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+      if (error.response?.status === 401 && !originalConfig._retried) {
+        originalConfig._retried = true;
+        clearSessionCache();
+        const freshSession = await getSessionFast();
+        const { bearerToken } = resolveSessionAuthContext(freshSession);
+        if (bearerToken) {
+          originalConfig.headers.Authorization = `Bearer ${bearerToken}`;
+          return client(originalConfig);
+        }
+        window.location.href = "/signin?reason=session_expired";
       }
       return Promise.reject(error);
     },

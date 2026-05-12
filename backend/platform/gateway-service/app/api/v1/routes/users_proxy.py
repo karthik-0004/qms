@@ -98,6 +98,27 @@ async def proxy_roles(
     )
 
 
+companies_router = APIRouter(prefix="/companies", tags=["Companies (proxy)"])
+
+
+@companies_router.api_route("/{full_path:path}", methods=["GET", "POST", "PATCH", "DELETE"])
+@companies_router.api_route("", methods=["GET", "POST"])
+@companies_router.api_route("/", methods=["GET", "POST"])
+async def proxy_companies(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    full_path: str = "",
+) -> Response:
+    upstream_base = _join_url(settings.user_service_url, "/api/v1/companies")
+    return await _forward(
+        upstream_base=upstream_base,
+        request=request,
+        full_path=full_path,
+        upstream_label="user-service",
+    )
+
+
 router = APIRouter()
 router.include_router(users_router)
 router.include_router(roles_router)
+router.include_router(companies_router)

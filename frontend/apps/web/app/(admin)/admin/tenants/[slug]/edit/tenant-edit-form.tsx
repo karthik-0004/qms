@@ -69,7 +69,7 @@ export default function TenantEditForm({ slug }: { slug: string }) {
     if (!tenant) return;
     try {
       await update.mutateAsync({ id: tenant.id, data: values });
-      router.push(`/admin/tenants/${tenant.slug}` as Route);
+      router.push(`/super-admin/tenants/${tenant.slug}` as Route);
     } catch (e) {
       form.setError("root", { message: handleApiError(e) });
     }
@@ -80,7 +80,7 @@ export default function TenantEditForm({ slug }: { slug: string }) {
     try {
       await del.mutateAsync(tenant.id);
       setDeleteOpen(false);
-      router.push("/admin/tenants" as Route);
+      router.push("/super-admin/tenants" as Route);
     } catch (e) {
       form.setError("root", { message: handleApiError(e) });
     }
@@ -101,7 +101,7 @@ export default function TenantEditForm({ slug }: { slug: string }) {
         <CardContent className="pt-6 text-sm text-muted-foreground">
           Tenant not found.
           <Button variant="link" className="px-1" asChild>
-            <Link href={"/admin/tenants" as Route}>Back</Link>
+            <Link href={"/super-admin/tenants" as Route}>Back</Link>
           </Button>
         </CardContent>
       </Card>
@@ -112,7 +112,7 @@ export default function TenantEditForm({ slug }: { slug: string }) {
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-start gap-3">
         <Button variant="outline" size="icon" className="shrink-0 min-h-11 min-w-11" asChild>
-          <Link href={`/admin/tenants/${tenant.slug}` as Route} aria-label={TENANT_ADMIN_LABELS.back_to_list}>
+          <Link href={`/super-admin/tenants/${tenant.slug}` as Route} aria-label={TENANT_ADMIN_LABELS.back_to_list}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -173,7 +173,7 @@ export default function TenantEditForm({ slug }: { slug: string }) {
           </Button>
           <div className="flex gap-2">
             <Button type="button" variant="outline" className="min-h-11" asChild>
-              <Link href={`/admin/tenants/${tenant.slug}` as Route}>Cancel</Link>
+              <Link href={`/super-admin/tenants/${tenant.slug}` as Route}>Cancel</Link>
             </Button>
             <Button type="submit" className="min-h-11" disabled={update.isPending}>
               {update.isPending ? "…" : TENANT_ADMIN_LABELS.action_save}

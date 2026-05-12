@@ -7,6 +7,8 @@ class UserRole(StrEnum):
     SUPER_ADMIN = "super_admin"
     TENANT_ADMIN = "tenant_admin"
     TENANT_USER = "tenant_user"
+    COMPANY_ADMIN = "company_admin"
+    COMPANY_USER = "company_user"
 
 
 class Permission(StrEnum):
@@ -68,10 +70,18 @@ class Permission(StrEnum):
     REPORT_GENERATE = "report:generate"
     ANALYTICS_READ = "analytics:read"
 
+    # Company management (tenant_admin and company_admin)
+    COMPANY_READ = "company:read"
+    COMPANY_WRITE = "company:write"
+    COMPANY_DELETE = "company:delete"
+    COMPANY_USER_READ = "company_user:read"
+    COMPANY_USER_WRITE = "company_user:write"
+    COMPANY_USER_DELETE = "company_user:delete"
+
 
 # Default permissions per role
 ROLE_PERMISSIONS: dict[UserRole, list[Permission]] = {
-    UserRole.SUPER_ADMIN: list(Permission),  # All permissions
+    UserRole.SUPER_ADMIN: list(Permission),  # All 76 permissions
     UserRole.TENANT_ADMIN: [
         Permission.USER_READ,
         Permission.USER_WRITE,
@@ -82,6 +92,12 @@ ROLE_PERMISSIONS: dict[UserRole, list[Permission]] = {
         Permission.AUDIT_EXPORT,
         Permission.CONFIG_READ,
         Permission.CONFIG_WRITE,
+        Permission.COMPANY_READ,
+        Permission.COMPANY_WRITE,
+        Permission.COMPANY_DELETE,
+        Permission.COMPANY_USER_READ,
+        Permission.COMPANY_USER_WRITE,
+        Permission.COMPANY_USER_DELETE,
         Permission.DOCUMENT_READ,
         Permission.DOCUMENT_WRITE,
         Permission.DOCUMENT_APPROVE,
@@ -119,6 +135,66 @@ ROLE_PERMISSIONS: dict[UserRole, list[Permission]] = {
         Permission.ANALYTICS_READ,
     ],
     UserRole.TENANT_USER: [
+        Permission.DOCUMENT_READ,
+        Permission.QUALITY_EVENT_READ,
+        Permission.CAPA_READ,
+        Permission.TRAINING_READ,
+        Permission.EQUIPMENT_READ,
+        Permission.PLATE_READ,
+        Permission.JOB_READ,
+        Permission.QA_REVIEW_READ,
+        Permission.CRM_READ,
+        Permission.CONTRACT_READ,
+        Permission.WORKORDER_READ,
+        Permission.CERTIFICATE_READ,
+        Permission.REPORT_READ,
+        Permission.ANALYTICS_READ,
+    ],
+    UserRole.COMPANY_ADMIN: [
+        Permission.COMPANY_READ,
+        Permission.COMPANY_USER_READ,
+        Permission.COMPANY_USER_WRITE,
+        Permission.COMPANY_USER_DELETE,
+        Permission.ROLE_READ,
+        Permission.ROLE_WRITE,
+        Permission.AUDIT_READ,
+        Permission.DOCUMENT_READ,
+        Permission.DOCUMENT_WRITE,
+        Permission.DOCUMENT_APPROVE,
+        Permission.DOCUMENT_DELETE,
+        Permission.QUALITY_EVENT_READ,
+        Permission.QUALITY_EVENT_WRITE,
+        Permission.CAPA_READ,
+        Permission.CAPA_WRITE,
+        Permission.CAPA_APPROVE,
+        Permission.TRAINING_READ,
+        Permission.TRAINING_WRITE,
+        Permission.TRAINING_ASSIGN,
+        Permission.EQUIPMENT_READ,
+        Permission.EQUIPMENT_WRITE,
+        Permission.PLATE_READ,
+        Permission.PLATE_WRITE,
+        Permission.JOB_READ,
+        Permission.JOB_WRITE,
+        Permission.QA_REVIEW_READ,
+        Permission.QA_REVIEW_WRITE,
+        Permission.QA_REVIEW_APPROVE,
+        Permission.CRM_READ,
+        Permission.CRM_WRITE,
+        Permission.CONTRACT_READ,
+        Permission.CONTRACT_WRITE,
+        Permission.WORKORDER_READ,
+        Permission.WORKORDER_WRITE,
+        Permission.WORKORDER_EXECUTE,
+        Permission.CERTIFICATE_READ,
+        Permission.CERTIFICATE_WRITE,
+        Permission.CERTIFICATE_ISSUE,
+        Permission.BILLING_READ,
+        Permission.REPORT_READ,
+        Permission.REPORT_GENERATE,
+        Permission.ANALYTICS_READ,
+    ],
+    UserRole.COMPANY_USER: [
         Permission.DOCUMENT_READ,
         Permission.QUALITY_EVENT_READ,
         Permission.CAPA_READ,

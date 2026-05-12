@@ -21,6 +21,44 @@ class BootstrapTenantAdminRequest(BaseModel):
         return validate_request_email(v)
 
 
+class BootstrapCompanyAdminRequest(BaseModel):
+    """Bootstrap a company_admin user (tenant_admin caller only)."""
+    email: str
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    company_id: str = Field(min_length=1, description="The company this admin belongs to")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_request_email(v)
+
+
+class BootstrapCompanyUserRequest(BaseModel):
+    """Bootstrap a company_user (company_admin or tenant_admin caller)."""
+    email: str
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    company_id: str | None = Field(default=None, description="Company to assign; falls back to caller's company_id")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_request_email(v)
+
+
+class BootstrapTenantUserRequest(BaseModel):
+    """Bootstrap a tenant_user auth account (tenant_admin caller only)."""
+    email: str
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_request_email(v)
+
+
 def _normalize_and_validate_mfa_code(value: str) -> str:
     code = value.strip().replace(" ", "")
     if len(code) != 6 or not code.isdigit():

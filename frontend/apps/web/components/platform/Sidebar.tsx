@@ -52,13 +52,31 @@ const CCV_NAV = [
   { href: "/ccv/analytics", icon: BarChart3, label: "Analytics" },
 ];
 
-const PLATFORM_NAV_ALL = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/settings/users", icon: Users, label: "Users" },
-  { href: "/settings", icon: Settings, label: "Settings" },
-] as const;
+interface NavEntry {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+}
 
-const PLATFORM_NAV_SUPER_ADMIN = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" }] as const;
+function getPlatformNav(role: string, companyId: string | null): NavEntry[] {
+  const items: NavEntry[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" }];
+
+  if (role === "tenant_admin") {
+    items.push({ href: "/settings/users", icon: Users, label: "Users" });
+    items.push({ href: "/settings/companies", icon: Building2, label: "Companies" });
+  } else if (role === "company_admin") {
+    if (companyId) {
+      items.push({
+        href: `/settings/companies/${companyId}`,
+        icon: Building2,
+        label: "My Company",
+      });
+    }
+  }
+
+  items.push({ href: "/settings", icon: Settings, label: "Settings" });
+  return items;
+}
 
 interface SidebarProps {
   session: Session;
@@ -71,7 +89,9 @@ export function Sidebar({ session }: SidebarProps) {
   const userRole = session.user.role;
   const isSuperAdmin = userRole === "super_admin";
 
-  const platformNavItems = isSuperAdmin ? PLATFORM_NAV_SUPER_ADMIN : PLATFORM_NAV_ALL;
+  const platformNavItems = isSuperAdmin
+    ? [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" }]
+    : getPlatformNav(userRole, session.user.company_id ?? null);
 
   const productNav =
     activeProduct === "qms"
@@ -118,7 +138,7 @@ export function Sidebar({ session }: SidebarProps) {
             href={item.href as Route}
             icon={item.icon}
             label={item.label}
-            isActive={pathname === item.href}
+            isActive={pathname.startsWith(item.href) && (item.href !== "/dashboard" || pathname === "/dashboard")}
             collapsed={sidebarCollapsed}
           />
         ))}
@@ -127,17 +147,17 @@ export function Sidebar({ session }: SidebarProps) {
           <>
             <div className="my-3 border-t border-slate-700" />
             <NavItem
-              href={"/admin/tenants" as Route}
+              href={"/super-admin/tenants" as Route}
               icon={Building2}
               label="Tenants"
-              isActive={pathname.startsWith("/admin/tenants")}
+              isActive={pathname.startsWith("/super-admin/tenants")}
               collapsed={sidebarCollapsed}
             />
             <NavItem
-              href={"/admin" as Route}
+              href={"/super-admin" as Route}
               icon={Crown}
               label="Platform admin"
-              isActive={pathname === "/admin"}
+              isActive={pathname === "/super-admin"}
               collapsed={sidebarCollapsed}
               highlight
             />

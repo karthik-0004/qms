@@ -4,14 +4,23 @@ import { apiClient } from "../client";
 
 export interface User {
   id: string;
-  email: string;
+  platform_user_id: string;
+  tenant_id: string;
+  company_id: string | null;
   first_name: string;
   last_name: string;
-  role: string;
-  status: string;
-  tenant_id: string;
-  last_login: string | null;
+  display_name: string | null;
+  phone: string | null;
+  department: string | null;
+  job_title: string | null;
+  avatar_url: string | null;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
+  // Additional fields from auth service
+  email: string;
+  role: string;
+  last_login: string | null;
 }
 
 export interface AuditEntry {
@@ -133,13 +142,147 @@ export const usersApi = {
   get: (id: string) =>
     apiClient.get<BackendItem<User>>(`/users/${id}`).then((r) => r.data.data),
 
-  create: (data: { email: string; first_name: string; last_name: string; role: string; password: string }) =>
+  create: (data: { 
+    email: string; 
+    first_name: string; 
+    last_name: string; 
+    display_name?: string;
+    phone?: string;
+    department?: string;
+    job_title?: string;
+    role: string;
+  }) =>
     apiClient.post<BackendItem<User>>("/users", data).then((r) => r.data.data),
 
   update: (id: string, data: Partial<User>) =>
     apiClient.patch<BackendItem<User>>(`/users/${id}`, data).then((r) => r.data.data),
 
   deactivate: (id: string) => apiClient.delete(`/users/${id}`).then((r) => r.data),
+};
+
+// ─── Companies ───────────────────────────────────────────────────────────────
+
+export interface Company {
+  id: string;
+  tenant_id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  company_code: string;
+  status: string;
+  admin_id: string | null;
+  employee_limit: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyWithAdmin {
+  company: Company;
+  admin: User;
+  temporary_password: string;
+}
+
+export interface CompanyUserCreated {
+  user: CompanyUser;
+  temporary_password: string;
+}
+
+export interface CompanyUser {
+  id: string;
+  platform_user_id: string;
+  tenant_id: string;
+  company_id: string;
+  first_name: string;
+  last_name: string;
+  display_name: string | null;
+  phone: string | null;
+  department: string | null;
+  job_title: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCompanyPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  company_code?: string;
+  employee_limit?: number;
+  admin: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+  };
+}
+
+export interface CompanyRole {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  is_system_role: boolean;
+  scope: string;
+  company_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const companiesApi = {
+  list: (params?: { is_active?: boolean; page?: number; page_size?: number }) =>
+    apiClient
+      .get<BackendPage<Company>>("/companies", { params })
+      .then((r) => ({
+        items: r.data.data,
+        total: r.data.pagination.total,
+        page: r.data.pagination.page,
+        page_size: r.data.pagination.page_size,
+      })),
+
+  get: (id: string) =>
+    apiClient.get<BackendItem<Company>>(`/companies/${id}`).then((r) => r.data.data),
+
+  create: (data: CreateCompanyPayload) =>
+    apiClient.post<BackendItem<CompanyWithAdmin>>("/companies", data).then((r) => r.data.data as CompanyWithAdmin),
+
+  update: (id: string, data: Partial<Pick<Company, "name" | "email" | "phone" | "address" | "employee_limit">>) =>
+    apiClient.patch<BackendItem<Company>>(`/companies/${id}`, data).then((r) => r.data.data),
+
+  deactivate: (id: string) => apiClient.delete(`/companies/${id}`).then((r) => r.data),
+
+  listUsers: (companyId: string, params?: { is_active?: boolean; page?: number; page_size?: number }) =>
+    apiClient
+      .get<BackendPage<CompanyUser>>(`/companies/${companyId}/users`, { params })
+      .then((r) => ({
+        items: r.data.data,
+        total: r.data.pagination.total,
+        page: r.data.pagination.page,
+        page_size: r.data.pagination.page_size,
+      })),
+
+  createUser: (
+    companyId: string,
+    data: { email: string; first_name: string; last_name: string; display_name?: string; phone?: string; department?: string; role_id?: string },
+  ) =>
+    apiClient.post<BackendItem<CompanyUserCreated>>(`/companies/${companyId}/users`, data).then((r) => r.data.data as CompanyUserCreated),
+
+  listRoles: (companyId: string) =>
+    apiClient.get<BackendItem<CompanyRole[]>>(`/companies/${companyId}/roles`).then((r) => r.data.data),
+
+  createRole: (companyId: string, data: { name: string; permissions: string[]; description?: string }) =>
+    apiClient.post<BackendItem<CompanyRole>>(`/companies/${companyId}/roles`, data).then((r) => r.data.data),
+
+  assignUserRole: (companyId: string, userId: string, roleId: string) =>
+    apiClient
+      .post(`/companies/${companyId}/users/${userId}/roles`, { role_id: roleId })
+      .then((r) => r.data),
+
+  removeUserRole: (companyId: string, userId: string, roleId: string) =>
+    apiClient.delete(`/companies/${companyId}/users/${userId}/roles/${roleId}`).then((r) => r.data),
 };
 
 // ─── Audit ──────────────────────────────────────────────────────────────────

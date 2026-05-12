@@ -10,6 +10,7 @@ class UserInfo(BaseModel):
     email: str
     role: str
     tenant_id: str | None
+    company_id: str | None = None
     mfa_enabled: bool
 
 
@@ -23,7 +24,7 @@ class TokenResponse(BaseModel):
 
 class RefreshResponse(BaseModel):
     access_token: str
-    refresh_token: str
+    refresh_token: str = ""
     token_type: str = "bearer"
     expires_in: int
 
@@ -37,6 +38,12 @@ class MFASetupResponse(BaseModel):
 class BootstrapTenantAdminResponse(BaseModel):
     platform_user_id: str
     temporary_password: str
+
+
+class BootstrapCompanyUserResponse(BaseModel):
+    platform_user_id: str
+    temporary_password: str
+    email: str
 
 
 class ResendTenantAdminWelcomeResponse(BaseModel):

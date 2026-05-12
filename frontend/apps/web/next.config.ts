@@ -17,14 +17,50 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "localhost" },
     ],
   },
-  async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  async redirects() {
     return [
+      // Old /login → new /signin (backwards-compat)
       {
-        source: "/api/platform/:path*",
-        destination: `${apiUrl}/api/v1/:path*`,
+        source: "/login",
+        destination: "/signin",
+        permanent: false,
+      },
+      // Old /admin panel → new /super-admin panel
+      {
+        source: "/admin",
+        destination: "/super-admin",
+        permanent: false,
+      },
+      {
+        source: "/admin/:path+",
+        destination: "/super-admin/:path+",
+        permanent: false,
       },
     ];
+  },
+
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    return {
+      // afterFiles: run AFTER file-system page matching.
+      // /super-admin/:path+ only rewrites when no file matches (e.g. /super-admin/tenants/*
+      // has no page file, so it falls through to the existing /admin/* pages).
+      // /super-admin/signin IS matched by a file, so this rewrite never fires for it.
+      afterFiles: [
+        {
+          source: "/super-admin/:path+",
+          destination: "/admin/:path+",
+        },
+      ],
+      beforeFiles: [],
+      fallback: [
+        {
+          source: "/api/platform/:path*",
+          destination: `${apiUrl}/api/v1/:path*`,
+        },
+      ],
+    };
   },
 };
 

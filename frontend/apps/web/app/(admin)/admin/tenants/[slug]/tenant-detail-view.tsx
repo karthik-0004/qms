@@ -54,7 +54,7 @@ export function TenantDetailView({ slug }: { slug: string }) {
     return (
       <div className="space-y-4 max-w-4xl">
         <Button variant="outline" size="sm" className="gap-1 min-h-11" asChild>
-          <Link href={"/admin/tenants" as Route}>
+          <Link href={"/super-admin/tenants" as Route}>
             <ChevronLeft className="h-4 w-4" />
             {TENANT_ADMIN_LABELS.detail_back_link}
           </Link>
@@ -90,7 +90,7 @@ export function TenantDetailView({ slug }: { slug: string }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3 min-w-0">
           <Button variant="outline" size="icon" className="shrink-0 min-h-11 min-w-11" asChild>
-            <Link href={"/admin/tenants" as Route} aria-label={TENANT_ADMIN_LABELS.detail_back_link}>
+            <Link href={"/super-admin/tenants" as Route} aria-label={TENANT_ADMIN_LABELS.detail_back_link}>
               <ChevronLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -133,13 +133,13 @@ export function TenantDetailView({ slug }: { slug: string }) {
             {TENANT_ADMIN_LABELS.action_resend_welcome}
           </Button>
           <Button variant="outline" size="sm" className="min-h-11 gap-1.5" asChild>
-            <Link href={`/admin/tenants/${tenant.slug}/edit` as Route}>
+            <Link href={`/super-admin/tenants/${tenant.slug}/edit` as Route}>
               <Pencil className="h-4 w-4" />
               {TENANT_ADMIN_LABELS.action_edit}
             </Link>
           </Button>
           <Button variant="outline" size="sm" className="min-h-11 gap-1.5" asChild>
-            <Link href={`/admin/tenants/${tenant.slug}/settings` as Route}>
+            <Link href={`/super-admin/tenants/${tenant.slug}/settings` as Route}>
               <Settings className="h-4 w-4" />
               {TENANT_ADMIN_LABELS.action_settings}
             </Link>

@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   auditApi,
+  companiesApi,
   tenantsApi,
   type UpdateTenantSettingsPayload,
   usersApi,
@@ -187,5 +188,79 @@ export function useDeleteTenant() {
       qc.invalidateQueries({ queryKey: ["tenants"] });
       qc.invalidateQueries({ queryKey: ["users"] });
     },
+  });
+}
+
+// ─── Companies ───────────────────────────────────────────────────────────────
+
+export function useCompanies(params?: Parameters<typeof companiesApi.list>[0]) {
+  return useQuery({
+    queryKey: ["companies", params],
+    queryFn: () => companiesApi.list(params),
+    staleTime: 30_000,
+  });
+}
+
+export function useCompany(id: string) {
+  return useQuery({
+    queryKey: ["companies", id],
+    queryFn: () => companiesApi.get(id),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: companiesApi.create,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["companies"] }),
+  });
+}
+
+export function useUpdateCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof companiesApi.update>[1] }) =>
+      companiesApi.update(id, data),
+    onSuccess: (_res, vars) => qc.invalidateQueries({ queryKey: ["companies", vars.id] }),
+  });
+}
+
+export function useDeactivateCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: companiesApi.deactivate,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["companies"] }),
+  });
+}
+
+export function useCompanyUsers(
+  companyId: string,
+  params?: Parameters<typeof companiesApi.listUsers>[1],
+) {
+  return useQuery({
+    queryKey: ["companies", companyId, "users", params],
+    queryFn: () => companiesApi.listUsers(companyId, params),
+    enabled: !!companyId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateCompanyUser(companyId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof companiesApi.createUser>[1]) =>
+      companiesApi.createUser(companyId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["companies", companyId, "users"] }),
+  });
+}
+
+export function useCompanyRoles(companyId: string) {
+  return useQuery({
+    queryKey: ["companies", companyId, "roles"],
+    queryFn: () => companiesApi.listRoles(companyId),
+    enabled: !!companyId,
+    staleTime: 60_000,
   });
 }

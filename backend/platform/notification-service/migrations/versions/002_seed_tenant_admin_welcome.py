@@ -5,11 +5,21 @@ Revises: 001_initial_schema
 Create Date: 2026-05-11
 """
 
+import os
+import time
+import uuid as _uuid_mod
 from datetime import datetime, timezone
-from uuid import uuid4
 
 import sqlalchemy as sa
 from alembic import op
+
+
+def _uuid7() -> str:
+    ts_ms = int(time.time() * 1000) & 0xFFFF_FFFF_FFFF
+    rand = int.from_bytes(os.urandom(10), "big")
+    upper = (ts_ms << 16) | (0x7 << 12) | ((rand >> 68) & 0xFFF)
+    lower = 0x8000_0000_0000_0000 | (rand & 0x3FFF_FFFF_FFFF_FFFF)
+    return str(_uuid_mod.UUID(int=(upper << 64) | lower))
 revision = "002_seed_tenant_admin_welcome"
 down_revision = "001_initial_schema"
 branch_labels = None
@@ -26,7 +36,7 @@ def upgrade() -> None:
         return
 
     now = datetime.now(timezone.utc)
-    tid = str(uuid4())
+    tid = _uuid7()
     subject = "Welcome — your {{tenant_name}} workspace"
     html = """<html><body>
 <p>Hello {{admin_first_name}} {{admin_last_name}},</p>

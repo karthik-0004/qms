@@ -9,7 +9,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getCachedSession();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/super-admin/signin");
 
   const role = session.user.role;
   if (role !== "super_admin") redirect("/dashboard");

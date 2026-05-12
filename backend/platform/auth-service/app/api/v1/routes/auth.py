@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser, require_super_admin
+from rainer_auth_lib.dependencies import CurrentUser, require_role, require_super_admin
 from rainer_common.exceptions import ConflictError, NotFoundError
 from rainer_common.responses import MessageResponse, SuccessResponse
 
@@ -25,7 +25,10 @@ from ....infra.db.repositories import (
     UserRepository,
 )
 from ....schemas.requests import (
+    BootstrapCompanyAdminRequest,
+    BootstrapCompanyUserRequest,
     BootstrapTenantAdminRequest,
+    BootstrapTenantUserRequest,
     CreateAccessKeyRequest,
     LoginRequest,
     LogoutRequest,
@@ -35,6 +38,7 @@ from ....schemas.requests import (
 )
 from ....schemas.responses import (
     AccessKeyResponse,
+    BootstrapCompanyUserResponse,
     BootstrapTenantAdminResponse,
     MFASetupResponse,
     RefreshResponse,
@@ -106,7 +110,7 @@ async def login(
         user_agent=user_agent,
     )
     refresh_token = result.pop("refresh_token")
-    body = SuccessResponse.of(TokenResponse(**result, refresh_token="")).model_dump()
+    body = SuccessResponse.of(TokenResponse(**result, refresh_token=refresh_token)).model_dump()
     response = JSONResponse(content=body, status_code=200)
     _set_refresh_cookie(response, refresh_token, settings)
     return response
@@ -131,7 +135,7 @@ async def refresh_token(
     ip = request.client.host if request.client else None
     result = await service.refresh_tokens(raw_token, ip_address=ip)
     new_refresh = result.pop("refresh_token")
-    body = SuccessResponse.of(RefreshResponse(**result, refresh_token="")).model_dump()
+    body = SuccessResponse.of(RefreshResponse(**result, refresh_token=new_refresh)).model_dump()
     response = JSONResponse(content=body, status_code=200)
     _set_refresh_cookie(response, new_refresh, settings)
     return response
@@ -307,6 +311,139 @@ async def resend_tenant_admin_welcome_credentials(
             platform_user_id=user.id,
             temporary_password=temporary_password,
             admin_email=user.email,
+        )
+    )
+
+
+@router.post(
+    "/bootstrap/company-admin",
+    response_model=SuccessResponse[BootstrapCompanyUserResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Provision company_admin auth account (tenant_admin only)",
+)
+async def bootstrap_company_admin(
+    payload: BootstrapCompanyAdminRequest,
+    current_user: Annotated[CurrentUser, Depends(require_role("super_admin", "tenant_admin"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SuccessResponse[BootstrapCompanyUserResponse]:
+    repo = UserRepository(db)
+    if await repo.get_by_email(payload.email):
+        raise ConflictError("Email already registered")
+
+    temporary_password = generate_temporary_password()
+    user = await repo.create(
+        email=payload.email,
+        password_hash=hash_password(temporary_password),
+        tenant_id=current_user.tenant_id,
+        role="company_admin",
+        company_id=payload.company_id,
+    )
+    await db.commit()
+    logger.info(
+        "company_admin_bootstrapped",
+        platform_user_id=user.id,
+        company_id=payload.company_id,
+        caller=current_user.sub,
+    )
+    return SuccessResponse.of(
+        BootstrapCompanyUserResponse(
+            platform_user_id=user.id,
+            temporary_password=temporary_password,
+            email=payload.email,
+        )
+    )
+
+
+@router.post(
+    "/bootstrap/company-user",
+    response_model=SuccessResponse[BootstrapCompanyUserResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Provision company_user auth account (company_admin only)",
+)
+async def bootstrap_company_user(
+    payload: BootstrapCompanyUserRequest,
+    current_user: Annotated[CurrentUser, Depends(require_role("super_admin", "tenant_admin", "company_admin"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SuccessResponse[BootstrapCompanyUserResponse]:
+    repo = UserRepository(db)
+    if await repo.get_by_email(payload.email):
+        raise ConflictError("Email already registered")
+
+    # Use explicitly provided company_id first, then fall back to caller's company_id.
+    # This allows tenant_admin to create users for a specific company (they have no
+    # company_id in their own token) while company_admin self-serves from their token.
+    company_id = payload.company_id or current_user.company_id
+    if not company_id and current_user.role == "company_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "BAD_REQUEST", "message": "company_id missing from caller token"},
+        )
+
+    temporary_password = generate_temporary_password()
+    user = await repo.create(
+        email=payload.email,
+        password_hash=hash_password(temporary_password),
+        tenant_id=current_user.tenant_id,
+        role="company_user",
+        company_id=company_id,
+    )
+    await db.commit()
+    logger.info(
+        "company_user_bootstrapped",
+        platform_user_id=user.id,
+        company_id=company_id,
+        caller=current_user.sub,
+    )
+    return SuccessResponse.of(
+        BootstrapCompanyUserResponse(
+            platform_user_id=user.id,
+            temporary_password=temporary_password,
+            email=payload.email,
+        )
+    )
+
+
+@router.post(
+    "/bootstrap/tenant-user",
+    response_model=SuccessResponse[BootstrapCompanyUserResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Provision tenant_user auth account (tenant_admin or super_admin only)",
+)
+async def bootstrap_tenant_user(
+    payload: BootstrapTenantUserRequest,
+    current_user: Annotated[CurrentUser, Depends(require_role("super_admin", "tenant_admin"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SuccessResponse[BootstrapCompanyUserResponse]:
+    tenant_id = current_user.tenant_id
+    if not tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "BAD_REQUEST", "message": "tenant_id missing from caller token"},
+        )
+
+    repo = UserRepository(db)
+    if await repo.get_by_email(payload.email):
+        raise ConflictError("Email already registered")
+
+    temporary_password = generate_temporary_password()
+    user = await repo.create(
+        email=payload.email,
+        password_hash=hash_password(temporary_password),
+        tenant_id=tenant_id,
+        role="tenant_user",
+    )
+    await db.commit()
+    logger.info(
+        "tenant_user_bootstrapped",
+        platform_user_id=user.id,
+        tenant_id=tenant_id,
+        caller=current_user.sub,
+    )
+    return SuccessResponse.of(
+        BootstrapCompanyUserResponse(
+            platform_user_id=user.id,
+            temporary_password=temporary_password,
+            email=payload.email,
         )
     )
 

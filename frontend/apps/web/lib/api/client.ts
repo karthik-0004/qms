@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/lib/stores/auth.store";
-import { getSessionFast, resolveSessionAuthContext } from "@/lib/api/session";
+import { getSessionFast, clearSessionCache, resolveSessionAuthContext } from "@/lib/api/session";
 
 const SERVER_API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1`;
 
@@ -44,8 +44,17 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      window.location.href = "/login?session=expired";
+    const originalConfig = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+    if (error.response?.status === 401 && !originalConfig._retried) {
+      originalConfig._retried = true;
+      clearSessionCache();
+      const freshSession = await getSessionFast();
+      const { bearerToken } = resolveSessionAuthContext(freshSession);
+      if (bearerToken) {
+        originalConfig.headers.Authorization = `Bearer ${bearerToken}`;
+        return apiClient(originalConfig);
+      }
+      window.location.href = "/signin?reason=session_expired";
     }
     return Promise.reject(error);
   }

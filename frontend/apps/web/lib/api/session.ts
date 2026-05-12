@@ -68,6 +68,12 @@ export async function getSessionFast(): Promise<SessionLike> {
   return session;
 }
 
+/** Force-evict the in-memory session cache so the next call fetches fresh from the server. */
+export function clearSessionCache(): void {
+  cachedSession = null;
+  cachedAtMs = 0;
+}
+
 /**
  * Token + tenant for API clients. Prefers NextAuth-augmented `session.user`;
  * falls back to legacy top-level fields for older sessions/tools.

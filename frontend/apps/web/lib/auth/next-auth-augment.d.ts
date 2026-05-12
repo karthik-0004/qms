@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       tenant_id: string | null;
+      company_id: string | null;
       /** Present for bearer API calls from the browser. */
       access_token: string;
     };
@@ -17,6 +18,10 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: string;
     tenant_id?: string | null;
+    company_id?: string | null;
     access_token?: string;
+    refresh_token?: string | null;
+    access_token_exp?: number;
+    error?: string;
   }
 }

@@ -146,7 +146,7 @@ export default function TenantCreateForm() {
   const onSubmit = async (values: TenantCreateFormValues) => {
     try {
       const tenant = await create.mutateAsync(toCreatePayload(values));
-      router.push(`/admin/tenants/${tenant.slug}` as Route);
+      router.push(`/super-admin/tenants/${tenant.slug}` as Route);
     } catch (e) {
       form.setError("root", { message: handleApiError(e) });
     }
@@ -165,7 +165,7 @@ export default function TenantCreateForm() {
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-start gap-3">
         <Button variant="outline" size="icon" className="shrink-0 min-h-11 min-w-11" asChild>
-          <Link href={"/admin/tenants" as Route} aria-label={TENANT_ADMIN_LABELS.back_to_list}>
+          <Link href={"/super-admin/tenants" as Route} aria-label={TENANT_ADMIN_LABELS.back_to_list}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -411,7 +411,7 @@ export default function TenantCreateForm() {
 
         <div className="flex flex-wrap gap-3 justify-end">
           <Button type="button" variant="outline" className="min-h-11" asChild>
-            <Link href={"/admin/tenants" as Route}>Cancel</Link>
+            <Link href={"/super-admin/tenants" as Route}>Cancel</Link>
           </Button>
           <Button type="submit" className="min-h-11" disabled={create.isPending}>
             {create.isPending ? TENANT_ADMIN_LABELS.submitCreating : TENANT_ADMIN_LABELS.submitCreate}

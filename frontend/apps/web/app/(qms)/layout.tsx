@@ -9,7 +9,7 @@ export default async function QMSLayout({
   children: React.ReactNode;
 }) {
   const session = await getCachedSession();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/signin");
 
   return <PlatformShell session={session}>{children}</PlatformShell>;
 }

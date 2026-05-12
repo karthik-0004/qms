@@ -53,6 +53,7 @@ class PlatformUser(Base):
     tenant_id: Mapped[str | None] = mapped_column(
         UUID(as_uuid=False), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True
     )
+    company_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
     role: Mapped[str] = mapped_column(String(50), nullable=False, default="tenant_user")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     mfa_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)

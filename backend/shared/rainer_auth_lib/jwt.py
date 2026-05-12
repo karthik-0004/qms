@@ -30,6 +30,7 @@ class TokenPayload(BaseModel):
     sub: str
     email: str
     tenant_id: str | None = None
+    company_id: str | None = None
     role: str = "tenant_user"
     permissions: list[str] = []
     product_access: list[str] = []
@@ -49,6 +50,7 @@ def create_access_token(
     email: str,
     settings: JWTSettings,
     tenant_id: str | None = None,
+    company_id: str | None = None,
     role: str = "tenant_user",
     permissions: list[str] | None = None,
     product_access: list[str] | None = None,
@@ -69,6 +71,7 @@ def create_access_token(
         "sub": subject,
         "email": email,
         "tenant_id": tenant_id,
+        "company_id": company_id,
         "role": role,
         "permissions": permissions or [],
         "product_access": product_access or [],

@@ -1,7 +1,8 @@
 """Notification Service — Repository layer."""
 
 from datetime import datetime, timezone
-from uuid import uuid4
+
+from rainer_common.uuid_utils import uuid7
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +38,7 @@ class NotificationTemplateRepository:
     ) -> NotificationTemplate:
         now = datetime.now(timezone.utc)
         template = NotificationTemplate(
-            id=str(uuid4()),
+            id=uuid7(),
             name=name,
             subject=subject,
             body_html=body_html,
@@ -69,7 +70,7 @@ class NotificationLogRepository:
     ) -> NotificationLog:
         now = datetime.now(timezone.utc)
         log = NotificationLog(
-            id=str(uuid4()),
+            id=uuid7(),
             tenant_id=tenant_id,
             user_id=user_id,
             recipient_email=recipient_email,

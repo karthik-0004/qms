@@ -76,7 +76,7 @@ export default function TenantSettingsForm({ slug }: { slug: string }) {
         <CardContent className="pt-6 text-sm text-muted-foreground">
           Tenant not found.
           <Button variant="link" className="px-1" asChild>
-            <Link href={"/admin/tenants" as Route}>Back</Link>
+            <Link href={"/super-admin/tenants" as Route}>Back</Link>
           </Button>
         </CardContent>
       </Card>
@@ -87,7 +87,7 @@ export default function TenantSettingsForm({ slug }: { slug: string }) {
     <div className="space-y-6 max-w-xl mx-auto">
       <div className="flex items-start gap-3">
         <Button variant="outline" size="icon" className="shrink-0 min-h-11 min-w-11" asChild>
-          <Link href={`/admin/tenants/${tenant.slug}` as Route} aria-label={TENANT_ADMIN_LABELS.back_to_list}>
+          <Link href={`/super-admin/tenants/${tenant.slug}` as Route} aria-label={TENANT_ADMIN_LABELS.back_to_list}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -129,7 +129,7 @@ export default function TenantSettingsForm({ slug }: { slug: string }) {
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" className="min-h-11" asChild>
-            <Link href={`/admin/tenants/${tenant.slug}` as Route}>Cancel</Link>
+            <Link href={`/super-admin/tenants/${tenant.slug}` as Route}>Cancel</Link>
           </Button>
           <Button type="submit" className="min-h-11" disabled={update.isPending}>
             {update.isPending ? "…" : TENANT_ADMIN_LABELS.action_save}

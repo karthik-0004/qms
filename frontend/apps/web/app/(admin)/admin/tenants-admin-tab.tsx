@@ -89,7 +89,7 @@ export function TenantsTab() {
             : `${totalItems} ${TENANT_ADMIN_LABELS.listTitle.toLowerCase()}`}
         </p>
         <Button size="sm" className="gap-1.5 min-h-11 sm:min-h-9" asChild>
-          <Link href={"/admin/tenants/new" as Route}>
+          <Link href={"/super-admin/tenants/new" as Route}>
             <Plus className="h-4 w-4" />
             {TENANT_ADMIN_LABELS.newTenantCta}
           </Link>
@@ -162,7 +162,7 @@ export function TenantsTab() {
                   >
                     <td className="py-3 pr-4">
                       <Link
-                        href={`/admin/tenants/${t.slug}` as Route}
+                        href={`/super-admin/tenants/${t.slug}` as Route}
                         className="group block rounded-md -m-1 p-1 hover:bg-muted/50 min-h-[44px]"
                       >
                         <p className="font-medium text-foreground group-hover:underline">
@@ -207,7 +207,7 @@ export function TenantsTab() {
                     <td className="py-3">
                       <div className="flex flex-wrap items-center gap-1">
                         <Button variant="ghost" size="sm" className="h-11 sm:h-8 px-2 text-xs min-w-[44px] sm:min-w-0" asChild>
-                          <Link href={`/admin/tenants/${t.slug}` as Route}>
+                          <Link href={`/super-admin/tenants/${t.slug}` as Route}>
                             <ExternalLink className="h-3 w-3 mr-1" aria-hidden />
                             {TENANT_ADMIN_LABELS.list_open}
                           </Link>
