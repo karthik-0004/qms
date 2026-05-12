@@ -1,0 +1,750 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Job Service",
+"description": "EndGameBiotech — Async Job Queue and Execution Management",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Health Health Get"
+}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Ready Ready Get"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/jobs": {
+"get": {
+"tags": [
+"Jobs"
+],
+"summary": "List jobs (paginated)",
+"operationId": "list_jobs_api_v1_jobs_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "job_type",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Job Type"
+}
+},
+{
+"name": "offset",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Offset"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 100,
+"minimum": 1,
+"default": 20,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response List Jobs Api V1 Jobs Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Jobs"
+],
+"summary": "Enqueue a new job",
+"operationId": "enqueue_job_api_v1_jobs_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/EnqueueJobRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/JobResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/jobs/{job_id}": {
+"get": {
+"tags": [
+"Jobs"
+],
+"summary": "Get job details",
+"operationId": "get_job_api_v1_jobs__job_id__get",
+"parameters": [
+{
+"name": "job_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Job Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/JobResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/jobs/claim": {
+"post": {
+"tags": [
+"Jobs"
+],
+"summary": "Claim next pending job",
+"operationId": "claim_job_api_v1_jobs_claim_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ClaimJobRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"anyOf": [
+{
+"$ref": "#/components/schemas/JobResponse"
+},
+{
+"type": "null"
+}
+],
+"title": "Response Claim Job Api V1 Jobs Claim Post"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/jobs/{job_id}/complete": {
+"post": {
+"tags": [
+"Jobs"
+],
+"summary": "Complete a job",
+"operationId": "complete_job_api_v1_jobs__job_id__complete_post",
+"parameters": [
+{
+"name": "job_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Job Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CompleteJobRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/JobResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/jobs/{job_id}/fail": {
+"post": {
+"tags": [
+"Jobs"
+],
+"summary": "Fail a job",
+"operationId": "fail_job_api_v1_jobs__job_id__fail_post",
+"parameters": [
+{
+"name": "job_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Job Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/FailJobRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/JobResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/jobs/{job_id}/cancel": {
+"post": {
+"tags": [
+"Jobs"
+],
+"summary": "Cancel a job",
+"operationId": "cancel_job_api_v1_jobs__job_id__cancel_post",
+"parameters": [
+{
+"name": "job_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Job Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/JobResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"ClaimJobRequest": {
+"properties": {
+"worker_id": {
+"type": "string",
+"minLength": 1,
+"title": "Worker Id"
+},
+"job_type": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Job Type"
+}
+},
+"type": "object",
+"required": [
+"worker_id"
+],
+"title": "ClaimJobRequest"
+},
+"CompleteJobRequest": {
+"properties": {
+"result": {
+"type": "object",
+"title": "Result",
+"default": {}
+}
+},
+"type": "object",
+"title": "CompleteJobRequest"
+},
+"EnqueueJobRequest": {
+"properties": {
+"job_type": {
+"type": "string",
+"minLength": 1,
+"title": "Job Type"
+},
+"payload": {
+"type": "object",
+"title": "Payload",
+"default": {}
+},
+"priority": {
+"type": "integer",
+"maximum": 10,
+"minimum": 1,
+"title": "Priority",
+"default": 5
+},
+"max_retries": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Max Retries"
+}
+},
+"type": "object",
+"required": [
+"job_type"
+],
+"title": "EnqueueJobRequest"
+},
+"FailJobRequest": {
+"properties": {
+"error_message": {
+"type": "string",
+"minLength": 1,
+"title": "Error Message"
+},
+"retry": {
+"type": "boolean",
+"title": "Retry",
+"default": true
+}
+},
+"type": "object",
+"required": [
+"error_message"
+],
+"title": "FailJobRequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"JobResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"job_type": {
+"type": "string",
+"title": "Job Type"
+},
+"payload": {
+"type": "object",
+"title": "Payload"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"priority": {
+"type": "integer",
+"title": "Priority"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"worker_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Worker Id"
+},
+"result": {
+"anyOf": [
+{
+"type": "object"
+},
+{
+"type": "null"
+}
+],
+"title": "Result"
+},
+"error_message": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Error Message"
+},
+"retry_count": {
+"type": "integer",
+"title": "Retry Count"
+},
+"max_retries": {
+"type": "integer",
+"title": "Max Retries"
+},
+"next_retry_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Next Retry At"
+},
+"started_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Started At"
+},
+"completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Completed At"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"job_type",
+"payload",
+"status",
+"priority",
+"created_by",
+"worker_id",
+"result",
+"error_message",
+"retry_count",
+"max_retries",
+"next_retry_at",
+"started_at",
+"completed_at",
+"created_at",
+"updated_at"
+],
+"title": "JobResponse"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

@@ -1,0 +1,1187 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Technician Service",
+"description": "RainerCCV — Technician profiles, certifications, and availability",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/api/v1/technicians": {
+"get": {
+"tags": [
+"Technicians"
+],
+"summary": "List technicians",
+"operationId": "list_technicians_api_v1_technicians_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "is_available",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Is Available"
+}
+},
+{
+"name": "skip",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Skip"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"default": 50,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/TechnicianResponse"
+},
+"title": "Response List Technicians Api V1 Technicians Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Technicians"
+],
+"summary": "Register technician",
+"operationId": "register_technician_api_v1_technicians_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/RegisterTechnicianRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TechnicianResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/technicians/{tech_id}": {
+"get": {
+"tags": [
+"Technicians"
+],
+"summary": "Get technician",
+"operationId": "get_technician_api_v1_technicians__tech_id__get",
+"parameters": [
+{
+"name": "tech_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Tech Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TechnicianResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"patch": {
+"tags": [
+"Technicians"
+],
+"summary": "Update technician",
+"operationId": "update_technician_api_v1_technicians__tech_id__patch",
+"parameters": [
+{
+"name": "tech_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Tech Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/UpdateTechnicianRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TechnicianResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/technicians/{tech_id}/status": {
+"post": {
+"tags": [
+"Technicians"
+],
+"summary": "Transition technician status",
+"operationId": "transition_status_api_v1_technicians__tech_id__status_post",
+"parameters": [
+{
+"name": "tech_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Tech Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TransitionStatusRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TechnicianResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/technicians/{tech_id}/availability": {
+"post": {
+"tags": [
+"Technicians"
+],
+"summary": "Set availability",
+"operationId": "set_availability_api_v1_technicians__tech_id__availability_post",
+"parameters": [
+{
+"name": "tech_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Tech Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SetAvailabilityRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TechnicianResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/technicians/{tech_id}/certifications": {
+"get": {
+"tags": [
+"Technicians"
+],
+"summary": "List certifications",
+"operationId": "list_certifications_api_v1_technicians__tech_id__certifications_get",
+"parameters": [
+{
+"name": "tech_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Tech Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/CertificationResponse"
+},
+"title": "Response List Certifications Api V1 Technicians  Tech Id  Certifications Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Technicians"
+],
+"summary": "Add certification",
+"operationId": "add_certification_api_v1_technicians__tech_id__certifications_post",
+"parameters": [
+{
+"name": "tech_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Tech Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddCertificationRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CertificationResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"AddCertificationRequest": {
+"properties": {
+"name": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Name"
+},
+"issuing_body": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Issuing Body"
+},
+"certificate_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Certificate Number"
+},
+"issued_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Issued Date"
+},
+"expiry_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Expiry Date"
+}
+},
+"type": "object",
+"required": [
+"name"
+],
+"title": "AddCertificationRequest"
+},
+"CertificationResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"technician_id": {
+"type": "string",
+"format": "uuid",
+"title": "Technician Id"
+},
+"name": {
+"type": "string",
+"title": "Name"
+},
+"issuing_body": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Issuing Body"
+},
+"certificate_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Certificate Number"
+},
+"issued_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Issued Date"
+},
+"expiry_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Expiry Date"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"technician_id",
+"name",
+"issuing_body",
+"certificate_number",
+"issued_date",
+"expiry_date",
+"created_at"
+],
+"title": "CertificationResponse"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"RegisterTechnicianRequest": {
+"properties": {
+"user_id": {
+"type": "string",
+"format": "uuid",
+"title": "User Id"
+},
+"employee_number": {
+"type": "string",
+"maxLength": 50,
+"minLength": 1,
+"title": "Employee Number"
+},
+"first_name": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "First Name"
+},
+"last_name": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Last Name"
+},
+"email": {
+"type": "string",
+"maxLength": 255,
+"minLength": 3,
+"title": "Email"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"specializations": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Specializations",
+"default": []
+},
+"service_area": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service Area"
+},
+"hourly_rate": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Hourly Rate"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"required": [
+"user_id",
+"employee_number",
+"first_name",
+"last_name",
+"email"
+],
+"title": "RegisterTechnicianRequest"
+},
+"SetAvailabilityRequest": {
+"properties": {
+"is_available": {
+"type": "boolean",
+"title": "Is Available"
+},
+"unavailable_reason": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Unavailable Reason"
+},
+"available_from": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Available From"
+}
+},
+"type": "object",
+"required": [
+"is_available"
+],
+"title": "SetAvailabilityRequest"
+},
+"TechnicianResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"user_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "User Id"
+},
+"first_name": {
+"type": "string",
+"title": "First Name"
+},
+"last_name": {
+"type": "string",
+"title": "Last Name"
+},
+"email": {
+"type": "string",
+"title": "Email"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"specializations": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Specializations"
+},
+"service_area": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service Area"
+},
+"hourly_rate": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Hourly Rate"
+},
+"is_available": {
+"type": "boolean",
+"title": "Is Available"
+},
+"unavailable_reason": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Unavailable Reason"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"created_by": {
+"type": "string",
+"format": "uuid",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"user_id",
+"first_name",
+"last_name",
+"email",
+"phone",
+"status",
+"specializations",
+"service_area",
+"hourly_rate",
+"is_available",
+"unavailable_reason",
+"notes",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "TechnicianResponse"
+},
+"TransitionStatusRequest": {
+"properties": {
+"new_status": {
+"type": "string",
+"minLength": 1,
+"title": "New Status"
+}
+},
+"type": "object",
+"required": [
+"new_status"
+],
+"title": "TransitionStatusRequest"
+},
+"UpdateTechnicianRequest": {
+"properties": {
+"first_name": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 100,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "First Name"
+},
+"last_name": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 100,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Last Name"
+},
+"email": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Email"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"specializations": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Specializations"
+},
+"service_area": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service Area"
+},
+"hourly_rate": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Hourly Rate"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"title": "UpdateTechnicianRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

@@ -1,0 +1,1413 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Rainer CAPA Service",
+"description": "QMS CAPA lifecycle management",
+"version": "0.1.0"
+},
+"paths": {
+"/api/v1/capas": {
+"get": {
+"tags": [
+"CAPAs"
+],
+"summary": "List CAPAs",
+"operationId": "list_capas_api_v1_capas_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "severity",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Severity"
+}
+},
+{
+"name": "owner_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+}
+},
+{
+"name": "department",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+}
+},
+{
+"name": "overdue_only",
+"in": "query",
+"required": false,
+"schema": {
+"type": "boolean",
+"default": false,
+"title": "Overdue Only"
+}
+},
+{
+"name": "page",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 1,
+"description": "Page number",
+"default": 1,
+"title": "Page"
+},
+"description": "Page number"
+},
+{
+"name": "page_size",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"description": "Items per page",
+"default": 20,
+"title": "Page Size"
+},
+"description": "Items per page"
+},
+{
+"name": "sort",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"description": "Sort field, prefix with - for desc",
+"title": "Sort"
+},
+"description": "Sort field, prefix with - for desc"
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaginatedResponse_CAPAResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"CAPAs"
+],
+"summary": "Create a CAPA",
+"operationId": "create_capa_api_v1_capas_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateCAPARequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/capas/{capa_id}": {
+"get": {
+"tags": [
+"CAPAs"
+],
+"summary": "Get CAPA details",
+"operationId": "get_capa_api_v1_capas__capa_id__get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"patch": {
+"tags": [
+"CAPAs"
+],
+"summary": "Update a CAPA",
+"operationId": "update_capa_api_v1_capas__capa_id__patch",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/UpdateCAPARequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/capas/{capa_id}/close": {
+"post": {
+"tags": [
+"CAPAs"
+],
+"summary": "Close a CAPA",
+"operationId": "close_capa_api_v1_capas__capa_id__close_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/capas/{capa_id}/verify-effectiveness": {
+"post": {
+"tags": [
+"CAPAs"
+],
+"summary": "Verify CAPA effectiveness",
+"operationId": "verify_effectiveness_api_v1_capas__capa_id__verify_effectiveness_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/VerifyEffectivenessRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/capas/{capa_id}/actions": {
+"get": {
+"tags": [
+"CAPAs"
+],
+"summary": "List CAPA actions",
+"operationId": "list_actions_api_v1_capas__capa_id__actions_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_list_CAPAActionResponse__"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"CAPAs"
+],
+"summary": "Add action to CAPA",
+"operationId": "add_action_api_v1_capas__capa_id__actions_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddCAPAActionRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAActionResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/capas/{capa_id}/actions/{action_id}/complete": {
+"post": {
+"tags": [
+"CAPAs"
+],
+"summary": "Complete a CAPA action",
+"operationId": "complete_action_api_v1_capas__capa_id__actions__action_id__complete_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "capa_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Capa Id"
+}
+},
+{
+"name": "action_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Action Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CompleteActionRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_CAPAActionResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"AddCAPAActionRequest": {
+"properties": {
+"action_type": {
+"type": "string",
+"maxLength": 50,
+"minLength": 1,
+"title": "Action Type"
+},
+"description": {
+"type": "string",
+"minLength": 1,
+"title": "Description"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+}
+},
+"type": "object",
+"required": [
+"action_type",
+"description"
+],
+"title": "AddCAPAActionRequest"
+},
+"CAPAActionResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"capa_id": {
+"type": "string",
+"title": "Capa Id"
+},
+"action_type": {
+"type": "string",
+"title": "Action Type"
+},
+"description": {
+"type": "string",
+"title": "Description"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Completed At"
+},
+"evidence": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Evidence"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"capa_id",
+"action_type",
+"description",
+"assigned_to",
+"due_date",
+"status",
+"completed_at",
+"evidence",
+"created_at"
+],
+"title": "CAPAActionResponse"
+},
+"CAPAResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"capa_number": {
+"type": "string",
+"title": "Capa Number"
+},
+"title": {
+"type": "string",
+"title": "Title"
+},
+"capa_type": {
+"type": "string",
+"title": "Capa Type"
+},
+"description": {
+"type": "string",
+"title": "Description"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"severity": {
+"type": "string",
+"title": "Severity"
+},
+"root_cause": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Root Cause"
+},
+"root_cause_method": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Root Cause Method"
+},
+"source_type": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Source Type"
+},
+"source_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Source Id"
+},
+"owner_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"target_close_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Target Close Date"
+},
+"actual_close_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Actual Close Date"
+},
+"effectiveness_verified": {
+"type": "boolean",
+"title": "Effectiveness Verified"
+},
+"effectiveness_check_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Effectiveness Check Date"
+},
+"tags": {
+"items": {},
+"type": "array",
+"title": "Tags"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"capa_number",
+"title",
+"capa_type",
+"description",
+"status",
+"severity",
+"root_cause",
+"root_cause_method",
+"source_type",
+"source_id",
+"owner_id",
+"department",
+"due_date",
+"target_close_date",
+"actual_close_date",
+"effectiveness_verified",
+"effectiveness_check_date",
+"tags",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "CAPAResponse"
+},
+"CompleteActionRequest": {
+"properties": {
+"evidence": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Evidence"
+}
+},
+"type": "object",
+"title": "CompleteActionRequest"
+},
+"CreateCAPARequest": {
+"properties": {
+"capa_number": {
+"type": "string",
+"maxLength": 50,
+"minLength": 1,
+"title": "Capa Number"
+},
+"title": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Title"
+},
+"description": {
+"type": "string",
+"minLength": 1,
+"title": "Description"
+},
+"capa_type": {
+"type": "string",
+"title": "Capa Type",
+"default": "corrective"
+},
+"severity": {
+"type": "string",
+"title": "Severity",
+"default": "major"
+},
+"source_type": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Source Type"
+},
+"source_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Source Id"
+},
+"owner_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"tags": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Tags",
+"default": []
+}
+},
+"type": "object",
+"required": [
+"capa_number",
+"title",
+"description"
+],
+"title": "CreateCAPARequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"PaginatedResponse_CAPAResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/CAPAResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"pagination": {
+"$ref": "#/components/schemas/PaginationMeta"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data",
+"pagination"
+],
+"title": "PaginatedResponse[CAPAResponse]"
+},
+"PaginationMeta": {
+"properties": {
+"page": {
+"type": "integer",
+"title": "Page"
+},
+"page_size": {
+"type": "integer",
+"title": "Page Size"
+},
+"total": {
+"type": "integer",
+"title": "Total"
+},
+"total_pages": {
+"type": "integer",
+"title": "Total Pages"
+},
+"has_next": {
+"type": "boolean",
+"title": "Has Next"
+},
+"has_prev": {
+"type": "boolean",
+"title": "Has Prev"
+}
+},
+"type": "object",
+"required": [
+"page",
+"page_size",
+"total",
+"total_pages",
+"has_next",
+"has_prev"
+],
+"title": "PaginationMeta"
+},
+"ResponseMeta": {
+"properties": {
+"request_id": {
+"type": "string",
+"title": "Request Id"
+},
+"timestamp": {
+"type": "string",
+"title": "Timestamp"
+},
+"service": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service"
+},
+"version": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Version"
+}
+},
+"type": "object",
+"title": "ResponseMeta"
+},
+"SuccessResponse_CAPAActionResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/CAPAActionResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[CAPAActionResponse]"
+},
+"SuccessResponse_CAPAResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/CAPAResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[CAPAResponse]"
+},
+"SuccessResponse_list_CAPAActionResponse__": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/CAPAActionResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[list[CAPAActionResponse]]"
+},
+"UpdateCAPARequest": {
+"properties": {
+"title": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Title"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"severity": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Severity"
+},
+"owner_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"root_cause": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Root Cause"
+},
+"root_cause_method": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Root Cause Method"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"target_close_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Target Close Date"
+},
+"tags": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Tags"
+}
+},
+"type": "object",
+"title": "UpdateCAPARequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+},
+"input": {
+"title": "Input"
+},
+"ctx": {
+"type": "object",
+"title": "Context"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+},
+"VerifyEffectivenessRequest": {
+"properties": {
+"verified": {
+"type": "boolean",
+"title": "Verified"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"required": [
+"verified"
+],
+"title": "VerifyEffectivenessRequest"
+}
+},
+"securitySchemes": {
+"HTTPBearer": {
+"type": "http",
+"scheme": "bearer"
+}
+}
+}
+}

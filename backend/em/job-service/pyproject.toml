@@ -38,6 +38,9 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-v --cov=app --cov-report=term-missing"
 
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
 [tool.coverage.run]
 source = ["app"]
 omit = ["tests/*"]

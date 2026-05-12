@@ -1,0 +1,1485 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "CRM Service",
+"description": "RainerCCV — Customer & Contact relationship management",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/api/v1/customers": {
+"get": {
+"tags": [
+"Customers"
+],
+"summary": "List customers",
+"operationId": "list_customers_api_v1_customers_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "skip",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Skip"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"default": 50,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/CustomerResponse"
+},
+"title": "Response List Customers Api V1 Customers Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Customers"
+],
+"summary": "Create customer",
+"operationId": "create_customer_api_v1_customers_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateCustomerRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CustomerResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/customers/{customer_id}": {
+"get": {
+"tags": [
+"Customers"
+],
+"summary": "Get customer",
+"operationId": "get_customer_api_v1_customers__customer_id__get",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CustomerResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"patch": {
+"tags": [
+"Customers"
+],
+"summary": "Update customer",
+"operationId": "update_customer_api_v1_customers__customer_id__patch",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/UpdateCustomerRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CustomerResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/customers/{customer_id}/status": {
+"post": {
+"tags": [
+"Customers"
+],
+"summary": "Transition customer status",
+"operationId": "transition_status_api_v1_customers__customer_id__status_post",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TransitionStatusRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CustomerResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/customers/{customer_id}/contacts": {
+"get": {
+"tags": [
+"Customers"
+],
+"summary": "List contacts",
+"operationId": "list_contacts_api_v1_customers__customer_id__contacts_get",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/ContactResponse"
+},
+"title": "Response List Contacts Api V1 Customers  Customer Id  Contacts Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Customers"
+],
+"summary": "Add contact to customer",
+"operationId": "add_contact_api_v1_customers__customer_id__contacts_post",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddContactRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ContactResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/customers/{customer_id}/interactions": {
+"get": {
+"tags": [
+"Customers"
+],
+"summary": "List interactions",
+"operationId": "list_interactions_api_v1_customers__customer_id__interactions_get",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"default": 50,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/InteractionResponse"
+},
+"title": "Response List Interactions Api V1 Customers  Customer Id  Interactions Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Customers"
+],
+"summary": "Log interaction",
+"operationId": "log_interaction_api_v1_customers__customer_id__interactions_post",
+"parameters": [
+{
+"name": "customer_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/LogInteractionRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InteractionResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"AddContactRequest": {
+"properties": {
+"first_name": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "First Name"
+},
+"last_name": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Last Name"
+},
+"is_primary": {
+"type": "boolean",
+"title": "Is Primary",
+"default": false
+},
+"title": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Title"
+},
+"email": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Email"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"mobile": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Mobile"
+}
+},
+"type": "object",
+"required": [
+"first_name",
+"last_name"
+],
+"title": "AddContactRequest"
+},
+"ContactResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"customer_id": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+},
+"first_name": {
+"type": "string",
+"title": "First Name"
+},
+"last_name": {
+"type": "string",
+"title": "Last Name"
+},
+"title": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Title"
+},
+"email": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Email"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"mobile": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Mobile"
+},
+"is_primary": {
+"type": "boolean",
+"title": "Is Primary"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"customer_id",
+"first_name",
+"last_name",
+"title",
+"email",
+"phone",
+"mobile",
+"is_primary",
+"created_at",
+"updated_at"
+],
+"title": "ContactResponse"
+},
+"CreateCustomerRequest": {
+"properties": {
+"company_name": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Company Name"
+},
+"industry": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Industry"
+},
+"website": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Website"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"email": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Email"
+},
+"address": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Address"
+},
+"city": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "City"
+},
+"state": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "State"
+},
+"country": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Country"
+},
+"postal_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Postal Code"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"tags": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Tags",
+"default": []
+}
+},
+"type": "object",
+"required": [
+"company_name"
+],
+"title": "CreateCustomerRequest"
+},
+"CustomerResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"company_name": {
+"type": "string",
+"title": "Company Name"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"industry": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Industry"
+},
+"website": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Website"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"email": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Email"
+},
+"address": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Address"
+},
+"city": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "City"
+},
+"state": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "State"
+},
+"country": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Country"
+},
+"postal_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Postal Code"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"tags": {
+"items": {},
+"type": "array",
+"title": "Tags"
+},
+"created_by": {
+"type": "string",
+"format": "uuid",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"company_name",
+"status",
+"industry",
+"website",
+"phone",
+"email",
+"address",
+"city",
+"state",
+"country",
+"postal_code",
+"notes",
+"tags",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "CustomerResponse"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"InteractionResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"customer_id": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+},
+"interaction_type": {
+"type": "string",
+"title": "Interaction Type"
+},
+"subject": {
+"type": "string",
+"title": "Subject"
+},
+"body": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Body"
+},
+"contact_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Contact Id"
+},
+"created_by": {
+"type": "string",
+"format": "uuid",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"customer_id",
+"interaction_type",
+"subject",
+"body",
+"contact_id",
+"created_by",
+"created_at"
+],
+"title": "InteractionResponse"
+},
+"LogInteractionRequest": {
+"properties": {
+"interaction_type": {
+"type": "string",
+"minLength": 1,
+"title": "Interaction Type"
+},
+"subject": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Subject"
+},
+"body": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Body"
+},
+"contact_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Contact Id"
+},
+"scheduled_at": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Scheduled At"
+},
+"duration_minutes": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Duration Minutes"
+}
+},
+"type": "object",
+"required": [
+"interaction_type",
+"subject"
+],
+"title": "LogInteractionRequest"
+},
+"TransitionStatusRequest": {
+"properties": {
+"new_status": {
+"type": "string",
+"minLength": 1,
+"title": "New Status"
+}
+},
+"type": "object",
+"required": [
+"new_status"
+],
+"title": "TransitionStatusRequest"
+},
+"UpdateCustomerRequest": {
+"properties": {
+"company_name": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Company Name"
+},
+"industry": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Industry"
+},
+"website": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Website"
+},
+"phone": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Phone"
+},
+"email": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Email"
+},
+"address": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Address"
+},
+"city": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "City"
+},
+"state": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "State"
+},
+"country": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Country"
+},
+"postal_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Postal Code"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"tags": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Tags"
+}
+},
+"type": "object",
+"title": "UpdateCustomerRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

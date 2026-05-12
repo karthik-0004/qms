@@ -1,0 +1,612 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Image Service",
+"description": "EndGameBiotech — Plate Image Capture and Storage",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Health Health Get"
+}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Ready Ready Get"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/images": {
+"get": {
+"tags": [
+"Images"
+],
+"summary": "List images (paginated)",
+"operationId": "list_images_api_v1_images_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "offset",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Offset"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 100,
+"minimum": 1,
+"default": 20,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response List Images Api V1 Images Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Images"
+],
+"summary": "Register a plate image",
+"operationId": "register_image_api_v1_images_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/RegisterImageRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ImageResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/images/{image_id}": {
+"get": {
+"tags": [
+"Images"
+],
+"summary": "Get image details",
+"operationId": "get_image_api_v1_images__image_id__get",
+"parameters": [
+{
+"name": "image_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Image Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ImageResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"delete": {
+"tags": [
+"Images"
+],
+"summary": "Soft-delete an image",
+"operationId": "delete_image_api_v1_images__image_id__delete",
+"parameters": [
+{
+"name": "image_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Image Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"204": {
+"description": "Successful Response"
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/images/{image_id}/set-primary": {
+"post": {
+"tags": [
+"Images"
+],
+"summary": "Set image as primary for plate",
+"operationId": "set_primary_api_v1_images__image_id__set_primary_post",
+"parameters": [
+{
+"name": "image_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Image Id"
+}
+},
+{
+"name": "plate_id",
+"in": "query",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Plate Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": false,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ImageResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"ImageResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"plate_id": {
+"type": "string",
+"title": "Plate Id"
+},
+"image_key": {
+"type": "string",
+"title": "Image Key"
+},
+"image_type": {
+"type": "string",
+"title": "Image Type"
+},
+"captured_at": {
+"type": "string",
+"format": "date-time",
+"title": "Captured At"
+},
+"uploaded_by": {
+"type": "string",
+"title": "Uploaded By"
+},
+"file_size_bytes": {
+"type": "integer",
+"title": "File Size Bytes"
+},
+"width_px": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Width Px"
+},
+"height_px": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Height Px"
+},
+"resolution_dpi": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Resolution Dpi"
+},
+"magnification": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Magnification"
+},
+"camera_settings": {
+"type": "object",
+"title": "Camera Settings"
+},
+"is_primary": {
+"type": "boolean",
+"title": "Is Primary"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"plate_id",
+"image_key",
+"image_type",
+"captured_at",
+"uploaded_by",
+"file_size_bytes",
+"width_px",
+"height_px",
+"resolution_dpi",
+"magnification",
+"camera_settings",
+"is_primary",
+"status",
+"created_at",
+"updated_at"
+],
+"title": "ImageResponse"
+},
+"RegisterImageRequest": {
+"properties": {
+"plate_id": {
+"type": "string",
+"title": "Plate Id"
+},
+"image_key": {
+"type": "string",
+"minLength": 1,
+"title": "Image Key"
+},
+"image_type": {
+"type": "string",
+"minLength": 1,
+"title": "Image Type"
+},
+"captured_at": {
+"type": "string",
+"format": "date-time",
+"title": "Captured At"
+},
+"file_size_bytes": {
+"type": "integer",
+"title": "File Size Bytes",
+"default": 0
+},
+"width_px": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Width Px"
+},
+"height_px": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Height Px"
+},
+"resolution_dpi": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Resolution Dpi"
+},
+"magnification": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Magnification"
+},
+"camera_settings": {
+"type": "object",
+"title": "Camera Settings",
+"default": {}
+},
+"is_primary": {
+"type": "boolean",
+"title": "Is Primary",
+"default": false
+}
+},
+"type": "object",
+"required": [
+"plate_id",
+"image_key",
+"image_type",
+"captured_at"
+],
+"title": "RegisterImageRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

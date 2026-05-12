@@ -1,0 +1,1171 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Rainer Quality Event Service",
+"description": "QMS Quality Event tracking and management",
+"version": "0.1.0"
+},
+"paths": {
+"/api/v1/quality-events": {
+"get": {
+"tags": [
+"Quality Events"
+],
+"summary": "List quality events",
+"operationId": "list_events_api_v1_quality_events_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "event_type",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Event Type"
+}
+},
+{
+"name": "severity",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Severity"
+}
+},
+{
+"name": "assigned_to",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+}
+},
+{
+"name": "department",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+}
+},
+{
+"name": "page",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 1,
+"description": "Page number",
+"default": 1,
+"title": "Page"
+},
+"description": "Page number"
+},
+{
+"name": "page_size",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"description": "Items per page",
+"default": 20,
+"title": "Page Size"
+},
+"description": "Items per page"
+},
+{
+"name": "sort",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"description": "Sort field, prefix with - for desc",
+"title": "Sort"
+},
+"description": "Sort field, prefix with - for desc"
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaginatedResponse_QualityEventResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Quality Events"
+],
+"summary": "Create a quality event",
+"operationId": "create_event_api_v1_quality_events_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateQualityEventRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_QualityEventResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/quality-events/summary": {
+"get": {
+"tags": [
+"Quality Events"
+],
+"summary": "Get quality events summary by status",
+"operationId": "get_summary_api_v1_quality_events_summary_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_QualityEventSummaryResponse_"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+},
+"/api/v1/quality-events/{event_id}": {
+"get": {
+"tags": [
+"Quality Events"
+],
+"summary": "Get quality event details",
+"operationId": "get_event_api_v1_quality_events__event_id__get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "event_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Event Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_QualityEventResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"patch": {
+"tags": [
+"Quality Events"
+],
+"summary": "Update a quality event",
+"operationId": "update_event_api_v1_quality_events__event_id__patch",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "event_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Event Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/UpdateQualityEventRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_QualityEventResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"delete": {
+"tags": [
+"Quality Events"
+],
+"summary": "Delete a quality event",
+"operationId": "delete_event_api_v1_quality_events__event_id__delete",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "event_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Event Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/MessageResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/quality-events/{event_id}/close": {
+"post": {
+"tags": [
+"Quality Events"
+],
+"summary": "Close a quality event",
+"operationId": "close_event_api_v1_quality_events__event_id__close_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "event_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Event Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CloseQualityEventRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_QualityEventResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"CloseQualityEventRequest": {
+"properties": {
+"resolution": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Resolution"
+}
+},
+"type": "object",
+"title": "CloseQualityEventRequest"
+},
+"CreateQualityEventRequest": {
+"properties": {
+"event_number": {
+"type": "string",
+"maxLength": 50,
+"minLength": 1,
+"title": "Event Number"
+},
+"title": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Title"
+},
+"event_type": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Event Type"
+},
+"description": {
+"type": "string",
+"minLength": 1,
+"title": "Description"
+},
+"detected_at": {
+"type": "string",
+"format": "date-time",
+"title": "Detected At"
+},
+"severity": {
+"type": "string",
+"title": "Severity",
+"default": "minor"
+},
+"priority": {
+"type": "string",
+"title": "Priority",
+"default": "medium"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"location": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"immediate_action": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Immediate Action"
+},
+"capa_required": {
+"type": "boolean",
+"title": "Capa Required",
+"default": false
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"tags": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Tags",
+"default": []
+}
+},
+"type": "object",
+"required": [
+"event_number",
+"title",
+"event_type",
+"description",
+"detected_at"
+],
+"title": "CreateQualityEventRequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"MessageResponse": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"message": {
+"type": "string",
+"title": "Message"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"message"
+],
+"title": "MessageResponse"
+},
+"PaginatedResponse_QualityEventResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/QualityEventResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"pagination": {
+"$ref": "#/components/schemas/PaginationMeta"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data",
+"pagination"
+],
+"title": "PaginatedResponse[QualityEventResponse]"
+},
+"PaginationMeta": {
+"properties": {
+"page": {
+"type": "integer",
+"title": "Page"
+},
+"page_size": {
+"type": "integer",
+"title": "Page Size"
+},
+"total": {
+"type": "integer",
+"title": "Total"
+},
+"total_pages": {
+"type": "integer",
+"title": "Total Pages"
+},
+"has_next": {
+"type": "boolean",
+"title": "Has Next"
+},
+"has_prev": {
+"type": "boolean",
+"title": "Has Prev"
+}
+},
+"type": "object",
+"required": [
+"page",
+"page_size",
+"total",
+"total_pages",
+"has_next",
+"has_prev"
+],
+"title": "PaginationMeta"
+},
+"QualityEventResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"event_number": {
+"type": "string",
+"title": "Event Number"
+},
+"title": {
+"type": "string",
+"title": "Title"
+},
+"event_type": {
+"type": "string",
+"title": "Event Type"
+},
+"description": {
+"type": "string",
+"title": "Description"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"severity": {
+"type": "string",
+"title": "Severity"
+},
+"priority": {
+"type": "string",
+"title": "Priority"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"location": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location"
+},
+"detected_at": {
+"type": "string",
+"format": "date-time",
+"title": "Detected At"
+},
+"detected_by": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Detected By"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"root_cause": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Root Cause"
+},
+"immediate_action": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Immediate Action"
+},
+"capa_required": {
+"type": "boolean",
+"title": "Capa Required"
+},
+"capa_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Capa Id"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"closed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Closed At"
+},
+"tags": {
+"items": {},
+"type": "array",
+"title": "Tags"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"event_number",
+"title",
+"event_type",
+"description",
+"status",
+"severity",
+"priority",
+"department",
+"location",
+"detected_at",
+"detected_by",
+"assigned_to",
+"root_cause",
+"immediate_action",
+"capa_required",
+"capa_id",
+"due_date",
+"closed_at",
+"tags",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "QualityEventResponse"
+},
+"QualityEventSummaryResponse": {
+"properties": {
+"by_status": {
+"additionalProperties": true,
+"type": "object",
+"title": "By Status"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+}
+},
+"type": "object",
+"required": [
+"by_status",
+"tenant_id"
+],
+"title": "QualityEventSummaryResponse"
+},
+"ResponseMeta": {
+"properties": {
+"request_id": {
+"type": "string",
+"title": "Request Id"
+},
+"timestamp": {
+"type": "string",
+"title": "Timestamp"
+},
+"service": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service"
+},
+"version": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Version"
+}
+},
+"type": "object",
+"title": "ResponseMeta"
+},
+"SuccessResponse_QualityEventResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/QualityEventResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[QualityEventResponse]"
+},
+"SuccessResponse_QualityEventSummaryResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/QualityEventSummaryResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[QualityEventSummaryResponse]"
+},
+"UpdateQualityEventRequest": {
+"properties": {
+"title": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Title"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"severity": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Severity"
+},
+"priority": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Priority"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"location": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"root_cause": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Root Cause"
+},
+"immediate_action": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Immediate Action"
+},
+"capa_required": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Capa Required"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"tags": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Tags"
+}
+},
+"type": "object",
+"title": "UpdateQualityEventRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+},
+"input": {
+"title": "Input"
+},
+"ctx": {
+"type": "object",
+"title": "Context"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+},
+"securitySchemes": {
+"HTTPBearer": {
+"type": "http",
+"scheme": "bearer"
+}
+}
+}
+}

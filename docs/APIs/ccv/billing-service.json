@@ -1,0 +1,1174 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Billing Service",
+"description": "RainerCCV — Invoice generation, payment tracking, billing lifecycle",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/api/v1/invoices": {
+"get": {
+"tags": [
+"Invoices"
+],
+"summary": "List invoices",
+"operationId": "list_invoices_api_v1_invoices_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "customer_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Customer Id"
+}
+},
+{
+"name": "skip",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Skip"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"default": 50,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/InvoiceResponse"
+},
+"title": "Response List Invoices Api V1 Invoices Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Invoices"
+],
+"summary": "Create invoice",
+"operationId": "create_invoice_api_v1_invoices_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateInvoiceRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InvoiceResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/invoices/{invoice_id}/status": {
+"post": {
+"tags": [
+"Invoices"
+],
+"summary": "Transition invoice status",
+"operationId": "transition_status_api_v1_invoices__invoice_id__status_post",
+"parameters": [
+{
+"name": "invoice_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TransitionStatusRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InvoiceResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/invoices/{invoice_id}/line-items": {
+"get": {
+"tags": [
+"Invoices"
+],
+"summary": "List invoice line items",
+"operationId": "list_line_items_api_v1_invoices__invoice_id__line_items_get",
+"parameters": [
+{
+"name": "invoice_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/InvoiceLineItemResponse"
+},
+"title": "Response List Line Items Api V1 Invoices  Invoice Id  Line Items Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Invoices"
+],
+"summary": "Add line item",
+"operationId": "add_line_item_api_v1_invoices__invoice_id__line_items_post",
+"parameters": [
+{
+"name": "invoice_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddLineItemRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InvoiceLineItemResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/invoices/{invoice_id}/payments": {
+"get": {
+"tags": [
+"Invoices"
+],
+"summary": "List payments",
+"operationId": "list_payments_api_v1_invoices__invoice_id__payments_get",
+"parameters": [
+{
+"name": "invoice_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/PaymentResponse"
+},
+"title": "Response List Payments Api V1 Invoices  Invoice Id  Payments Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Invoices"
+],
+"summary": "Record payment",
+"operationId": "record_payment_api_v1_invoices__invoice_id__payments_post",
+"parameters": [
+{
+"name": "invoice_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/RecordPaymentRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaymentResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/invoices/{invoice_id}": {
+"get": {
+"tags": [
+"Invoices"
+],
+"summary": "Get invoice",
+"operationId": "get_invoice_api_v1_invoices__invoice_id__get",
+"parameters": [
+{
+"name": "invoice_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/InvoiceResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"AddLineItemRequest": {
+"properties": {
+"description": {
+"type": "string",
+"maxLength": 500,
+"minLength": 1,
+"title": "Description"
+},
+"unit_price": {
+"type": "number",
+"minimum": 0,
+"title": "Unit Price"
+},
+"quantity": {
+"type": "number",
+"exclusiveMinimum": 0,
+"title": "Quantity",
+"default": 1
+},
+"unit": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Unit"
+},
+"tax_rate": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Tax Rate"
+},
+"sort_order": {
+"type": "integer",
+"title": "Sort Order",
+"default": 0
+}
+},
+"type": "object",
+"required": [
+"description",
+"unit_price"
+],
+"title": "AddLineItemRequest"
+},
+"CreateInvoiceRequest": {
+"properties": {
+"customer_id": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+},
+"contract_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Contract Id"
+},
+"work_order_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Work Order Id"
+},
+"invoice_number": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Invoice Number"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"currency": {
+"type": "string",
+"title": "Currency",
+"default": "USD"
+},
+"tax_rate": {
+"type": "number",
+"title": "Tax Rate",
+"default": 0
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"payment_terms": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Payment Terms"
+}
+},
+"type": "object",
+"required": [
+"customer_id",
+"invoice_number"
+],
+"title": "CreateInvoiceRequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"InvoiceLineItemResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"invoice_id": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+},
+"description": {
+"type": "string",
+"title": "Description"
+},
+"unit_price": {
+"type": "number",
+"title": "Unit Price"
+},
+"quantity": {
+"type": "number",
+"title": "Quantity"
+},
+"unit": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Unit"
+},
+"tax_rate": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Tax Rate"
+},
+"line_total": {
+"type": "number",
+"title": "Line Total"
+},
+"sort_order": {
+"type": "integer",
+"title": "Sort Order"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"invoice_id",
+"description",
+"unit_price",
+"quantity",
+"unit",
+"line_total",
+"sort_order",
+"created_at"
+],
+"title": "InvoiceLineItemResponse"
+},
+"InvoiceResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"customer_id": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+},
+"contract_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Contract Id"
+},
+"work_order_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Work Order Id"
+},
+"invoice_number": {
+"type": "string",
+"title": "Invoice Number"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"subtotal": {
+"type": "number",
+"title": "Subtotal"
+},
+"tax_amount": {
+"type": "number",
+"title": "Tax Amount"
+},
+"total_amount": {
+"type": "number",
+"title": "Total Amount"
+},
+"paid_amount": {
+"type": "number",
+"title": "Paid Amount"
+},
+"balance_due": {
+"type": "number",
+"title": "Balance Due"
+},
+"currency": {
+"type": "string",
+"title": "Currency"
+},
+"tax_rate": {
+"type": "number",
+"title": "Tax Rate"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"paid_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Paid Date"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"payment_terms": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Payment Terms"
+},
+"created_by": {
+"type": "string",
+"format": "uuid",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"customer_id",
+"contract_id",
+"work_order_id",
+"invoice_number",
+"status",
+"subtotal",
+"tax_amount",
+"total_amount",
+"paid_amount",
+"balance_due",
+"currency",
+"tax_rate",
+"due_date",
+"paid_date",
+"notes",
+"payment_terms",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "InvoiceResponse",
+"description": "Maps SQLAlchemy `Invoice` (paid_amount, balance_due, paid_date) to API field names."
+},
+"PaymentResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"invoice_id": {
+"type": "string",
+"format": "uuid",
+"title": "Invoice Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"amount": {
+"type": "number",
+"title": "Amount"
+},
+"payment_method": {
+"type": "string",
+"title": "Payment Method"
+},
+"reference_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Reference Number"
+},
+"payment_date": {
+"type": "string",
+"format": "date-time",
+"title": "Payment Date"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"created_by": {
+"type": "string",
+"format": "uuid",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"invoice_id",
+"tenant_id",
+"amount",
+"payment_method",
+"reference_number",
+"payment_date",
+"notes",
+"created_by",
+"created_at"
+],
+"title": "PaymentResponse"
+},
+"RecordPaymentRequest": {
+"properties": {
+"amount": {
+"type": "number",
+"exclusiveMinimum": 0,
+"title": "Amount"
+},
+"payment_method": {
+"type": "string",
+"minLength": 1,
+"title": "Payment Method"
+},
+"reference_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Reference Number"
+},
+"payment_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Payment Date"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"required": [
+"amount",
+"payment_method"
+],
+"title": "RecordPaymentRequest"
+},
+"TransitionStatusRequest": {
+"properties": {
+"new_status": {
+"type": "string",
+"minLength": 1,
+"title": "New Status"
+},
+"comment": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Comment"
+}
+},
+"type": "object",
+"required": [
+"new_status"
+],
+"title": "TransitionStatusRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

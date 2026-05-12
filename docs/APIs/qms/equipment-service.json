@@ -1,0 +1,1380 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Rainer Equipment Service",
+"description": "QMS Equipment asset management, calibration, and maintenance",
+"version": "0.1.0"
+},
+"paths": {
+"/api/v1/equipment": {
+"get": {
+"tags": [
+"Equipment"
+],
+"summary": "List equipment assets",
+"operationId": "list_equipment_api_v1_equipment_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "equipment_type",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Equipment Type"
+}
+},
+{
+"name": "department",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+}
+},
+{
+"name": "requires_calibration",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Requires Calibration"
+}
+},
+{
+"name": "page",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 1,
+"description": "Page number",
+"default": 1,
+"title": "Page"
+},
+"description": "Page number"
+},
+{
+"name": "page_size",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"description": "Items per page",
+"default": 20,
+"title": "Page Size"
+},
+"description": "Items per page"
+},
+{
+"name": "sort",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"description": "Sort field, prefix with - for desc",
+"title": "Sort"
+},
+"description": "Sort field, prefix with - for desc"
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaginatedResponse_EquipmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Equipment"
+],
+"summary": "Register equipment asset",
+"operationId": "create_equipment_api_v1_equipment_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateEquipmentRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_EquipmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/equipment/due-for-calibration": {
+"get": {
+"tags": [
+"Equipment"
+],
+"summary": "Get equipment due for calibration",
+"operationId": "due_for_calibration_api_v1_equipment_due_for_calibration_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "days_ahead",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 365,
+"minimum": 1,
+"default": 30,
+"title": "Days Ahead"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_list_EquipmentResponse__"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/equipment/{equipment_id}": {
+"get": {
+"tags": [
+"Equipment"
+],
+"summary": "Get equipment details",
+"operationId": "get_equipment_api_v1_equipment__equipment_id__get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "equipment_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Equipment Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_EquipmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"patch": {
+"tags": [
+"Equipment"
+],
+"summary": "Update equipment",
+"operationId": "update_equipment_api_v1_equipment__equipment_id__patch",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "equipment_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Equipment Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/UpdateEquipmentRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_EquipmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"delete": {
+"tags": [
+"Equipment"
+],
+"summary": "Delete equipment",
+"operationId": "delete_equipment_api_v1_equipment__equipment_id__delete",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "equipment_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Equipment Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/MessageResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/equipment/{equipment_id}/calibrate": {
+"post": {
+"tags": [
+"Equipment"
+],
+"summary": "Record equipment calibration",
+"operationId": "record_calibration_api_v1_equipment__equipment_id__calibrate_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "equipment_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Equipment Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/RecordCalibrationRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_EquipmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/equipment/{equipment_id}/decommission": {
+"post": {
+"tags": [
+"Equipment"
+],
+"summary": "Decommission equipment",
+"operationId": "decommission_api_v1_equipment__equipment_id__decommission_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "equipment_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Equipment Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/DecommissionRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_EquipmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"CreateEquipmentRequest": {
+"properties": {
+"asset_tag": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Asset Tag"
+},
+"name": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Name"
+},
+"equipment_type": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Equipment Type"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"manufacturer": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Manufacturer"
+},
+"model": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Model"
+},
+"serial_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Serial Number"
+},
+"location": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"requires_calibration": {
+"type": "boolean",
+"title": "Requires Calibration",
+"default": false
+},
+"calibration_frequency_days": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Calibration Frequency Days"
+},
+"requires_pm": {
+"type": "boolean",
+"title": "Requires Pm",
+"default": false
+},
+"pm_frequency_days": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Pm Frequency Days"
+},
+"purchase_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Purchase Date"
+},
+"warranty_expiry": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Warranty Expiry"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"tags": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Tags",
+"default": []
+}
+},
+"type": "object",
+"required": [
+"asset_tag",
+"name",
+"equipment_type"
+],
+"title": "CreateEquipmentRequest"
+},
+"DecommissionRequest": {
+"properties": {
+"reason": {
+"type": "string",
+"minLength": 1,
+"title": "Reason"
+}
+},
+"type": "object",
+"required": [
+"reason"
+],
+"title": "DecommissionRequest"
+},
+"EquipmentResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"asset_tag": {
+"type": "string",
+"title": "Asset Tag"
+},
+"name": {
+"type": "string",
+"title": "Name"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"equipment_type": {
+"type": "string",
+"title": "Equipment Type"
+},
+"manufacturer": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Manufacturer"
+},
+"model": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Model"
+},
+"serial_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Serial Number"
+},
+"location": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"requires_calibration": {
+"type": "boolean",
+"title": "Requires Calibration"
+},
+"calibration_frequency_days": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Calibration Frequency Days"
+},
+"last_calibration_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Last Calibration Date"
+},
+"next_calibration_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Next Calibration Date"
+},
+"requires_pm": {
+"type": "boolean",
+"title": "Requires Pm"
+},
+"pm_frequency_days": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Pm Frequency Days"
+},
+"last_pm_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Last Pm Date"
+},
+"next_pm_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Next Pm Date"
+},
+"purchase_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Purchase Date"
+},
+"warranty_expiry": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Warranty Expiry"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"tags": {
+"items": {},
+"type": "array",
+"title": "Tags"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"asset_tag",
+"name",
+"description",
+"equipment_type",
+"manufacturer",
+"model",
+"serial_number",
+"location",
+"department",
+"status",
+"requires_calibration",
+"calibration_frequency_days",
+"last_calibration_date",
+"next_calibration_date",
+"requires_pm",
+"pm_frequency_days",
+"last_pm_date",
+"next_pm_date",
+"purchase_date",
+"warranty_expiry",
+"assigned_to",
+"notes",
+"tags",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "EquipmentResponse"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"MessageResponse": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"message": {
+"type": "string",
+"title": "Message"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"message"
+],
+"title": "MessageResponse"
+},
+"PaginatedResponse_EquipmentResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/EquipmentResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"pagination": {
+"$ref": "#/components/schemas/PaginationMeta"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data",
+"pagination"
+],
+"title": "PaginatedResponse[EquipmentResponse]"
+},
+"PaginationMeta": {
+"properties": {
+"page": {
+"type": "integer",
+"title": "Page"
+},
+"page_size": {
+"type": "integer",
+"title": "Page Size"
+},
+"total": {
+"type": "integer",
+"title": "Total"
+},
+"total_pages": {
+"type": "integer",
+"title": "Total Pages"
+},
+"has_next": {
+"type": "boolean",
+"title": "Has Next"
+},
+"has_prev": {
+"type": "boolean",
+"title": "Has Prev"
+}
+},
+"type": "object",
+"required": [
+"page",
+"page_size",
+"total",
+"total_pages",
+"has_next",
+"has_prev"
+],
+"title": "PaginationMeta"
+},
+"RecordCalibrationRequest": {
+"properties": {
+"calibration_date": {
+"type": "string",
+"format": "date-time",
+"title": "Calibration Date"
+},
+"passed": {
+"type": "boolean",
+"title": "Passed"
+},
+"certificate_file_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Certificate File Id"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"required": [
+"calibration_date",
+"passed"
+],
+"title": "RecordCalibrationRequest"
+},
+"ResponseMeta": {
+"properties": {
+"request_id": {
+"type": "string",
+"title": "Request Id"
+},
+"timestamp": {
+"type": "string",
+"title": "Timestamp"
+},
+"service": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service"
+},
+"version": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Version"
+}
+},
+"type": "object",
+"title": "ResponseMeta"
+},
+"SuccessResponse_EquipmentResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/EquipmentResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[EquipmentResponse]"
+},
+"SuccessResponse_list_EquipmentResponse__": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/EquipmentResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[list[EquipmentResponse]]"
+},
+"UpdateEquipmentRequest": {
+"properties": {
+"name": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Name"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"location": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"manufacturer": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Manufacturer"
+},
+"model": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Model"
+},
+"serial_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Serial Number"
+},
+"assigned_to": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned To"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"tags": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Tags"
+},
+"warranty_expiry": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Warranty Expiry"
+}
+},
+"type": "object",
+"title": "UpdateEquipmentRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+},
+"input": {
+"title": "Input"
+},
+"ctx": {
+"type": "object",
+"title": "Context"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+},
+"securitySchemes": {
+"HTTPBearer": {
+"type": "http",
+"scheme": "bearer"
+}
+}
+}
+}

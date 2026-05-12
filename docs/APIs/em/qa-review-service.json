@@ -1,0 +1,932 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "QA Review Service",
+"description": "EndGameBiotech — QA Review Workflow for Plate Analysis Results",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Health Health Get"
+}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Ready Ready Get"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/reviews": {
+"get": {
+"tags": [
+"QA Reviews"
+],
+"summary": "List QA reviews (paginated)",
+"operationId": "list_reviews_api_v1_reviews_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "reviewer_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Reviewer Id"
+}
+},
+{
+"name": "priority",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Priority"
+}
+},
+{
+"name": "offset",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Offset"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 100,
+"minimum": 1,
+"default": 20,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response List Reviews Api V1 Reviews Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"QA Reviews"
+],
+"summary": "Create a QA review",
+"operationId": "create_review_api_v1_reviews_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateReviewRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReviewResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/reviews/{review_id}": {
+"get": {
+"tags": [
+"QA Reviews"
+],
+"summary": "Get review details",
+"operationId": "get_review_api_v1_reviews__review_id__get",
+"parameters": [
+{
+"name": "review_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Review Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReviewResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/reviews/{review_id}/assign": {
+"post": {
+"tags": [
+"QA Reviews"
+],
+"summary": "Assign reviewer",
+"operationId": "assign_reviewer_api_v1_reviews__review_id__assign_post",
+"parameters": [
+{
+"name": "review_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Review Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AssignReviewerRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReviewResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/reviews/{review_id}/transition": {
+"post": {
+"tags": [
+"QA Reviews"
+],
+"summary": "Transition review status",
+"operationId": "transition_status_api_v1_reviews__review_id__transition_post",
+"parameters": [
+{
+"name": "review_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Review Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TransitionStatusRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ReviewResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/reviews/{review_id}/comments": {
+"get": {
+"tags": [
+"QA Reviews"
+],
+"summary": "List review comments",
+"operationId": "list_comments_api_v1_reviews__review_id__comments_get",
+"parameters": [
+{
+"name": "review_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Review Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/CommentResponse"
+},
+"title": "Response List Comments Api V1 Reviews  Review Id  Comments Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"QA Reviews"
+],
+"summary": "Add comment to review",
+"operationId": "add_comment_api_v1_reviews__review_id__comments_post",
+"parameters": [
+{
+"name": "review_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Review Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddCommentRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CommentResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"AddCommentRequest": {
+"properties": {
+"body": {
+"type": "string",
+"minLength": 1,
+"title": "Body"
+},
+"is_internal": {
+"type": "boolean",
+"title": "Is Internal",
+"default": false
+}
+},
+"type": "object",
+"required": [
+"body"
+],
+"title": "AddCommentRequest"
+},
+"AssignReviewerRequest": {
+"properties": {
+"reviewer_id": {
+"type": "string",
+"title": "Reviewer Id"
+}
+},
+"type": "object",
+"required": [
+"reviewer_id"
+],
+"title": "AssignReviewerRequest"
+},
+"CommentResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"review_id": {
+"type": "string",
+"title": "Review Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"author_id": {
+"type": "string",
+"title": "Author Id"
+},
+"body": {
+"type": "string",
+"title": "Body"
+},
+"is_internal": {
+"type": "boolean",
+"title": "Is Internal"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"review_id",
+"tenant_id",
+"author_id",
+"body",
+"is_internal",
+"created_at"
+],
+"title": "CommentResponse"
+},
+"CreateReviewRequest": {
+"properties": {
+"plate_id": {
+"type": "string",
+"title": "Plate Id"
+},
+"analysis_run_id": {
+"type": "string",
+"title": "Analysis Run Id"
+},
+"priority": {
+"type": "string",
+"title": "Priority",
+"default": "normal"
+},
+"due_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due At"
+}
+},
+"type": "object",
+"required": [
+"plate_id",
+"analysis_run_id"
+],
+"title": "CreateReviewRequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"ReviewResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"plate_id": {
+"type": "string",
+"title": "Plate Id"
+},
+"analysis_run_id": {
+"type": "string",
+"title": "Analysis Run Id"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"priority": {
+"type": "string",
+"title": "Priority"
+},
+"reviewer_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Reviewer Id"
+},
+"assigned_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned At"
+},
+"review_started_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Review Started At"
+},
+"review_completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Review Completed At"
+},
+"decision": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Decision"
+},
+"review_notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Review Notes"
+},
+"override_colony_count": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Override Colony Count"
+},
+"override_reason": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Override Reason"
+},
+"ai_result_accepted": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Ai Result Accepted"
+},
+"due_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due At"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"plate_id",
+"analysis_run_id",
+"status",
+"priority",
+"reviewer_id",
+"assigned_at",
+"review_started_at",
+"review_completed_at",
+"decision",
+"review_notes",
+"override_colony_count",
+"override_reason",
+"ai_result_accepted",
+"due_at",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "ReviewResponse"
+},
+"TransitionStatusRequest": {
+"properties": {
+"new_status": {
+"type": "string",
+"minLength": 1,
+"title": "New Status"
+},
+"decision": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Decision"
+},
+"review_notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Review Notes"
+},
+"override_colony_count": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Override Colony Count"
+},
+"override_reason": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Override Reason"
+},
+"ai_result_accepted": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Ai Result Accepted"
+}
+},
+"type": "object",
+"required": [
+"new_status"
+],
+"title": "TransitionStatusRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

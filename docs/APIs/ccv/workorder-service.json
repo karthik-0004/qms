@@ -1,0 +1,1429 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Work Order Service",
+"description": "RainerCCV — Field work order management and technician dispatch",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders": {
+"get": {
+"tags": [
+"Work Orders"
+],
+"summary": "List work orders",
+"operationId": "list_workorders_api_v1_workorders_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "customer_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Customer Id"
+}
+},
+{
+"name": "technician_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Technician Id"
+}
+},
+{
+"name": "skip",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Skip"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"default": 50,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/WorkOrderResponse"
+},
+"title": "Response List Workorders Api V1 Workorders Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Work Orders"
+],
+"summary": "Create work order",
+"operationId": "create_workorder_api_v1_workorders_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateWorkOrderRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders/{wo_id}": {
+"get": {
+"tags": [
+"Work Orders"
+],
+"summary": "Get work order",
+"operationId": "get_workorder_api_v1_workorders__wo_id__get",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders/{wo_id}/status": {
+"post": {
+"tags": [
+"Work Orders"
+],
+"summary": "Transition work order status",
+"operationId": "transition_status_api_v1_workorders__wo_id__status_post",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TransitionStatusRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders/{wo_id}/assign": {
+"post": {
+"tags": [
+"Work Orders"
+],
+"summary": "Assign technician",
+"operationId": "assign_technician_api_v1_workorders__wo_id__assign_post",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AssignTechnicianRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders/{wo_id}/tasks": {
+"get": {
+"tags": [
+"Work Orders"
+],
+"summary": "List tasks",
+"operationId": "list_tasks_api_v1_workorders__wo_id__tasks_get",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/WorkOrderTaskResponse"
+},
+"title": "Response List Tasks Api V1 Workorders  Wo Id  Tasks Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Work Orders"
+],
+"summary": "Add task",
+"operationId": "add_task_api_v1_workorders__wo_id__tasks_post",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddTaskRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderTaskResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders/{wo_id}/tasks/{task_id}/complete": {
+"post": {
+"tags": [
+"Work Orders"
+],
+"summary": "Complete task",
+"operationId": "complete_task_api_v1_workorders__wo_id__tasks__task_id__complete_post",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "task_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Task Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CompleteTaskRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderTaskResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/workorders/{wo_id}/notes": {
+"get": {
+"tags": [
+"Work Orders"
+],
+"summary": "List notes",
+"operationId": "list_notes_api_v1_workorders__wo_id__notes_get",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/WorkOrderNoteResponse"
+},
+"title": "Response List Notes Api V1 Workorders  Wo Id  Notes Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Work Orders"
+],
+"summary": "Add note",
+"operationId": "add_note_api_v1_workorders__wo_id__notes_post",
+"parameters": [
+{
+"name": "wo_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "Wo Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"format": "uuid",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AddNoteRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/WorkOrderNoteResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"AddNoteRequest": {
+"properties": {
+"body": {
+"type": "string",
+"minLength": 1,
+"title": "Body"
+},
+"is_internal": {
+"type": "boolean",
+"title": "Is Internal",
+"default": false
+}
+},
+"type": "object",
+"required": [
+"body"
+],
+"title": "AddNoteRequest"
+},
+"AddTaskRequest": {
+"properties": {
+"title": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Title"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"sort_order": {
+"type": "integer",
+"title": "Sort Order",
+"default": 0
+}
+},
+"type": "object",
+"required": [
+"title"
+],
+"title": "AddTaskRequest"
+},
+"AssignTechnicianRequest": {
+"properties": {
+"technician_id": {
+"type": "string",
+"format": "uuid",
+"title": "Technician Id"
+}
+},
+"type": "object",
+"required": [
+"technician_id"
+],
+"title": "AssignTechnicianRequest"
+},
+"CompleteTaskRequest": {
+"properties": {
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"title": "CompleteTaskRequest"
+},
+"CreateWorkOrderRequest": {
+"properties": {
+"customer_id": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+},
+"contract_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Contract Id"
+},
+"work_order_number": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Work Order Number"
+},
+"title": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Title"
+},
+"work_type": {
+"type": "string",
+"minLength": 1,
+"title": "Work Type"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"priority": {
+"type": "string",
+"title": "Priority",
+"default": "normal"
+},
+"site_address": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site Address"
+},
+"site_city": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site City"
+},
+"site_state": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site State"
+},
+"site_postal_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site Postal Code"
+},
+"scheduled_start": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Scheduled Start"
+},
+"scheduled_end": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Scheduled End"
+},
+"estimated_hours": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Estimated Hours"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"required": [
+"customer_id",
+"work_order_number",
+"title",
+"work_type"
+],
+"title": "CreateWorkOrderRequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"TransitionStatusRequest": {
+"properties": {
+"new_status": {
+"type": "string",
+"minLength": 1,
+"title": "New Status"
+},
+"comment": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Comment"
+}
+},
+"type": "object",
+"required": [
+"new_status"
+],
+"title": "TransitionStatusRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+},
+"WorkOrderNoteResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"work_order_id": {
+"type": "string",
+"format": "uuid",
+"title": "Work Order Id"
+},
+"author_id": {
+"type": "string",
+"format": "uuid",
+"title": "Author Id"
+},
+"body": {
+"type": "string",
+"title": "Body"
+},
+"is_internal": {
+"type": "boolean",
+"title": "Is Internal"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"work_order_id",
+"author_id",
+"body",
+"is_internal",
+"created_at"
+],
+"title": "WorkOrderNoteResponse"
+},
+"WorkOrderResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"format": "uuid",
+"title": "Tenant Id"
+},
+"customer_id": {
+"type": "string",
+"format": "uuid",
+"title": "Customer Id"
+},
+"contract_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Contract Id"
+},
+"wo_number": {
+"type": "string",
+"title": "Wo Number"
+},
+"title": {
+"type": "string",
+"title": "Title"
+},
+"work_type": {
+"type": "string",
+"title": "Work Type"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"priority": {
+"type": "string",
+"title": "Priority"
+},
+"site_address": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site Address"
+},
+"site_city": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site City"
+},
+"site_state": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site State"
+},
+"site_postal_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Site Postal Code"
+},
+"assigned_technician_id": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned Technician Id"
+},
+"scheduled_start": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Scheduled Start"
+},
+"scheduled_end": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Scheduled End"
+},
+"actual_start": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Actual Start"
+},
+"actual_end": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Actual End"
+},
+"estimated_hours": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Estimated Hours"
+},
+"actual_hours": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Actual Hours"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"created_by": {
+"type": "string",
+"format": "uuid",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"customer_id",
+"contract_id",
+"wo_number",
+"title",
+"work_type",
+"description",
+"status",
+"priority",
+"site_address",
+"site_city",
+"site_state",
+"site_postal_code",
+"assigned_technician_id",
+"scheduled_start",
+"scheduled_end",
+"actual_start",
+"actual_end",
+"estimated_hours",
+"actual_hours",
+"notes",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "WorkOrderResponse"
+},
+"WorkOrderTaskResponse": {
+"properties": {
+"id": {
+"type": "string",
+"format": "uuid",
+"title": "Id"
+},
+"work_order_id": {
+"type": "string",
+"format": "uuid",
+"title": "Work Order Id"
+},
+"title": {
+"type": "string",
+"title": "Title"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"sort_order": {
+"type": "integer",
+"title": "Sort Order"
+},
+"completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Completed At"
+},
+"completed_by": {
+"anyOf": [
+{
+"type": "string",
+"format": "uuid"
+},
+{
+"type": "null"
+}
+],
+"title": "Completed By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"work_order_id",
+"title",
+"description",
+"status",
+"sort_order",
+"completed_at",
+"completed_by",
+"created_at"
+],
+"title": "WorkOrderTaskResponse"
+}
+}
+}
+}

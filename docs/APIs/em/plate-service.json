@@ -1,0 +1,752 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Plate Service",
+"description": "EndGameBiotech — Environmental Monitoring Plate Management",
+"version": "0.1.0"
+},
+"paths": {
+"/health": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Health",
+"operationId": "health_health_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Health Health Get"
+}
+}
+}
+}
+}
+}
+},
+"/ready": {
+"get": {
+"tags": [
+"ops"
+],
+"summary": "Ready",
+"operationId": "ready_ready_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response Ready Ready Get"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/plates": {
+"get": {
+"tags": [
+"Plates"
+],
+"summary": "List plates (paginated)",
+"operationId": "list_plates_api_v1_plates_get",
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "offset",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 0,
+"default": 0,
+"title": "Offset"
+}
+},
+{
+"name": "limit",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 100,
+"minimum": 1,
+"default": 20,
+"title": "Limit"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "object",
+"title": "Response List Plates Api V1 Plates Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Plates"
+],
+"summary": "Register a new plate",
+"operationId": "register_plate_api_v1_plates_post",
+"parameters": [
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/RegisterPlateRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PlateResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/plates/{plate_id}": {
+"get": {
+"tags": [
+"Plates"
+],
+"summary": "Get plate details",
+"operationId": "get_plate_api_v1_plates__plate_id__get",
+"parameters": [
+{
+"name": "plate_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Plate Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PlateResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/plates/{plate_id}/status": {
+"post": {
+"tags": [
+"Plates"
+],
+"summary": "Transition plate status",
+"operationId": "transition_status_api_v1_plates__plate_id__status_post",
+"parameters": [
+{
+"name": "plate_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Plate Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+},
+{
+"name": "x-user-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-User-Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/TransitionStatusRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PlateResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/plates/{plate_id}/history": {
+"get": {
+"tags": [
+"Plates"
+],
+"summary": "Get plate status history",
+"operationId": "get_history_api_v1_plates__plate_id__history_get",
+"parameters": [
+{
+"name": "plate_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Plate Id"
+}
+},
+{
+"name": "x-tenant-id",
+"in": "header",
+"required": true,
+"schema": {
+"type": "string",
+"title": "X-Tenant-Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/components/schemas/PlateStatusHistoryResponse"
+},
+"title": "Response Get History Api V1 Plates  Plate Id  History Get"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"PlateResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"barcode": {
+"type": "string",
+"title": "Barcode"
+},
+"sample_type": {
+"type": "string",
+"title": "Sample Type"
+},
+"media_type": {
+"type": "string",
+"title": "Media Type"
+},
+"incubation_temp_celsius": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Incubation Temp Celsius"
+},
+"incubation_hours": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Incubation Hours"
+},
+"location_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location Code"
+},
+"lot_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Lot Number"
+},
+"operator_id": {
+"type": "string",
+"title": "Operator Id"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"sampled_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Sampled At"
+},
+"incubation_started_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Incubation Started At"
+},
+"incubation_completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Incubation Completed At"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"barcode",
+"sample_type",
+"media_type",
+"incubation_temp_celsius",
+"incubation_hours",
+"location_code",
+"lot_number",
+"operator_id",
+"status",
+"notes",
+"sampled_at",
+"incubation_started_at",
+"incubation_completed_at",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "PlateResponse"
+},
+"PlateStatusHistoryResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"plate_id": {
+"type": "string",
+"title": "Plate Id"
+},
+"from_status": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "From Status"
+},
+"to_status": {
+"type": "string",
+"title": "To Status"
+},
+"changed_by": {
+"type": "string",
+"title": "Changed By"
+},
+"reason": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Reason"
+},
+"changed_at": {
+"type": "string",
+"format": "date-time",
+"title": "Changed At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"plate_id",
+"from_status",
+"to_status",
+"changed_by",
+"reason",
+"changed_at"
+],
+"title": "PlateStatusHistoryResponse"
+},
+"RegisterPlateRequest": {
+"properties": {
+"barcode": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Barcode"
+},
+"sample_type": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Sample Type"
+},
+"media_type": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Media Type"
+},
+"location_code": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Location Code"
+},
+"lot_number": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Lot Number"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"incubation_temp_celsius": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Incubation Temp Celsius"
+},
+"incubation_hours": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Incubation Hours"
+},
+"metadata": {
+"type": "object",
+"title": "Metadata",
+"default": {}
+}
+},
+"type": "object",
+"required": [
+"barcode",
+"sample_type",
+"media_type"
+],
+"title": "RegisterPlateRequest"
+},
+"TransitionStatusRequest": {
+"properties": {
+"new_status": {
+"type": "string",
+"minLength": 1,
+"title": "New Status"
+},
+"reason": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Reason"
+}
+},
+"type": "object",
+"required": [
+"new_status"
+],
+"title": "TransitionStatusRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+}
+}
+}

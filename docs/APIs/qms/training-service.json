@@ -1,0 +1,1124 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Rainer Training Service",
+"description": "QMS Training course management and assignment tracking",
+"version": "0.1.0"
+},
+"paths": {
+"/api/v1/training/courses": {
+"get": {
+"tags": [
+"Training"
+],
+"summary": "List training courses",
+"operationId": "list_courses_api_v1_training_courses_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "department",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+}
+},
+{
+"name": "is_mandatory",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Is Mandatory"
+}
+},
+{
+"name": "page",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 1,
+"description": "Page number",
+"default": 1,
+"title": "Page"
+},
+"description": "Page number"
+},
+{
+"name": "page_size",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"description": "Items per page",
+"default": 20,
+"title": "Page Size"
+},
+"description": "Items per page"
+},
+{
+"name": "sort",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"description": "Sort field, prefix with - for desc",
+"title": "Sort"
+},
+"description": "Sort field, prefix with - for desc"
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaginatedResponse_TrainingCourseResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Training"
+],
+"summary": "Create a training course",
+"operationId": "create_course_api_v1_training_courses_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateCourseRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_TrainingCourseResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/training/courses/{course_id}": {
+"get": {
+"tags": [
+"Training"
+],
+"summary": "Get course details",
+"operationId": "get_course_api_v1_training_courses__course_id__get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "course_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Course Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_TrainingCourseResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/training/courses/{course_id}/assign": {
+"post": {
+"tags": [
+"Training"
+],
+"summary": "Assign training to a user",
+"operationId": "assign_training_api_v1_training_courses__course_id__assign_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "course_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Course Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/AssignTrainingRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_TrainingAssignmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/training/assignments": {
+"get": {
+"tags": [
+"Training"
+],
+"summary": "List assignments for the current user",
+"operationId": "my_assignments_api_v1_training_assignments_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "page",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 1,
+"description": "Page number",
+"default": 1,
+"title": "Page"
+},
+"description": "Page number"
+},
+{
+"name": "page_size",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"description": "Items per page",
+"default": 20,
+"title": "Page Size"
+},
+"description": "Items per page"
+},
+{
+"name": "sort",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"description": "Sort field, prefix with - for desc",
+"title": "Sort"
+},
+"description": "Sort field, prefix with - for desc"
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaginatedResponse_TrainingAssignmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/training/assignments/{assignment_id}/complete": {
+"post": {
+"tags": [
+"Training"
+],
+"summary": "Complete a training assignment",
+"operationId": "complete_training_api_v1_training_assignments__assignment_id__complete_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "assignment_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Assignment Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CompleteTrainingRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_TrainingAssignmentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/training/assignments/overdue": {
+"get": {
+"tags": [
+"Training"
+],
+"summary": "Get overdue training assignments",
+"operationId": "overdue_assignments_api_v1_training_assignments_overdue_get",
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_list_TrainingAssignmentResponse__"
+}
+}
+}
+}
+},
+"security": [
+{
+"HTTPBearer": []
+}
+]
+}
+}
+},
+"components": {
+"schemas": {
+"AssignTrainingRequest": {
+"properties": {
+"user_id": {
+"type": "string",
+"title": "User Id"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+}
+},
+"type": "object",
+"required": [
+"user_id"
+],
+"title": "AssignTrainingRequest"
+},
+"CompleteTrainingRequest": {
+"properties": {
+"score": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Score"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+}
+},
+"type": "object",
+"title": "CompleteTrainingRequest"
+},
+"CreateCourseRequest": {
+"properties": {
+"course_code": {
+"type": "string",
+"maxLength": 50,
+"minLength": 1,
+"title": "Course Code"
+},
+"title": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Title"
+},
+"course_type": {
+"type": "string",
+"title": "Course Type",
+"default": "online"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"document_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Document Id"
+},
+"duration_hours": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Duration Hours"
+},
+"passing_score": {
+"type": "integer",
+"title": "Passing Score",
+"default": 80
+},
+"requires_certification": {
+"type": "boolean",
+"title": "Requires Certification",
+"default": false
+},
+"recurrence_days": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Recurrence Days"
+},
+"is_mandatory": {
+"type": "boolean",
+"title": "Is Mandatory",
+"default": false
+}
+},
+"type": "object",
+"required": [
+"course_code",
+"title"
+],
+"title": "CreateCourseRequest"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"PaginatedResponse_TrainingAssignmentResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/TrainingAssignmentResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"pagination": {
+"$ref": "#/components/schemas/PaginationMeta"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data",
+"pagination"
+],
+"title": "PaginatedResponse[TrainingAssignmentResponse]"
+},
+"PaginatedResponse_TrainingCourseResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/TrainingCourseResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"pagination": {
+"$ref": "#/components/schemas/PaginationMeta"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data",
+"pagination"
+],
+"title": "PaginatedResponse[TrainingCourseResponse]"
+},
+"PaginationMeta": {
+"properties": {
+"page": {
+"type": "integer",
+"title": "Page"
+},
+"page_size": {
+"type": "integer",
+"title": "Page Size"
+},
+"total": {
+"type": "integer",
+"title": "Total"
+},
+"total_pages": {
+"type": "integer",
+"title": "Total Pages"
+},
+"has_next": {
+"type": "boolean",
+"title": "Has Next"
+},
+"has_prev": {
+"type": "boolean",
+"title": "Has Prev"
+}
+},
+"type": "object",
+"required": [
+"page",
+"page_size",
+"total",
+"total_pages",
+"has_next",
+"has_prev"
+],
+"title": "PaginationMeta"
+},
+"ResponseMeta": {
+"properties": {
+"request_id": {
+"type": "string",
+"title": "Request Id"
+},
+"timestamp": {
+"type": "string",
+"title": "Timestamp"
+},
+"service": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service"
+},
+"version": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Version"
+}
+},
+"type": "object",
+"title": "ResponseMeta"
+},
+"SuccessResponse_TrainingAssignmentResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/TrainingAssignmentResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[TrainingAssignmentResponse]"
+},
+"SuccessResponse_TrainingCourseResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/TrainingCourseResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[TrainingCourseResponse]"
+},
+"SuccessResponse_list_TrainingAssignmentResponse__": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/TrainingAssignmentResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[list[TrainingAssignmentResponse]]"
+},
+"TrainingAssignmentResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"course_id": {
+"type": "string",
+"title": "Course Id"
+},
+"user_id": {
+"type": "string",
+"title": "User Id"
+},
+"assigned_by": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Assigned By"
+},
+"due_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Due Date"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"score": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Score"
+},
+"passed": {
+"anyOf": [
+{
+"type": "boolean"
+},
+{
+"type": "null"
+}
+],
+"title": "Passed"
+},
+"completed_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Completed At"
+},
+"cert_expiry_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Cert Expiry Date"
+},
+"notes": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Notes"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"course_id",
+"user_id",
+"assigned_by",
+"due_date",
+"status",
+"score",
+"passed",
+"completed_at",
+"cert_expiry_date",
+"notes",
+"created_at",
+"updated_at"
+],
+"title": "TrainingAssignmentResponse"
+},
+"TrainingCourseResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"course_code": {
+"type": "string",
+"title": "Course Code"
+},
+"title": {
+"type": "string",
+"title": "Title"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"course_type": {
+"type": "string",
+"title": "Course Type"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"document_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Document Id"
+},
+"duration_hours": {
+"anyOf": [
+{
+"type": "number"
+},
+{
+"type": "null"
+}
+],
+"title": "Duration Hours"
+},
+"passing_score": {
+"type": "integer",
+"title": "Passing Score"
+},
+"requires_certification": {
+"type": "boolean",
+"title": "Requires Certification"
+},
+"recurrence_days": {
+"anyOf": [
+{
+"type": "integer"
+},
+{
+"type": "null"
+}
+],
+"title": "Recurrence Days"
+},
+"is_mandatory": {
+"type": "boolean",
+"title": "Is Mandatory"
+},
+"is_active": {
+"type": "boolean",
+"title": "Is Active"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"course_code",
+"title",
+"description",
+"course_type",
+"department",
+"document_id",
+"duration_hours",
+"passing_score",
+"requires_certification",
+"recurrence_days",
+"is_mandatory",
+"is_active",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "TrainingCourseResponse"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+},
+"input": {
+"title": "Input"
+},
+"ctx": {
+"type": "object",
+"title": "Context"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+},
+"securitySchemes": {
+"HTTPBearer": {
+"type": "http",
+"scheme": "bearer"
+}
+}
+}
+}

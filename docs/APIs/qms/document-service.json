@@ -1,0 +1,1509 @@
+{
+"openapi": "3.1.0",
+"info": {
+"title": "Rainer Document Service",
+"description": "QMS Document Control — lifecycle management, e-signatures, version history",
+"version": "0.1.0"
+},
+"paths": {
+"/api/v1/documents": {
+"get": {
+"tags": [
+"Documents"
+],
+"summary": "List documents (filtered, paginated)",
+"operationId": "list_documents_api_v1_documents_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "status",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Status"
+}
+},
+{
+"name": "doc_type",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Doc Type"
+}
+},
+{
+"name": "department",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+}
+},
+{
+"name": "owner_id",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+}
+},
+{
+"name": "search",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Search"
+}
+},
+{
+"name": "page",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"minimum": 1,
+"description": "Page number",
+"default": 1,
+"title": "Page"
+},
+"description": "Page number"
+},
+{
+"name": "page_size",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 200,
+"minimum": 1,
+"description": "Items per page",
+"default": 20,
+"title": "Page Size"
+},
+"description": "Items per page"
+},
+{
+"name": "sort",
+"in": "query",
+"required": false,
+"schema": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"description": "Sort field, prefix with - for desc",
+"title": "Sort"
+},
+"description": "Sort field, prefix with - for desc"
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/PaginatedResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"post": {
+"tags": [
+"Documents"
+],
+"summary": "Create a new document",
+"operationId": "create_document_api_v1_documents_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/CreateDocumentRequest"
+}
+}
+}
+},
+"responses": {
+"201": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/{document_id}": {
+"get": {
+"tags": [
+"Documents"
+],
+"summary": "Get document details",
+"operationId": "get_document_api_v1_documents__document_id__get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"patch": {
+"tags": [
+"Documents"
+],
+"summary": "Update draft document",
+"operationId": "update_document_api_v1_documents__document_id__patch",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/UpdateDocumentRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+},
+"delete": {
+"tags": [
+"Documents"
+],
+"summary": "Delete a draft document",
+"operationId": "delete_document_api_v1_documents__document_id__delete",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/MessageResponse"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/{document_id}/submit-for-review": {
+"post": {
+"tags": [
+"Documents"
+],
+"summary": "Submit document for approval review",
+"operationId": "submit_for_review_api_v1_documents__document_id__submit_for_review_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SubmitForReviewRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/{document_id}/approve": {
+"post": {
+"tags": [
+"Documents"
+],
+"summary": "Approve document (requires e-signature)",
+"operationId": "approve_document_api_v1_documents__document_id__approve_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/ApproveDocumentRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/{document_id}/reject": {
+"post": {
+"tags": [
+"Documents"
+],
+"summary": "Reject document (returns to draft)",
+"operationId": "reject_document_api_v1_documents__document_id__reject_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"requestBody": {
+"required": true,
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/RejectDocumentRequest"
+}
+}
+}
+},
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/{document_id}/make-obsolete": {
+"post": {
+"tags": [
+"Documents"
+],
+"summary": "Mark approved document as obsolete",
+"operationId": "make_obsolete_api_v1_documents__document_id__make_obsolete_post",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_DocumentResponse_"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/{document_id}/versions": {
+"get": {
+"tags": [
+"Documents"
+],
+"summary": "Get document version history",
+"operationId": "get_versions_api_v1_documents__document_id__versions_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "document_id",
+"in": "path",
+"required": true,
+"schema": {
+"type": "string",
+"title": "Document Id"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_list_DocumentVersionResponse__"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+},
+"/api/v1/documents/due-for-review": {
+"get": {
+"tags": [
+"Documents"
+],
+"summary": "Get documents due for periodic review",
+"operationId": "due_for_review_api_v1_documents_due_for_review_get",
+"security": [
+{
+"HTTPBearer": []
+}
+],
+"parameters": [
+{
+"name": "days_ahead",
+"in": "query",
+"required": false,
+"schema": {
+"type": "integer",
+"maximum": 365,
+"minimum": 1,
+"default": 30,
+"title": "Days Ahead"
+}
+}
+],
+"responses": {
+"200": {
+"description": "Successful Response",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/SuccessResponse_list_DocumentResponse__"
+}
+}
+}
+},
+"422": {
+"description": "Validation Error",
+"content": {
+"application/json": {
+"schema": {
+"$ref": "#/components/schemas/HTTPValidationError"
+}
+}
+}
+}
+}
+}
+}
+},
+"components": {
+"schemas": {
+"ApproveDocumentRequest": {
+"properties": {
+"signature": {
+"type": "string",
+"minLength": 1,
+"title": "Signature",
+"description": "E-signature passphrase or token"
+},
+"comment": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Comment"
+},
+"effective_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Effective Date"
+},
+"review_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Review Date"
+}
+},
+"type": "object",
+"required": [
+"signature"
+],
+"title": "ApproveDocumentRequest"
+},
+"CreateDocumentRequest": {
+"properties": {
+"doc_number": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 50,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Doc Number"
+},
+"title": {
+"type": "string",
+"maxLength": 255,
+"minLength": 1,
+"title": "Title"
+},
+"doc_type": {
+"type": "string",
+"maxLength": 100,
+"minLength": 1,
+"title": "Doc Type"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"owner_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+},
+"tags": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Tags",
+"default": []
+},
+"regulatory_frameworks": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Regulatory Frameworks",
+"default": []
+},
+"file_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "File Id"
+}
+},
+"type": "object",
+"required": [
+"title",
+"doc_type"
+],
+"title": "CreateDocumentRequest"
+},
+"DocumentResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"tenant_id": {
+"type": "string",
+"title": "Tenant Id"
+},
+"doc_number": {
+"type": "string",
+"title": "Doc Number"
+},
+"title": {
+"type": "string",
+"title": "Title"
+},
+"doc_type": {
+"type": "string",
+"title": "Doc Type"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"status": {
+"type": "string",
+"title": "Status"
+},
+"current_version": {
+"type": "string",
+"title": "Current Version"
+},
+"owner_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+},
+"approver_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Approver Id"
+},
+"effective_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Effective Date"
+},
+"review_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Review Date"
+},
+"expiry_date": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Expiry Date"
+},
+"workflow_instance_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Workflow Instance Id"
+},
+"file_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "File Id"
+},
+"tags": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Tags"
+},
+"regulatory_frameworks": {
+"items": {
+"type": "string"
+},
+"type": "array",
+"title": "Regulatory Frameworks"
+},
+"is_controlled": {
+"type": "boolean",
+"title": "Is Controlled"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+},
+"updated_at": {
+"type": "string",
+"format": "date-time",
+"title": "Updated At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"tenant_id",
+"doc_number",
+"title",
+"doc_type",
+"department",
+"description",
+"status",
+"current_version",
+"owner_id",
+"approver_id",
+"effective_date",
+"review_date",
+"expiry_date",
+"workflow_instance_id",
+"file_id",
+"tags",
+"regulatory_frameworks",
+"is_controlled",
+"created_by",
+"created_at",
+"updated_at"
+],
+"title": "DocumentResponse"
+},
+"DocumentVersionResponse": {
+"properties": {
+"id": {
+"type": "string",
+"title": "Id"
+},
+"document_id": {
+"type": "string",
+"title": "Document Id"
+},
+"version": {
+"type": "string",
+"title": "Version"
+},
+"file_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "File Id"
+},
+"change_summary": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Change Summary"
+},
+"approved_by": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Approved By"
+},
+"approved_at": {
+"anyOf": [
+{
+"type": "string",
+"format": "date-time"
+},
+{
+"type": "null"
+}
+],
+"title": "Approved At"
+},
+"signature_hash": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Signature Hash"
+},
+"created_by": {
+"type": "string",
+"title": "Created By"
+},
+"created_at": {
+"type": "string",
+"format": "date-time",
+"title": "Created At"
+}
+},
+"type": "object",
+"required": [
+"id",
+"document_id",
+"version",
+"file_id",
+"change_summary",
+"approved_by",
+"approved_at",
+"signature_hash",
+"created_by",
+"created_at"
+],
+"title": "DocumentVersionResponse"
+},
+"HTTPValidationError": {
+"properties": {
+"detail": {
+"items": {
+"$ref": "#/components/schemas/ValidationError"
+},
+"type": "array",
+"title": "Detail"
+}
+},
+"type": "object",
+"title": "HTTPValidationError"
+},
+"MessageResponse": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"message": {
+"type": "string",
+"title": "Message"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"message"
+],
+"title": "MessageResponse"
+},
+"PaginatedResponse_DocumentResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/DocumentResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"pagination": {
+"$ref": "#/components/schemas/PaginationMeta"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data",
+"pagination"
+],
+"title": "PaginatedResponse[DocumentResponse]"
+},
+"PaginationMeta": {
+"properties": {
+"page": {
+"type": "integer",
+"title": "Page"
+},
+"page_size": {
+"type": "integer",
+"title": "Page Size"
+},
+"total": {
+"type": "integer",
+"title": "Total"
+},
+"total_pages": {
+"type": "integer",
+"title": "Total Pages"
+},
+"has_next": {
+"type": "boolean",
+"title": "Has Next"
+},
+"has_prev": {
+"type": "boolean",
+"title": "Has Prev"
+}
+},
+"type": "object",
+"required": [
+"page",
+"page_size",
+"total",
+"total_pages",
+"has_next",
+"has_prev"
+],
+"title": "PaginationMeta"
+},
+"RejectDocumentRequest": {
+"properties": {
+"reason": {
+"type": "string",
+"minLength": 1,
+"title": "Reason"
+}
+},
+"type": "object",
+"required": [
+"reason"
+],
+"title": "RejectDocumentRequest"
+},
+"ResponseMeta": {
+"properties": {
+"request_id": {
+"type": "string",
+"title": "Request Id"
+},
+"timestamp": {
+"type": "string",
+"title": "Timestamp"
+},
+"service": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Service"
+},
+"version": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Version"
+}
+},
+"type": "object",
+"title": "ResponseMeta"
+},
+"SubmitForReviewRequest": {
+"properties": {
+"approver_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Approver Id"
+},
+"comment": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Comment"
+}
+},
+"type": "object",
+"title": "SubmitForReviewRequest"
+},
+"SuccessResponse_DocumentResponse_": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"$ref": "#/components/schemas/DocumentResponse"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[DocumentResponse]"
+},
+"SuccessResponse_list_DocumentResponse__": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/DocumentResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[list[DocumentResponse]]"
+},
+"SuccessResponse_list_DocumentVersionResponse__": {
+"properties": {
+"success": {
+"type": "boolean",
+"title": "Success",
+"default": true
+},
+"data": {
+"items": {
+"$ref": "#/components/schemas/DocumentVersionResponse"
+},
+"type": "array",
+"title": "Data"
+},
+"meta": {
+"$ref": "#/components/schemas/ResponseMeta"
+}
+},
+"type": "object",
+"required": [
+"data"
+],
+"title": "SuccessResponse[list[DocumentVersionResponse]]"
+},
+"UpdateDocumentRequest": {
+"properties": {
+"title": {
+"anyOf": [
+{
+"type": "string",
+"maxLength": 255,
+"minLength": 1
+},
+{
+"type": "null"
+}
+],
+"title": "Title"
+},
+"description": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Description"
+},
+"department": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Department"
+},
+"owner_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Owner Id"
+},
+"approver_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "Approver Id"
+},
+"tags": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Tags"
+},
+"regulatory_frameworks": {
+"anyOf": [
+{
+"items": {
+"type": "string"
+},
+"type": "array"
+},
+{
+"type": "null"
+}
+],
+"title": "Regulatory Frameworks"
+},
+"file_id": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "null"
+}
+],
+"title": "File Id"
+}
+},
+"type": "object",
+"title": "UpdateDocumentRequest"
+},
+"ValidationError": {
+"properties": {
+"loc": {
+"items": {
+"anyOf": [
+{
+"type": "string"
+},
+{
+"type": "integer"
+}
+]
+},
+"type": "array",
+"title": "Location"
+},
+"msg": {
+"type": "string",
+"title": "Message"
+},
+"type": {
+"type": "string",
+"title": "Error Type"
+},
+"input": {
+"title": "Input"
+},
+"ctx": {
+"type": "object",
+"title": "Context"
+}
+},
+"type": "object",
+"required": [
+"loc",
+"msg",
+"type"
+],
+"title": "ValidationError"
+}
+},
+"securitySchemes": {
+"HTTPBearer": {
+"type": "http",
+"scheme": "bearer"
+}
+}
+}
+}

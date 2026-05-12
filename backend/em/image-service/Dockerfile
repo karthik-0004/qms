@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 FROM base AS builder
 COPY pyproject.toml .
+COPY app ./app
 RUN pip install --upgrade pip && pip install hatchling && pip install -e ".[dev]"
 
 FROM base AS runtime
