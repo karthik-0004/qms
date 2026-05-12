@@ -1,0 +1,2455 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer User Service",
+      "description": "User profiles, RBAC, and role management",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/api/v1/users": {
+        "get": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "List Users",
+          "operationId": "list_users_api_v1_users_get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "is_active",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Is Active"
+              }
+            },
+            {
+              "name": "department",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Department"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Page number",
+                "default": 1,
+                "title": "Page"
+              },
+              "description": "Page number"
+            },
+            {
+              "name": "page_size",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "maximum": 200,
+                "minimum": 1,
+                "description": "Items per page",
+                "default": 20,
+                "title": "Page Size"
+              },
+              "description": "Items per page"
+            },
+            {
+              "name": "sort",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Sort field, prefix with - for desc",
+                "title": "Sort"
+              },
+              "description": "Sort field, prefix with - for desc"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponse_UserResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Create User",
+          "operationId": "create_user_api_v1_users_post",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_UserResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/users/{user_id}": {
+        "get": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Get User",
+          "operationId": "get_user_api_v1_users__user_id__get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_UserResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Update User",
+          "operationId": "update_user_api_v1_users__user_id__patch",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateUserRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_UserResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Deactivate User",
+          "operationId": "deactivate_user_api_v1_users__user_id__delete",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/users/{user_id}/permissions": {
+        "get": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Get User Permissions",
+          "operationId": "get_user_permissions_api_v1_users__user_id__permissions_get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_UserPermissionsResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/roles": {
+        "get": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "List Roles",
+          "operationId": "list_roles_api_v1_roles_get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "product",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Product"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_list_RoleResponse__"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Create Role",
+          "operationId": "create_role_api_v1_roles_post",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRoleRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_RoleResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/roles/{role_id}": {
+        "patch": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Update Role",
+          "operationId": "update_role_api_v1_roles__role_id__patch",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "role_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Role Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRoleRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_RoleResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/users/{user_id}/roles": {
+        "post": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Assign Role",
+          "operationId": "assign_role_api_v1_users__user_id__roles_post",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignRoleRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_UserRoleResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/users/{user_id}/roles/{role_id}": {
+        "delete": {
+          "tags": [
+            "Users & Roles"
+          ],
+          "summary": "Remove Role",
+          "operationId": "remove_role_api_v1_users__user_id__roles__role_id__delete",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            },
+            {
+              "name": "role_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Role Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/scim/v2/ServiceProviderConfig": {
+        "get": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Get Service Provider Config",
+          "operationId": "get_service_provider_config_scim_v2_ServiceProviderConfig_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SCIMServiceProviderConfig"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/scim/v2/ResourceTypes": {
+        "get": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Get Resource Types",
+          "operationId": "get_resource_types_scim_v2_ResourceTypes_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/scim/v2/Users": {
+        "get": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "List Users",
+          "description": "SCIM 2.0 — List or filter users.",
+          "operationId": "list_users_scim_v2_Users_get",
+          "parameters": [
+            {
+              "name": "filter",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Filter"
+              }
+            },
+            {
+              "name": "startIndex",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1,
+                "title": "Startindex"
+              }
+            },
+            {
+              "name": "count",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "maximum": 200,
+                "minimum": 1,
+                "default": 20,
+                "title": "Count"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Create User",
+          "description": "SCIM 2.0 — Provision a new user.",
+          "operationId": "create_user_scim_v2_Users_post",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SCIMUserResource"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/scim/v2/Users/{user_id}": {
+        "get": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Get User",
+          "description": "SCIM 2.0 — Get a single user by ID.",
+          "operationId": "get_user_scim_v2_Users__user_id__get",
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "put": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Replace User",
+          "description": "SCIM 2.0 — Full replacement of user attributes.",
+          "operationId": "replace_user_scim_v2_Users__user_id__put",
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SCIMUserResource"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Patch User",
+          "description": "SCIM 2.0 — Partial update using PATCH operations.",
+          "operationId": "patch_user_scim_v2_Users__user_id__patch",
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SCIMPatchRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Delete User",
+          "description": "SCIM 2.0 — Deprovision (deactivate) a user.",
+          "operationId": "delete_user_scim_v2_Users__user_id__delete",
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "User Id"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Successful Response"
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/scim/v2/Groups": {
+        "get": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "List Groups",
+          "description": "SCIM 2.0 — List groups (mapped to Rainer roles).",
+          "operationId": "list_groups_scim_v2_Groups_get",
+          "parameters": [
+            {
+              "name": "filter",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Filter"
+              }
+            },
+            {
+              "name": "startIndex",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1,
+                "title": "Startindex"
+              }
+            },
+            {
+              "name": "count",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "maximum": 200,
+                "minimum": 1,
+                "default": 20,
+                "title": "Count"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/scim/v2/Groups/{group_id}": {
+        "get": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Get Group",
+          "description": "SCIM 2.0 — Get a single group (role) by ID.",
+          "operationId": "get_group_scim_v2_Groups__group_id__get",
+          "parameters": [
+            {
+              "name": "group_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Group Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "SCIM 2.0"
+          ],
+          "summary": "Patch Group",
+          "description": "SCIM 2.0 — Patch group membership (add/remove users from a role).",
+          "operationId": "patch_group_scim_v2_Groups__group_id__patch",
+          "parameters": [
+            {
+              "name": "group_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Group Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SCIMPatchRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "AssignRoleRequest": {
+          "properties": {
+            "role_id": {
+              "type": "string",
+              "title": "Role Id"
+            }
+          },
+          "type": "object",
+          "required": [
+            "role_id"
+          ],
+          "title": "AssignRoleRequest"
+        },
+        "CreateRoleRequest": {
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Name"
+            },
+            "permissions": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Permissions"
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Description"
+            },
+            "product": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Product"
+            }
+          },
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "title": "CreateRoleRequest"
+        },
+        "CreateUserRequest": {
+          "properties": {
+            "platform_user_id": {
+              "type": "string",
+              "title": "Platform User Id"
+            },
+            "first_name": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "First Name"
+            },
+            "last_name": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Last Name"
+            },
+            "display_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Display Name"
+            },
+            "phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Phone"
+            },
+            "department": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            },
+            "job_title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Title"
+            }
+          },
+          "type": "object",
+          "required": [
+            "platform_user_id",
+            "first_name",
+            "last_name"
+          ],
+          "title": "CreateUserRequest"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "MessageResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "message": {
+              "type": "string",
+              "title": "Message"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "message"
+          ],
+          "title": "MessageResponse"
+        },
+        "PaginatedResponse_UserResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/UserResponse"
+              },
+              "type": "array",
+              "title": "Data"
+            },
+            "pagination": {
+              "$ref": "#/components/schemas/PaginationMeta"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data",
+            "pagination"
+          ],
+          "title": "PaginatedResponse[UserResponse]"
+        },
+        "PaginationMeta": {
+          "properties": {
+            "page": {
+              "type": "integer",
+              "title": "Page"
+            },
+            "page_size": {
+              "type": "integer",
+              "title": "Page Size"
+            },
+            "total": {
+              "type": "integer",
+              "title": "Total"
+            },
+            "total_pages": {
+              "type": "integer",
+              "title": "Total Pages"
+            },
+            "has_next": {
+              "type": "boolean",
+              "title": "Has Next"
+            },
+            "has_prev": {
+              "type": "boolean",
+              "title": "Has Prev"
+            }
+          },
+          "type": "object",
+          "required": [
+            "page",
+            "page_size",
+            "total",
+            "total_pages",
+            "has_next",
+            "has_prev"
+          ],
+          "title": "PaginationMeta"
+        },
+        "ResponseMeta": {
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "title": "Request Id"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp"
+            },
+            "service": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "title": "ResponseMeta"
+        },
+        "RoleResponse": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "name": {
+              "type": "string",
+              "title": "Name"
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Description"
+            },
+            "permissions": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Permissions"
+            },
+            "is_system_role": {
+              "type": "boolean",
+              "title": "Is System Role"
+            },
+            "product": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Product"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Created At"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Updated At"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "description",
+            "permissions",
+            "is_system_role",
+            "product",
+            "created_at",
+            "updated_at"
+          ],
+          "title": "RoleResponse"
+        },
+        "SCIMAuthScheme": {
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "default": "oauthbearertoken"
+            },
+            "name": {
+              "type": "string",
+              "title": "Name",
+              "default": "OAuth Bearer Token"
+            },
+            "description": {
+              "type": "string",
+              "title": "Description",
+              "default": "Authentication scheme using the OAuth Bearer Token Standard"
+            },
+            "specUri": {
+              "type": "string",
+              "title": "Specuri",
+              "default": "https://tools.ietf.org/html/rfc6750"
+            },
+            "primary": {
+              "type": "boolean",
+              "title": "Primary",
+              "default": true
+            }
+          },
+          "type": "object",
+          "title": "SCIMAuthScheme"
+        },
+        "SCIMBulkConfig": {
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "title": "Supported",
+              "default": false
+            },
+            "maxOperations": {
+              "type": "integer",
+              "title": "Maxoperations",
+              "default": 0
+            },
+            "maxPayloadSize": {
+              "type": "integer",
+              "title": "Maxpayloadsize",
+              "default": 0
+            }
+          },
+          "type": "object",
+          "title": "SCIMBulkConfig"
+        },
+        "SCIMChangePasswordConfig": {
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "title": "Supported",
+              "default": false
+            }
+          },
+          "type": "object",
+          "title": "SCIMChangePasswordConfig"
+        },
+        "SCIMETagConfig": {
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "title": "Supported",
+              "default": false
+            }
+          },
+          "type": "object",
+          "title": "SCIMETagConfig"
+        },
+        "SCIMEmail": {
+          "properties": {
+            "value": {
+              "type": "string",
+              "title": "Value"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "default": "work"
+            },
+            "primary": {
+              "type": "boolean",
+              "title": "Primary",
+              "default": true
+            }
+          },
+          "type": "object",
+          "required": [
+            "value"
+          ],
+          "title": "SCIMEmail"
+        },
+        "SCIMFilterConfig": {
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "title": "Supported",
+              "default": true
+            },
+            "maxResults": {
+              "type": "integer",
+              "title": "Maxresults",
+              "default": 200
+            }
+          },
+          "type": "object",
+          "title": "SCIMFilterConfig"
+        },
+        "SCIMGroupMember": {
+          "properties": {
+            "value": {
+              "type": "string",
+              "title": "Value"
+            },
+            "display": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Display"
+            },
+            "$ref": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Ref"
+            }
+          },
+          "type": "object",
+          "required": [
+            "value"
+          ],
+          "title": "SCIMGroupMember"
+        },
+        "SCIMMeta": {
+          "properties": {
+            "resourceType": {
+              "type": "string",
+              "title": "Resourcetype"
+            },
+            "created": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created"
+            },
+            "lastModified": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lastmodified"
+            },
+            "location": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Location"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "required": [
+            "resourceType"
+          ],
+          "title": "SCIMMeta"
+        },
+        "SCIMName": {
+          "properties": {
+            "formatted": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Formatted"
+            },
+            "familyName": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Familyname"
+            },
+            "givenName": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Givenname"
+            }
+          },
+          "type": "object",
+          "title": "SCIMName"
+        },
+        "SCIMPatchOp": {
+          "properties": {
+            "op": {
+              "type": "string",
+              "enum": [
+                "add",
+                "remove",
+                "replace"
+              ],
+              "title": "Op"
+            },
+            "path": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Path"
+            },
+            "value": {
+              "title": "Value"
+            }
+          },
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "title": "SCIMPatchOp"
+        },
+        "SCIMPatchRequest": {
+          "properties": {
+            "schemas": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Schemas",
+              "default": [
+                "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+              ]
+            },
+            "Operations": {
+              "items": {
+                "$ref": "#/components/schemas/SCIMPatchOp"
+              },
+              "type": "array",
+              "title": "Operations"
+            }
+          },
+          "type": "object",
+          "required": [
+            "Operations"
+          ],
+          "title": "SCIMPatchRequest"
+        },
+        "SCIMPhoneNumber": {
+          "properties": {
+            "value": {
+              "type": "string",
+              "title": "Value"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "default": "work"
+            }
+          },
+          "type": "object",
+          "required": [
+            "value"
+          ],
+          "title": "SCIMPhoneNumber"
+        },
+        "SCIMServiceProviderConfig": {
+          "properties": {
+            "schemas": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Schemas",
+              "default": [
+                "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
+              ]
+            },
+            "documentationUri": {
+              "type": "string",
+              "title": "Documentationuri",
+              "default": "https://docs.rainertek.com/scim"
+            },
+            "patch": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "type": "object",
+              "title": "Patch",
+              "default": {
+                "supported": true
+              }
+            },
+            "bulk": {
+              "$ref": "#/components/schemas/SCIMBulkConfig",
+              "default": {
+                "supported": false,
+                "maxOperations": 0,
+                "maxPayloadSize": 0
+              }
+            },
+            "filter": {
+              "$ref": "#/components/schemas/SCIMFilterConfig",
+              "default": {
+                "supported": true,
+                "maxResults": 200
+              }
+            },
+            "changePassword": {
+              "$ref": "#/components/schemas/SCIMChangePasswordConfig",
+              "default": {
+                "supported": false
+              }
+            },
+            "sort": {
+              "$ref": "#/components/schemas/SCIMSortConfig",
+              "default": {
+                "supported": false
+              }
+            },
+            "etag": {
+              "$ref": "#/components/schemas/SCIMETagConfig",
+              "default": {
+                "supported": false
+              }
+            },
+            "authenticationSchemes": {
+              "items": {
+                "$ref": "#/components/schemas/SCIMAuthScheme"
+              },
+              "type": "array",
+              "title": "Authenticationschemes",
+              "default": [
+                {
+                  "type": "oauthbearertoken",
+                  "name": "OAuth Bearer Token",
+                  "description": "Authentication scheme using the OAuth Bearer Token Standard",
+                  "specUri": "https://tools.ietf.org/html/rfc6750",
+                  "primary": true
+                }
+              ]
+            },
+            "meta": {
+              "$ref": "#/components/schemas/SCIMMeta",
+              "default": {
+                "resourceType": "ServiceProviderConfig"
+              }
+            }
+          },
+          "type": "object",
+          "title": "SCIMServiceProviderConfig"
+        },
+        "SCIMSortConfig": {
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "title": "Supported",
+              "default": false
+            }
+          },
+          "type": "object",
+          "title": "SCIMSortConfig"
+        },
+        "SCIMUserResource": {
+          "properties": {
+            "schemas": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Schemas",
+              "default": [
+                "urn:ietf:params:scim:schemas:core:2.0:User"
+              ]
+            },
+            "id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Id"
+            },
+            "externalId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Externalid"
+            },
+            "userName": {
+              "type": "string",
+              "title": "Username"
+            },
+            "name": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SCIMName"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "displayName": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Displayname"
+            },
+            "emails": {
+              "items": {
+                "$ref": "#/components/schemas/SCIMEmail"
+              },
+              "type": "array",
+              "title": "Emails",
+              "default": []
+            },
+            "phoneNumbers": {
+              "items": {
+                "$ref": "#/components/schemas/SCIMPhoneNumber"
+              },
+              "type": "array",
+              "title": "Phonenumbers",
+              "default": []
+            },
+            "active": {
+              "type": "boolean",
+              "title": "Active",
+              "default": true
+            },
+            "title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Title"
+            },
+            "department": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            },
+            "groups": {
+              "items": {
+                "$ref": "#/components/schemas/SCIMGroupMember"
+              },
+              "type": "array",
+              "title": "Groups",
+              "default": []
+            },
+            "meta": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SCIMMeta"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "type": "object",
+          "required": [
+            "userName"
+          ],
+          "title": "SCIMUserResource"
+        },
+        "SuccessResponse_RoleResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/RoleResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[RoleResponse]"
+        },
+        "SuccessResponse_UserPermissionsResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/UserPermissionsResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[UserPermissionsResponse]"
+        },
+        "SuccessResponse_UserResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/UserResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[UserResponse]"
+        },
+        "SuccessResponse_UserRoleResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/UserRoleResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[UserRoleResponse]"
+        },
+        "SuccessResponse_list_RoleResponse__": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/RoleResponse"
+              },
+              "type": "array",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[list[RoleResponse]]"
+        },
+        "UpdateRoleRequest": {
+          "properties": {
+            "permissions": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Permissions"
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Description"
+            }
+          },
+          "type": "object",
+          "title": "UpdateRoleRequest"
+        },
+        "UpdateUserRequest": {
+          "properties": {
+            "first_name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100,
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "First Name"
+            },
+            "last_name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100,
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last Name"
+            },
+            "display_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Display Name"
+            },
+            "phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Phone"
+            },
+            "department": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            },
+            "job_title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Title"
+            }
+          },
+          "type": "object",
+          "title": "UpdateUserRequest"
+        },
+        "UserPermissionsResponse": {
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "title": "User Id"
+            },
+            "permissions": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Permissions"
+            }
+          },
+          "type": "object",
+          "required": [
+            "user_id",
+            "permissions"
+          ],
+          "title": "UserPermissionsResponse"
+        },
+        "UserResponse": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "platform_user_id": {
+              "type": "string",
+              "title": "Platform User Id"
+            },
+            "tenant_id": {
+              "type": "string",
+              "title": "Tenant Id"
+            },
+            "first_name": {
+              "type": "string",
+              "title": "First Name"
+            },
+            "last_name": {
+              "type": "string",
+              "title": "Last Name"
+            },
+            "display_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Display Name"
+            },
+            "phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Phone"
+            },
+            "department": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            },
+            "job_title": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Title"
+            },
+            "avatar_url": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Avatar Url"
+            },
+            "is_active": {
+              "type": "boolean",
+              "title": "Is Active"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Created At"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Updated At"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "platform_user_id",
+            "tenant_id",
+            "first_name",
+            "last_name",
+            "display_name",
+            "phone",
+            "department",
+            "job_title",
+            "avatar_url",
+            "is_active",
+            "created_at",
+            "updated_at"
+          ],
+          "title": "UserResponse"
+        },
+        "UserRoleResponse": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "user_id": {
+              "type": "string",
+              "title": "User Id"
+            },
+            "role_id": {
+              "type": "string",
+              "title": "Role Id"
+            },
+            "granted_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Granted By"
+            },
+            "granted_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Granted At"
+            },
+            "expires_at": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expires At"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "user_id",
+            "role_id",
+            "granted_by",
+            "granted_at",
+            "expires_at"
+          ],
+          "title": "UserRoleResponse"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      },
+      "securitySchemes": {
+        "HTTPBearer": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  }

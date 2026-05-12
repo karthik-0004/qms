@@ -1,0 +1,501 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer Notification Service",
+      "description": "Multi-channel notifications: email, SMS, push, webhooks, WebSocket",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/api/v1/notifications/send-email": {
+        "post": {
+          "tags": [
+            "Notifications"
+          ],
+          "summary": "Send email notification (internal)",
+          "operationId": "send_email_api_v1_notifications_send_email_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendEmailRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/notifications/send-from-template": {
+        "post": {
+          "tags": [
+            "Notifications"
+          ],
+          "summary": "Send notification using template",
+          "operationId": "send_from_template_api_v1_notifications_send_from_template_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendFromTemplateRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/notifications/templates": {
+        "get": {
+          "tags": [
+            "Notifications"
+          ],
+          "summary": "List notification templates",
+          "operationId": "list_templates_api_v1_notifications_templates_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_list_dict__"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        },
+        "post": {
+          "tags": [
+            "Notifications"
+          ],
+          "summary": "Create notification template (admin)",
+          "operationId": "create_template_api_v1_notifications_templates_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTemplateRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_dict_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "CreateTemplateRequest": {
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Name"
+            },
+            "subject": {
+              "type": "string",
+              "title": "Subject"
+            },
+            "body_html": {
+              "type": "string",
+              "title": "Body Html"
+            },
+            "body_text": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Body Text"
+            },
+            "channel": {
+              "type": "string",
+              "title": "Channel",
+              "default": "email"
+            },
+            "variables": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Variables",
+              "default": []
+            }
+          },
+          "type": "object",
+          "required": [
+            "name",
+            "subject",
+            "body_html"
+          ],
+          "title": "CreateTemplateRequest"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "MessageResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "message": {
+              "type": "string",
+              "title": "Message"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "message"
+          ],
+          "title": "MessageResponse"
+        },
+        "ResponseMeta": {
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "title": "Request Id"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp"
+            },
+            "service": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "title": "ResponseMeta"
+        },
+        "SendEmailRequest": {
+          "properties": {
+            "recipient_email": {
+              "type": "string",
+              "title": "Recipient Email"
+            },
+            "subject": {
+              "type": "string",
+              "title": "Subject"
+            },
+            "body_html": {
+              "type": "string",
+              "title": "Body Html"
+            },
+            "body_text": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Body Text"
+            },
+            "tenant_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Id"
+            },
+            "user_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            },
+            "template_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Template Name"
+            }
+          },
+          "type": "object",
+          "required": [
+            "recipient_email",
+            "subject",
+            "body_html"
+          ],
+          "title": "SendEmailRequest"
+        },
+        "SendFromTemplateRequest": {
+          "properties": {
+            "template_name": {
+              "type": "string",
+              "title": "Template Name"
+            },
+            "recipient_email": {
+              "type": "string",
+              "title": "Recipient Email"
+            },
+            "variables": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Variables",
+              "default": {
+  
+              }
+            },
+            "tenant_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Id"
+            },
+            "user_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          "type": "object",
+          "required": [
+            "template_name",
+            "recipient_email"
+          ],
+          "title": "SendFromTemplateRequest"
+        },
+        "SuccessResponse_dict_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[dict]"
+        },
+        "SuccessResponse_list_dict__": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[list[dict]]"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      },
+      "securitySchemes": {
+        "HTTPBearer": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  }

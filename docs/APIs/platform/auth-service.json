@@ -1,0 +1,743 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer Auth Service",
+      "description": "Authentication, JWT issuance, MFA, and access key management",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/api/v1/auth/login": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Authenticate user and get tokens",
+          "operationId": "login_api_v1_auth_login_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/refresh": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Rotate refresh token and get new access token",
+          "operationId": "refresh_token_api_v1_auth_refresh_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/RefreshTokenRequest"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Payload"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/logout": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Revoke refresh token (logout)",
+          "operationId": "logout_api_v1_auth_logout_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LogoutRequest"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Payload"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/logout-all": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Revoke all refresh tokens for current user (logout all devices)",
+          "operationId": "logout_all_api_v1_auth_logout_all_post",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/auth/mfa/setup": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Generate MFA TOTP secret and QR code",
+          "operationId": "setup_mfa_api_v1_auth_mfa_setup_post",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_MFASetupResponse_"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/auth/mfa/verify": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Verify TOTP code and enable MFA",
+          "operationId": "verify_mfa_api_v1_auth_mfa_verify_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFAVerifyRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/auth/mfa/disable": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Disable MFA (requires password confirmation)",
+          "operationId": "disable_mfa_api_v1_auth_mfa_disable_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFADisableRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/auth/access-keys": {
+        "post": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Create service-to-service access key (super_admin only)",
+          "operationId": "create_access_key_api_v1_auth_access_keys_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAccessKeyRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_AccessKeyResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/auth/access-keys/{key_id}": {
+        "delete": {
+          "tags": [
+            "Authentication"
+          ],
+          "summary": "Revoke a service access key",
+          "operationId": "revoke_access_key_api_v1_auth_access_keys__key_id__delete",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "key_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Key Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "AccessKeyResponse": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "raw_key": {
+              "type": "string",
+              "title": "Raw Key"
+            },
+            "key_prefix": {
+              "type": "string",
+              "title": "Key Prefix"
+            },
+            "service_name": {
+              "type": "string",
+              "title": "Service Name"
+            },
+            "scopes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Scopes"
+            },
+            "expires_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expires At"
+            },
+            "warning": {
+              "type": "string",
+              "title": "Warning"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "raw_key",
+            "key_prefix",
+            "service_name",
+            "scopes",
+            "expires_at",
+            "warning"
+          ],
+          "title": "AccessKeyResponse"
+        },
+        "CreateAccessKeyRequest": {
+          "properties": {
+            "service_name": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Service Name"
+            },
+            "scopes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Scopes"
+            },
+            "expires_at": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expires At"
+            }
+          },
+          "type": "object",
+          "required": [
+            "service_name"
+          ],
+          "title": "CreateAccessKeyRequest"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "LoginRequest": {
+          "properties": {
+            "email": {
+              "type": "string",
+              "title": "Email"
+            },
+            "password": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Password"
+            },
+            "mfa_code": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 6,
+                  "minLength": 6
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mfa Code"
+            }
+          },
+          "type": "object",
+          "required": [
+            "email",
+            "password"
+          ],
+          "title": "LoginRequest"
+        },
+        "LogoutRequest": {
+          "properties": {
+            "refresh_token": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Refresh Token"
+            }
+          },
+          "type": "object",
+          "required": [
+            "refresh_token"
+          ],
+          "title": "LogoutRequest"
+        },
+        "MFADisableRequest": {
+          "properties": {
+            "password": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Password"
+            }
+          },
+          "type": "object",
+          "required": [
+            "password"
+          ],
+          "title": "MFADisableRequest"
+        },
+        "MFASetupResponse": {
+          "properties": {
+            "secret": {
+              "type": "string",
+              "title": "Secret"
+            },
+            "provisioning_uri": {
+              "type": "string",
+              "title": "Provisioning Uri"
+            },
+            "qr_code_url": {
+              "type": "string",
+              "title": "Qr Code Url"
+            }
+          },
+          "type": "object",
+          "required": [
+            "secret",
+            "provisioning_uri",
+            "qr_code_url"
+          ],
+          "title": "MFASetupResponse"
+        },
+        "MFAVerifyRequest": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "maxLength": 6,
+              "minLength": 6,
+              "title": "Code"
+            }
+          },
+          "type": "object",
+          "required": [
+            "code"
+          ],
+          "title": "MFAVerifyRequest"
+        },
+        "MessageResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "message": {
+              "type": "string",
+              "title": "Message"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "message"
+          ],
+          "title": "MessageResponse"
+        },
+        "RefreshTokenRequest": {
+          "properties": {
+            "refresh_token": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Refresh Token"
+            }
+          },
+          "type": "object",
+          "required": [
+            "refresh_token"
+          ],
+          "title": "RefreshTokenRequest"
+        },
+        "ResponseMeta": {
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "title": "Request Id"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp"
+            },
+            "service": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "title": "ResponseMeta"
+        },
+        "SuccessResponse_AccessKeyResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/AccessKeyResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[AccessKeyResponse]"
+        },
+        "SuccessResponse_MFASetupResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/MFASetupResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[MFASetupResponse]"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      },
+      "securitySchemes": {
+        "HTTPBearer": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  }

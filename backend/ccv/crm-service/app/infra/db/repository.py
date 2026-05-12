@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, and_
+from sqlalchemy import and_, func, select, update
 from app.infra.db.models import Customer, Contact, Interaction
 
 
@@ -40,21 +40,68 @@ class CustomerRepository:
         )
         return result.scalar_one_or_none()
 
-    async def list(
+    def _base_filter(
         self,
         tenant_id: uuid.UUID,
         status: str | None = None,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> list[Customer]:
+        search: str | None = None,
+    ):
         stmt = select(Customer).where(
             and_(Customer.tenant_id == tenant_id, Customer.deleted_at.is_(None))
         )
         if status:
             stmt = stmt.where(Customer.status == status)
+        if search and search.strip():
+            pat = f"%{search.strip()}%"
+            stmt = stmt.where(Customer.company_name.ilike(pat))
+        return stmt
+
+    async def count(
+        self,
+        tenant_id: uuid.UUID,
+        status: str | None = None,
+        search: str | None = None,
+    ) -> int:
+        conds = [Customer.tenant_id == tenant_id, Customer.deleted_at.is_(None)]
+        if status:
+            conds.append(Customer.status == status)
+        if search and search.strip():
+            conds.append(Customer.company_name.ilike(f"%{search.strip()}%"))
+        stmt = select(func.count()).select_from(Customer).where(and_(*conds))
+        result = await self._session.execute(stmt)
+        return int(result.scalar_one() or 0)
+
+    async def list(
+        self,
+        tenant_id: uuid.UUID,
+        status: str | None = None,
+        search: str | None = None,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> list[Customer]:
+        stmt = self._base_filter(tenant_id, status=status, search=search)
         stmt = stmt.offset(skip).limit(limit).order_by(Customer.company_name)
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
+
+    async def contact_counts_for_customers(
+        self, tenant_id: uuid.UUID, customer_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, int]:
+        if not customer_ids:
+            return {}
+        stmt = (
+            select(Contact.customer_id, func.count(Contact.id))
+            .where(
+                and_(
+                    Contact.tenant_id == tenant_id,
+                    Contact.deleted_at.is_(None),
+                    Contact.customer_id.in_(customer_ids),
+                )
+            )
+            .group_by(Contact.customer_id)
+        )
+        result = await self._session.execute(stmt)
+        return {row[0]: int(row[1]) for row in result.all()}
 
     async def update(self, customer: Customer, data: dict) -> Customer:
         for key, value in data.items():

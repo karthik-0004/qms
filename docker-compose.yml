@@ -572,6 +572,11 @@ services:
     depends_on:
       - auth-service
       - redis
+      - crm-service
+      - contract-service
+      - workorder-service
+      - technician-service
+      - billing-service
     ports:
       - "8000:8000"
     environment:
@@ -579,6 +584,11 @@ services:
       AUTH_SERVICE_URL: "http://auth-service:8001"
       TENANT_SERVICE_URL: "http://tenant-service:8002"
       NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
+      CRM_SERVICE_URL: "http://crm-service:8040"
+      CONTRACT_SERVICE_URL: "http://contract-service:8041"
+      WORKORDER_SERVICE_URL: "http://workorder-service:8042"
+      TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
+      BILLING_SERVICE_URL: "http://billing-service:8044"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
@@ -586,6 +596,7 @@ services:
       SERVICE_NAME: "gateway-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8000"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}"
 
   schedule-service:
     build:
@@ -1041,6 +1052,8 @@ services:
     build:
       context: ./frontend/apps/web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
     <<: *service-defaults
     depends_on:
       - auth-service
@@ -1049,9 +1062,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXTAUTH_URL: "http://localhost:3000"
+      # When browsing from another PC, use that machine's reachable API URL here and rebuild `web`.
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
       NEXTAUTH_SECRET: "dev-nextauth-secret-change-in-production"
-      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
       NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL: "http://quality-event-service:8021"
       AUTH_SERVICE_URL: "http://auth-service:8001"
       NODE_ENV: "development"

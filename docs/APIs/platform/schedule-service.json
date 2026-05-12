@@ -1,0 +1,11 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer Schedule Service",
+      "description": "Generic recurring schedule management — daily, monthly, annual, custom",
+      "version": "0.1.0"
+    },
+    "paths": {
+  
+    }
+  }

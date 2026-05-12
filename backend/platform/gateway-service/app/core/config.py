@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     audit_service_url: str = "http://audit-service:8004"
     notification_service_url: str = "http://notification-service:8005"
     document_service_url: str = "http://document-service:8020"
+    crm_service_url: str = "http://crm-service:8040"
+    contract_service_url: str = "http://contract-service:8041"
+    workorder_service_url: str = "http://workorder-service:8042"
+    technician_service_url: str = "http://technician-service:8043"
+    billing_service_url: str = "http://billing-service:8044"
 
     # JWT settings (for validation)
     jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"
@@ -34,10 +39,12 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     rainer_master_secret: str = "dev-master-secret-change-in-production"
-    cors_allowed_origins: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ]
+    # Comma-separated list (also settable via env CORS_ALLOWED_ORIGINS) — required when the
+    # web app is served from another host or LAN IP (see .env.example).
+    cors_allowed_origins: str = "http://localhost:3000,http://localhost:3001"
+
+    def cors_origins_as_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
 
 
 @lru_cache

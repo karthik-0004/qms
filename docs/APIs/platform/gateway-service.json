@@ -1,0 +1,310 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer API Gateway",
+      "description": "Central API gateway: JWT validation, tenant context injection, rate limiting, CORS, security headers",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/api/v1/gateway/validate-token": {
+        "post": {
+          "tags": [
+            "Gateway"
+          ],
+          "summary": "Validate JWT token and extract tenant context (internal)",
+          "operationId": "validate_token_api_v1_gateway_validate_token_post",
+          "parameters": [
+            {
+              "name": "authorization",
+              "in": "header",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Authorization"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_ValidateTokenResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/login": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Proxy: auth-service login",
+          "operationId": "login_api_v1_auth_login_post",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/refresh": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Proxy: auth-service refresh",
+          "operationId": "refresh_api_v1_auth_refresh_post",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/logout": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Proxy: auth-service logout",
+          "operationId": "logout_api_v1_auth_logout_post",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/logout-all": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Proxy: auth-service logout all devices",
+          "operationId": "logout_all_api_v1_auth_logout_all_post",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "ResponseMeta": {
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "title": "Request Id"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp"
+            },
+            "service": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "title": "ResponseMeta"
+        },
+        "SuccessResponse_ValidateTokenResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/ValidateTokenResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[ValidateTokenResponse]"
+        },
+        "ValidateTokenResponse": {
+          "properties": {
+            "valid": {
+              "type": "boolean",
+              "title": "Valid"
+            },
+            "user_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            },
+            "tenant_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Id"
+            },
+            "role": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            },
+            "permissions": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Permissions",
+              "default": []
+            }
+          },
+          "type": "object",
+          "required": [
+            "valid"
+          ],
+          "title": "ValidateTokenResponse"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      }
+    }
+  }

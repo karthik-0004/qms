@@ -1,0 +1,400 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer Config Service",
+      "description": "Feature flags, enums, and platform configuration",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/api/v1/config/features": {
+        "get": {
+          "tags": [
+            "Configuration"
+          ],
+          "summary": "Get feature flags for current tenant",
+          "operationId": "get_features_api_v1_config_features_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_dict_str__bool__"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/config/features/{flag_key}": {
+        "get": {
+          "tags": [
+            "Configuration"
+          ],
+          "summary": "Get specific feature flag value",
+          "operationId": "get_feature_api_v1_config_features__flag_key__get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "flag_key",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Flag Key"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_dict_str__Any__"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/config/enums": {
+        "get": {
+          "tags": [
+            "Configuration"
+          ],
+          "summary": "List all available enum types",
+          "operationId": "list_enum_types_api_v1_config_enums_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_list_str__"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      },
+      "/api/v1/config/enums/{enum_type}": {
+        "get": {
+          "tags": [
+            "Configuration"
+          ],
+          "summary": "Get enum values by type",
+          "operationId": "get_enums_api_v1_config_enums__enum_type__get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "enum_type",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Enum Type"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_list_dict_str__str___"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/config/platform": {
+        "get": {
+          "tags": [
+            "Configuration"
+          ],
+          "summary": "Get complete platform configuration",
+          "operationId": "get_platform_config_api_v1_config_platform_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_dict_"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "ResponseMeta": {
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "title": "Request Id"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp"
+            },
+            "service": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "title": "ResponseMeta"
+        },
+        "SuccessResponse_dict_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[dict]"
+        },
+        "SuccessResponse_dict_str__Any__": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[dict[str, Any]]"
+        },
+        "SuccessResponse_dict_str__bool__": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "type": "object",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[dict[str, bool]]"
+        },
+        "SuccessResponse_list_dict_str__str___": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[list[dict[str, str]]]"
+        },
+        "SuccessResponse_list_str__": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Data"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[list[str]]"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      },
+      "securitySchemes": {
+        "HTTPBearer": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  }

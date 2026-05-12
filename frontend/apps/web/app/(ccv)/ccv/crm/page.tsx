@@ -1,13 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Briefcase, Loader2, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCustomers } from "@/lib/hooks/queries/ccv";
+import { handleApiError } from "@/lib/api/client";
+import { useCustomers, useCreateCustomer } from "@/lib/hooks/queries/ccv";
 import type { Customer } from "@/lib/api/services/ccv";
+import {
+  crmCustomerCreateSchema,
+  type CrmCustomerCreateFormValues,
+} from "@/validators/ccv/crm-customer.schema";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   prospect: { label: "Prospect", color: "bg-blue-100 text-blue-700" },
@@ -23,6 +39,19 @@ export default function CRMPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [addOpen, setAddOpen] = useState(false);
+
+  const createCustomer = useCreateCustomer();
+
+  const form = useForm<CrmCustomerCreateFormValues>({
+    resolver: zodResolver(crmCustomerCreateSchema),
+    defaultValues: {
+      company_name: "",
+      industry: "",
+      email: "",
+      phone: "",
+    },
+  });
 
   const { data, isLoading: loading } = useCustomers({
     search: search || undefined,
@@ -36,6 +65,32 @@ export default function CRMPage() {
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const paginated = customers;
 
+  const onOpenAdd = () => {
+    form.reset({
+      company_name: "",
+      industry: "",
+      email: "",
+      phone: "",
+    });
+    setAddOpen(true);
+  };
+
+  const onSubmitCreate = async (values: CrmCustomerCreateFormValues) => {
+    try {
+      const payload = {
+        company_name: values.company_name.trim(),
+        ...(values.industry?.trim() ? { industry: values.industry.trim() } : {}),
+        ...(values.email?.trim() ? { email: values.email.trim() } : {}),
+        ...(values.phone?.trim() ? { phone: values.phone.trim() } : {}),
+      };
+      await createCustomer.mutateAsync(payload);
+      setAddOpen(false);
+      form.reset();
+    } catch (e) {
+      form.setError("root", { message: handleApiError(e) });
+    }
+  };
+
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
@@ -46,8 +101,68 @@ export default function CRMPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Customer and contact relationship management</p>
         </div>
-        <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Add Customer</Button>
+        <Button type="button" size="sm" className="gap-1.5" onClick={onOpenAdd}>
+          <Plus className="h-4 w-4" />
+          Add Customer
+        </Button>
       </div>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add customer</DialogTitle>
+            <DialogDescription>Create a new company record for your tenant.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmitCreate)} className="space-y-4">
+            {form.formState.errors.root?.message ? (
+              <p className="text-sm text-destructive" role="alert">
+                {form.formState.errors.root.message}
+              </p>
+            ) : null}
+            <div className="space-y-2">
+              <Label htmlFor="company_name">Company name</Label>
+              <Input
+                id="company_name"
+                autoComplete="organization"
+                {...form.register("company_name")}
+              />
+              {form.formState.errors.company_name ? (
+                <p className="text-xs text-destructive">{form.formState.errors.company_name.message}</p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industry</Label>
+              <Input id="industry" {...form.register("industry")} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
+              {form.formState.errors.email ? (
+                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" type="tel" autoComplete="tel" {...form.register("phone")} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createCustomer.isPending}>
+                {createCustomer.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Saving…
+                  </>
+                ) : (
+                  "Create"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardContent className="pt-4">

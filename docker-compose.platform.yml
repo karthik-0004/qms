@@ -1,7 +1,7 @@
 version: "3.9"
 
 # ============================================================
-# Rainer Platform — Platform Services Only (Minimal Startup)
+# Rainer Platform + RainerCCV (gateway proxies CCV APIs on :8000)
 # Usage: docker-compose -f docker-compose.platform.yml up -d
 # ============================================================
 
@@ -381,6 +381,112 @@ services:
       SERVICE_VERSION: "0.1.0"
       PORT: "8009"
 
+  # ============================================================
+  # RainerCCV (CRM, contracts, work orders, billing) — gateway proxies /api/v1/*
+  # ============================================================
+  crm-service:
+    build:
+      context: ./backend/ccv/crm-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8040:8040"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "crm-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8040"
+
+  contract-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/contract-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8041:8041"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "contract-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8041"
+
+  workorder-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/workorder-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8042:8042"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
+      SERVICE_NAME: "workorder-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8042"
+
+  technician-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/technician-service/Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8043:8043"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "technician-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8043"
+
+  billing-service:
+    build:
+      context: ./backend/ccv/billing-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8044:8044"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      DEFAULT_CURRENCY: "USD"
+      PAYMENT_DUE_DAYS: "30"
+      SERVICE_NAME: "billing-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8044"
+
   gateway-service:
     build:
       context: .
@@ -389,6 +495,11 @@ services:
     depends_on:
       - auth-service
       - redis
+      - crm-service
+      - contract-service
+      - workorder-service
+      - technician-service
+      - billing-service
     ports:
       - "8000:8000"
     environment:
@@ -396,6 +507,11 @@ services:
       AUTH_SERVICE_URL: "http://auth-service:8001"
       TENANT_SERVICE_URL: "http://tenant-service:8002"
       NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
+      CRM_SERVICE_URL: "http://crm-service:8040"
+      CONTRACT_SERVICE_URL: "http://contract-service:8041"
+      WORKORDER_SERVICE_URL: "http://workorder-service:8042"
+      TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
+      BILLING_SERVICE_URL: "http://billing-service:8044"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
@@ -403,6 +519,7 @@ services:
       SERVICE_NAME: "gateway-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8000"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}"
 
   schedule-service:
     build:

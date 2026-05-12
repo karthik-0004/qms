@@ -1,5 +1,13 @@
 import { apiClient } from "../client";
 
+function tempRef(prefix: string): string {
+  try {
+    return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+  } catch {
+    return `${prefix}-${Date.now().toString(36)}`;
+  }
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface Customer {
@@ -90,6 +98,29 @@ export interface PaginatedResponse<T> {
   page_size: number;
 }
 
+/** CCV list handlers return arrays; coerce to PaginatedResponse for TanStack Query. */
+function listPaging(params?: { page?: number; page_size?: number }) {
+  const page_size = params?.page_size ?? 50;
+  const page = params?.page ?? 1;
+  return { skip: (page - 1) * page_size, limit: page_size, page, page_size };
+}
+
+function coerceListPage<T>(rows: unknown, page: number, page_size: number): PaginatedResponse<T> {
+  if (
+    typeof rows === "object" &&
+    rows !== null &&
+    Array.isArray((rows as PaginatedResponse<T>).items) &&
+    typeof (rows as PaginatedResponse<T>).total === "number"
+  ) {
+    return rows as PaginatedResponse<T>;
+  }
+  const items = Array.isArray(rows) ? (rows as T[]) : [];
+  const hasMore = items.length === page_size;
+  const total =
+    hasMore ? page * page_size + 1 : (page - 1) * page_size + items.length;
+  return { items, total, page, page_size };
+}
+
 // ─── CRM (Customers) ───────────────────────────────────────────────────────
 
 export const customersApi = {
@@ -109,74 +140,209 @@ export const customersApi = {
 // ─── Contracts ──────────────────────────────────────────────────────────────
 
 export const contractsApi = {
-  list: (params?: { search?: string; status?: string; contract_type?: string; page?: number; page_size?: number }) =>
-    apiClient.get<PaginatedResponse<Contract>>("/contracts/contracts", { params }).then((r) => r.data),
+  list: async (
+    params?: {
+      search?: string;
+      status?: string;
+      contract_type?: string;
+      customer_id?: string;
+      page?: number;
+      page_size?: number;
+    },
+  ) => {
+    const { skip, limit, page, page_size } = listPaging(params);
+    const { data } = await apiClient.get<unknown>("/contracts", {
+      params: {
+        skip,
+        limit,
+        status: params?.status ?? undefined,
+        customer_id: params?.customer_id ?? undefined,
+      },
+    });
+    return coerceListPage<Contract>(data, page, page_size);
+  },
 
   get: (id: string) =>
-    apiClient.get<Contract>(`/contracts/contracts/${id}`).then((r) => r.data),
+    apiClient.get<Contract>(`/contracts/${id}`).then((r) => r.data),
 
-  create: (data: { title: string; customer_id: string; contract_type: string; start_date: string; total_value: number }) =>
-    apiClient.post<Contract>("/contracts/contracts", data).then((r) => r.data),
+  create: (data: {
+    title: string;
+    customer_id: string;
+    contract_type: string;
+    start_date: string;
+    total_value: number;
+    contract_number?: string;
+    currency?: string;
+  }) =>
+    apiClient.post<Contract>("/contracts", {
+      ...data,
+      contract_number: data.contract_number ?? tempRef("CNT"),
+      currency: data.currency ?? "USD",
+    }).then((r) => r.data),
 
+  /** Maps UI `action` to API `new_status`. */
   transition: (id: string, data: { action: string; comments?: string }) =>
-    apiClient.post<Contract>(`/contracts/contracts/${id}/transition`, data).then((r) => r.data),
+    apiClient
+      .post<Contract>(`/contracts/${id}/status`, {
+        new_status: data.action,
+        comment: data.comments,
+      })
+      .then((r) => r.data),
 };
 
 // ─── Work Orders ────────────────────────────────────────────────────────────
 
 export const workOrdersApi = {
-  list: (params?: { search?: string; status?: string; priority?: string; page?: number; page_size?: number }) =>
-    apiClient.get<PaginatedResponse<WorkOrder>>("/work-orders/work-orders", { params }).then((r) => r.data),
+  list: async (
+    params?: {
+      search?: string;
+      status?: string;
+      priority?: string;
+      customer_id?: string;
+      technician_id?: string;
+      page?: number;
+      page_size?: number;
+    },
+  ) => {
+    const { skip, limit, page, page_size } = listPaging(params);
+    const { data } = await apiClient.get<unknown>("/workorders", {
+      params: {
+        skip,
+        limit,
+        status: params?.status ?? undefined,
+        customer_id: params?.customer_id ?? undefined,
+        technician_id: params?.technician_id ?? undefined,
+      },
+    });
+    return coerceListPage<WorkOrder>(data, page, page_size);
+  },
 
   get: (id: string) =>
-    apiClient.get<WorkOrder>(`/work-orders/work-orders/${id}`).then((r) => r.data),
+    apiClient.get<WorkOrder>(`/workorders/${id}`).then((r) => r.data),
 
-  create: (data: { title: string; customer_id: string; priority: string; scheduled_date?: string }) =>
-    apiClient.post<WorkOrder>("/work-orders/work-orders", data).then((r) => r.data),
+  create: (data: {
+    title: string;
+    customer_id: string;
+    priority: string;
+    scheduled_date?: string;
+    work_order_number?: string;
+    work_type?: string;
+  }) =>
+    apiClient.post<WorkOrder>("/workorders", {
+      work_order_number: data.work_order_number ?? tempRef("WO"),
+      title: data.title,
+      customer_id: data.customer_id,
+      priority: data.priority ?? "normal",
+      work_type: data.work_type ?? "other",
+      scheduled_start: data.scheduled_date,
+    }).then((r) => r.data),
 
   assign: (id: string, data: { technician_id: string }) =>
-    apiClient.post<WorkOrder>(`/work-orders/work-orders/${id}/assign`, data).then((r) => r.data),
+    apiClient.post<WorkOrder>(`/workorders/${id}/assign`, data).then((r) => r.data),
 
   transition: (id: string, data: { action: string; comments?: string }) =>
-    apiClient.post<WorkOrder>(`/work-orders/work-orders/${id}/transition`, data).then((r) => r.data),
+    apiClient
+      .post<WorkOrder>(`/workorders/${id}/status`, {
+        new_status: data.action,
+        comment: data.comments,
+      })
+      .then((r) => r.data),
 };
 
 // ─── Technicians ────────────────────────────────────────────────────────────
 
 export const techniciansApi = {
-  list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>
-    apiClient.get<PaginatedResponse<Technician>>("/technicians/technicians", { params }).then((r) => r.data),
+  list: async (params?: { search?: string; status?: string; page?: number; page_size?: number }) => {
+    const { skip, limit, page, page_size } = listPaging(params);
+    const { data } = await apiClient.get<unknown>("/technicians", {
+      params: {
+        skip,
+        limit,
+        status: params?.status ?? undefined,
+      },
+    });
+    return coerceListPage<Technician>(data, page, page_size);
+  },
 
   get: (id: string) =>
-    apiClient.get<Technician>(`/technicians/technicians/${id}`).then((r) => r.data),
+    apiClient.get<Technician>(`/technicians/${id}`).then((r) => r.data),
 
-  create: (data: { first_name: string; last_name: string; email: string; specializations: string[] }) =>
-    apiClient.post<Technician>("/technicians/technicians", data).then((r) => r.data),
+  create: (data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    specializations: string[];
+    employee_number?: string;
+  }) =>
+    apiClient.post<Technician>("/technicians", {
+      ...data,
+      employee_number: data.employee_number ?? tempRef("EMP"),
+      /** Platform user link not plumbed through UI yet; random UUID satisfies API shape. */
+      user_id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : "00000000-0000-4000-8000-000000000001",
+    }).then((r) => r.data),
 
   updateAvailability: (id: string, data: { is_available: boolean }) =>
-    apiClient.patch<Technician>(`/technicians/technicians/${id}/availability`, data).then((r) => r.data),
+    apiClient.post<Technician>(`/technicians/${id}/availability`, data).then((r) => r.data),
 };
 
 // ─── Billing (Invoices) ─────────────────────────────────────────────────────
 
 export const invoicesApi = {
-  list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>
-    apiClient.get<PaginatedResponse<Invoice>>("/billing/invoices", { params }).then((r) => r.data),
+  list: async (
+    params?: {
+      search?: string;
+      status?: string;
+      customer_id?: string;
+      page?: number;
+      page_size?: number;
+    },
+  ) => {
+    const { skip, limit, page, page_size } = listPaging(params);
+    const { data } = await apiClient.get<unknown>("/invoices", {
+      params: {
+        skip,
+        limit,
+        status: params?.status ?? undefined,
+        customer_id: params?.customer_id ?? undefined,
+      },
+    });
+    return coerceListPage<Invoice>(data, page, page_size);
+  },
 
   get: (id: string) =>
-    apiClient.get<Invoice>(`/billing/invoices/${id}`).then((r) => r.data),
+    apiClient.get<Invoice>(`/invoices/${id}`).then((r) => r.data),
 
-  create: (data: { customer_id: string; work_order_id?: string; due_date?: string }) =>
-    apiClient.post<Invoice>("/billing/invoices", data).then((r) => r.data),
+  create: (data: {
+    customer_id: string;
+    work_order_id?: string;
+    due_date?: string;
+    invoice_number?: string;
+  }) =>
+    apiClient.post<Invoice>("/invoices", {
+      ...data,
+      invoice_number: data.invoice_number ?? tempRef("INV"),
+    }).then((r) => r.data),
 
   recordPayment: (id: string, data: { amount: number; payment_method: string; reference?: string }) =>
-    apiClient.post<Invoice>(`/billing/invoices/${id}/payments`, data).then((r) => r.data),
+    apiClient
+      .post<Invoice>(`/invoices/${id}/payments`, {
+        amount: data.amount,
+        payment_method: data.payment_method,
+        reference_number: data.reference,
+      })
+      .then((r) => r.data),
 
   transition: (id: string, data: { action: string }) =>
-    apiClient.post<Invoice>(`/billing/invoices/${id}/transition`, data).then((r) => r.data),
+    apiClient
+      .post<Invoice>(`/invoices/${id}/status`, { new_status: data.action })
+      .then((r) => r.data),
 };
 
 // ─── Certificates ───────────────────────────────────────────────────────────
+// No certificate-service deployment in compose yet — paths unchanged for future upstream.
 
 export const certificatesApi = {
   list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>

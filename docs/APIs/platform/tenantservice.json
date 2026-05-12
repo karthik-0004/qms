@@ -1,0 +1,1037 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Rainer Tenant Service",
+      "description": "Tenant provisioning, lifecycle, and configuration management",
+      "version": "0.1.0"
+    },
+    "paths": {
+      "/api/v1/tenants": {
+        "post": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Create and provision a new tenant (super_admin only)",
+          "operationId": "create_tenant_api_v1_tenants_post",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTenantRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_TenantResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "List all tenants (super_admin only)",
+          "operationId": "list_tenants_api_v1_tenants_get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "status_filter",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Status Filter"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Page number",
+                "default": 1,
+                "title": "Page"
+              },
+              "description": "Page number"
+            },
+            {
+              "name": "page_size",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "maximum": 200,
+                "minimum": 1,
+                "description": "Items per page",
+                "default": 20,
+                "title": "Page Size"
+              },
+              "description": "Items per page"
+            },
+            {
+              "name": "sort",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Sort field, prefix with - for desc",
+                "title": "Sort"
+              },
+              "description": "Sort field, prefix with - for desc"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponse_TenantResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/tenants/{tenant_id}": {
+        "get": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Get tenant details",
+          "operationId": "get_tenant_api_v1_tenants__tenant_id__get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_TenantResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Update tenant (super_admin only)",
+          "operationId": "update_tenant_api_v1_tenants__tenant_id__patch",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTenantRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_TenantResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Soft-delete tenant (super_admin only)",
+          "operationId": "delete_tenant_api_v1_tenants__tenant_id__delete",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/tenants/{tenant_id}/suspend": {
+        "post": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Suspend tenant (super_admin only)",
+          "operationId": "suspend_tenant_api_v1_tenants__tenant_id__suspend_post",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/tenants/{tenant_id}/activate": {
+        "post": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Activate / reactivate tenant (super_admin only)",
+          "operationId": "activate_tenant_api_v1_tenants__tenant_id__activate_post",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/tenants/{tenant_id}/settings": {
+        "get": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Get tenant settings",
+          "operationId": "get_settings_endpoint_api_v1_tenants__tenant_id__settings_get",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse_TenantSettingsResponse_"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "Tenants"
+          ],
+          "summary": "Update tenant settings",
+          "operationId": "update_settings_endpoint_api_v1_tenants__tenant_id__settings_patch",
+          "security": [
+            {
+              "HTTPBearer": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Tenant Id"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTenantSettingsRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "CreateTenantRequest": {
+          "properties": {
+            "tenant_name": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 2,
+              "title": "Tenant Name"
+            },
+            "products": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "minItems": 1,
+              "title": "Products"
+            },
+            "tier": {
+              "type": "string",
+              "title": "Tier",
+              "default": "starter"
+            },
+            "region": {
+              "type": "string",
+              "title": "Region",
+              "default": "us-east-1"
+            }
+          },
+          "type": "object",
+          "required": [
+            "tenant_name",
+            "products"
+          ],
+          "title": "CreateTenantRequest"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "MessageResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "message": {
+              "type": "string",
+              "title": "Message"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "message"
+          ],
+          "title": "MessageResponse"
+        },
+        "PaginatedResponse_TenantResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/TenantResponse"
+              },
+              "type": "array",
+              "title": "Data"
+            },
+            "pagination": {
+              "$ref": "#/components/schemas/PaginationMeta"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data",
+            "pagination"
+          ],
+          "title": "PaginatedResponse[TenantResponse]"
+        },
+        "PaginationMeta": {
+          "properties": {
+            "page": {
+              "type": "integer",
+              "title": "Page"
+            },
+            "page_size": {
+              "type": "integer",
+              "title": "Page Size"
+            },
+            "total": {
+              "type": "integer",
+              "title": "Total"
+            },
+            "total_pages": {
+              "type": "integer",
+              "title": "Total Pages"
+            },
+            "has_next": {
+              "type": "boolean",
+              "title": "Has Next"
+            },
+            "has_prev": {
+              "type": "boolean",
+              "title": "Has Prev"
+            }
+          },
+          "type": "object",
+          "required": [
+            "page",
+            "page_size",
+            "total",
+            "total_pages",
+            "has_next",
+            "has_prev"
+          ],
+          "title": "PaginationMeta"
+        },
+        "ResponseMeta": {
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "title": "Request Id"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp"
+            },
+            "service": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          "type": "object",
+          "title": "ResponseMeta"
+        },
+        "SuccessResponse_TenantResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/TenantResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[TenantResponse]"
+        },
+        "SuccessResponse_TenantSettingsResponse_": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "$ref": "#/components/schemas/TenantSettingsResponse"
+            },
+            "meta": {
+              "$ref": "#/components/schemas/ResponseMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "SuccessResponse[TenantSettingsResponse]"
+        },
+        "TenantResponse": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "tenant_name": {
+              "type": "string",
+              "title": "Tenant Name"
+            },
+            "slug": {
+              "type": "string",
+              "title": "Slug"
+            },
+            "db_name": {
+              "type": "string",
+              "title": "Db Name"
+            },
+            "status": {
+              "type": "string",
+              "title": "Status"
+            },
+            "tier": {
+              "type": "string",
+              "title": "Tier"
+            },
+            "products": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Products"
+            },
+            "region": {
+              "type": "string",
+              "title": "Region"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Created At"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Updated At"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "tenant_name",
+            "slug",
+            "db_name",
+            "status",
+            "tier",
+            "products",
+            "region",
+            "created_at",
+            "updated_at"
+          ],
+          "title": "TenantResponse"
+        },
+        "TenantSettingsResponse": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "title": "Id"
+            },
+            "tenant_id": {
+              "type": "string",
+              "title": "Tenant Id"
+            },
+            "max_users": {
+              "type": "integer",
+              "title": "Max Users"
+            },
+            "max_storage_gb": {
+              "type": "integer",
+              "title": "Max Storage Gb"
+            },
+            "features": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Features"
+            },
+            "branding": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Branding"
+            },
+            "webhook_urls": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "title": "Webhook Urls"
+            },
+            "timezone": {
+              "type": "string",
+              "title": "Timezone"
+            },
+            "locale": {
+              "type": "string",
+              "title": "Locale"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Created At"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Updated At"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "tenant_id",
+            "max_users",
+            "max_storage_gb",
+            "features",
+            "branding",
+            "webhook_urls",
+            "timezone",
+            "locale",
+            "created_at",
+            "updated_at"
+          ],
+          "title": "TenantSettingsResponse"
+        },
+        "UpdateTenantRequest": {
+          "properties": {
+            "tenant_name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100,
+                  "minLength": 2
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tenant Name"
+            },
+            "tier": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tier"
+            },
+            "products": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Products"
+            }
+          },
+          "type": "object",
+          "title": "UpdateTenantRequest"
+        },
+        "UpdateTenantSettingsRequest": {
+          "properties": {
+            "max_users": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 10000,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Users"
+            },
+            "max_storage_gb": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 10000,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Storage Gb"
+            },
+            "features": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Features"
+            },
+            "branding": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Branding"
+            },
+            "smtp_config": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Smtp Config"
+            },
+            "webhook_urls": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Webhook Urls"
+            },
+            "timezone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Timezone"
+            },
+            "locale": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Locale"
+            }
+          },
+          "type": "object",
+          "title": "UpdateTenantSettingsRequest"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      },
+      "securitySchemes": {
+        "HTTPBearer": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  }
