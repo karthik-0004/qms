@@ -28,7 +28,22 @@ Inside the `auth-service` container:
 - Set env vars: `AUTH_SUPERADMIN_EMAIL`, `AUTH_SUPERADMIN_PASSWORD`
 - Run: `python -m app.scripts.create_super_admin`
 
-### Seed a tenant admin (recommended for dev)
+### Tenant admin shortcut (canonical local login)
+
+Full `docker-compose.yml` runs **`platform-dev-login-seed`** after **`auth-service-init`**, before **`auth-service` starts**. It upserts:
+
+- Tenant **`acme`** (`Acme Corporation`)
+- **`tenantadmin@acme.com`** / **`TenantAdmin1`** (override via `DEV_TENANTADMIN_*` env on that service)
+
+Set `SKIP_DEV_TENANTADMIN_BOOTSTRAP=1` on `platform-dev-login-seed` to disable. For a one-off refresh after the DB changed:
+
+```bash
+docker compose run --rm platform-dev-login-seed
+```
+
+---
+
+### Seed a tenant admin manually (alternate)
 
 1) Create a tenant (via `tenant-service`) and copy its UUID.
 

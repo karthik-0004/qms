@@ -296,6 +296,34 @@ services:
     command: >
       sh -lc "set -e; alembic upgrade head"
 
+  # Idempotent Acme + tenantadmin@acme.com (see auth-service bootstrap_local_tenant_admin).
+  platform-dev-login-seed:
+    build:
+      context: .
+      dockerfile: backend/platform/auth-service/Dockerfile
+    <<: *service-defaults
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "platform-dev-login-seed"
+      DEV_TENANTADMIN_EMAIL: "tenantadmin@acme.com"
+      DEV_TENANTADMIN_PASSWORD: "TenantAdmin1"
+      DEV_BOOTSTRAP_TENANT_SLUG: "acme"
+      DEV_BOOTSTRAP_TENANT_NAME: "Acme Corporation"
+      DEV_TENANTADMIN_ROLE: "tenant_admin"
+    command: >
+      sh -lc "set -e; python -m app.scripts.bootstrap_local_tenant_admin"
+
   notification-service-init:
     build:
       context: .
@@ -325,6 +353,8 @@ services:
       redis:
         condition: service_healthy
       auth-service-init:
+        condition: service_completed_successfully
+      platform-dev-login-seed:
         condition: service_completed_successfully
     ports:
       - "8001:8001"
