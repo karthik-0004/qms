@@ -1,6 +1,6 @@
 .PHONY: help up down build logs ps clean \
         test-all test-unit test-integration test-contract test-e2e \
-        migrate-master lint format typecheck install-dev
+        migrate-master lint format typecheck install-dev update-docs
 
 SHELL := /bin/bash
 PLATFORM_SERVICES := auth-service tenant-service user-service audit-service \
@@ -178,6 +178,31 @@ typecheck: ## Run mypy type checking
 
 lint-frontend: ## Lint frontend code
 	cd frontend/apps/web && npm run lint
+
+# ============================================================
+# Documentation
+# ============================================================
+update-docs: ## Update all service OpenAPI documentation from code
+	@echo "Updating CCV documentation..."
+	@for svc in $(CCV_SERVICES); do \
+		export PYTHONPATH="backend/ccv/$$svc:backend/shared/rainer_common:backend/shared/rainer_auth_lib:backend/shared/rainer_tenant_lib:backend/shared/rainer_events:backend/shared/rainer_cache" && \
+		python backend/scripts/extract_openapi.py app.main:app > docs/APIs/ccv/$$svc.json; \
+	done
+	@echo "Updating QMS documentation..."
+	@for svc in $(QMS_SERVICES); do \
+		export PYTHONPATH="backend/qms/$$svc:backend/shared/rainer_common:backend/shared/rainer_auth_lib:backend/shared/rainer_tenant_lib:backend/shared/rainer_events:backend/shared/rainer_cache" && \
+		python backend/scripts/extract_openapi.py app.main:app > docs/APIs/qms/$$svc.json; \
+	done
+	@echo "Updating EM documentation..."
+	@for svc in $(EM_SERVICES); do \
+		export PYTHONPATH="backend/em/$$svc:backend/shared/rainer_common:backend/shared/rainer_auth_lib:backend/shared/rainer_tenant_lib:backend/shared/rainer_events:backend/shared/rainer_cache" && \
+		python backend/scripts/extract_openapi.py app.main:app > docs/APIs/em/$$svc.json; \
+	done
+	@echo "Updating Platform documentation..."
+	@for svc in $(PLATFORM_SERVICES); do \
+		export PYTHONPATH="backend/platform/$$svc:backend/shared/rainer_common:backend/shared/rainer_auth_lib:backend/shared/rainer_tenant_lib:backend/shared/rainer_events:backend/shared/rainer_cache" && \
+		python backend/scripts/extract_openapi.py app.main:app > docs/APIs/platform/$$svc.json; \
+	done
 
 # ============================================================
 # Setup

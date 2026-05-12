@@ -210,6 +210,12 @@
                         "in": "header",
                         "required": true,
                         "schema": { "type": "string", "format": "uuid" }
+                    },
+                    {
+                        "name": "x-user-id",
+                        "in": "header",
+                        "required": true,
+                        "schema": { "type": "string", "format": "uuid" }
                     }
                 ],
                 "requestBody": {
