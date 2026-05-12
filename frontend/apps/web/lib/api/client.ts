@@ -30,14 +30,32 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
   // Browser: always use Next.js `/api/platform/*` rewrite → gateway `/api/v1/*` so a mis-set
   // NEXT_PUBLIC_API_URL (e.g. auth :8001) cannot break CRM/CCV/platform JSON calls.
   config.baseURL = typeof window === "undefined" ? SERVER_API_BASE : "/api/platform";
-  const session = await getSessionFast();
+
+  // For tenant operations, ensure we have a fresh session
+  const isTenantOperation = config.url?.includes('/tenants');
+  let session;
+  if (isTenantOperation) {
+    // For tenant operations, clear cache and get fresh session to ensure we have latest token
+    clearSessionCache();
+    session = await getSessionFast();
+  } else {
+    session = await getSessionFast();
+  }
+
   const { bearerToken, tenantId: tenantFromSession } = resolveSessionAuthContext(session);
-  if (bearerToken) config.headers.Authorization = `Bearer ${bearerToken}`;
+
+  // CRITICAL: Always set Authorization header if we have a bearer token
+  // This is required for all authenticated endpoints including tenant operations
+  if (bearerToken) {
+    config.headers.Authorization = `Bearer ${bearerToken}`;
+  }
+
   const tenantId = tenantFromSession ?? useAuthStore.getState().tenant_id;
   if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
   const userId = useAuthStore.getState().user?.id;
   if (userId) config.headers["X-User-ID"] = userId;
   config.headers["X-Request-ID"] = crypto.randomUUID();
+
   return config;
 });
 

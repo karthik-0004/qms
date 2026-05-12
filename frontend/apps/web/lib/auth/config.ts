@@ -208,7 +208,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.tenant_id === undefined ? null : (token.tenant_id as string | null);
       session.user.company_id =
         token.company_id === undefined ? null : (token.company_id as string | null);
-      session.user.access_token = (token.access_token as string) ?? "";
+      const access = (token.access_token as string) ?? "";
+      session.user.access_token = access;
+      session.accessToken = access;
       return session;
     },
   },

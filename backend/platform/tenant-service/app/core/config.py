@@ -31,14 +31,19 @@ class Settings(BaseSettings):
     kafka_group_id: str = "tenant-service"
 
     rainer_master_secret: str = "dev-master-secret-change-in-production"
+
+    # JWT settings (for validation)
+    jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"
+    jwt_algorithm: str = "HS256"
+
     default_tenant_db_host: str = "postgres"
     default_tenant_db_port: int = 5432
 
     # In docker-compose these resolve via service DNS.
     # Local dev can still override via env to point at localhost ports.
-    auth_service_url: str = "http://auth-service:8001"
-    user_service_url: str = "http://user-service:8003"
-    notification_service_url: str = "http://notification-service:8005"
+    auth_service_url: str = "http://localhost:8001"
+    user_service_url: str = "http://localhost:8003"
+    notification_service_url: str = "http://localhost:8005"
     public_web_login_url: str = "http://localhost:3000/login"
 
     cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]

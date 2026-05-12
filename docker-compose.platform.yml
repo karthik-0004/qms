@@ -569,6 +569,7 @@ services:
       <<: *common-env
       AUTH_SERVICE_URL: "http://auth-service:8001"
       TENANT_SERVICE_URL: "http://tenant-service:8002"
+      AUDIT_SERVICE_URL: "http://audit-service:8004"
       NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
       CRM_SERVICE_URL: "http://crm-service:8040"
       CONTRACT_SERVICE_URL: "http://contract-service:8041"

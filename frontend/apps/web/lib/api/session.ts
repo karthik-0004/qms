@@ -86,14 +86,18 @@ export function resolveSessionAuthContext(session: SessionLike | null): {
   const s = session as Record<string, unknown>;
   const user = s.user as Record<string, unknown> | undefined;
 
+  /** Prefer top-level token — Auth.js client session may omit custom `user` fields. */
+  const bearerFromSessionRoot = s.accessToken;
   const bearerFromUser = user?.access_token;
   const bearerFromLegacy = s.access_token;
   const bearerToken =
-    typeof bearerFromUser === "string"
-      ? bearerFromUser
-      : typeof bearerFromLegacy === "string"
-        ? bearerFromLegacy
-        : undefined;
+    typeof bearerFromSessionRoot === "string" && bearerFromSessionRoot.trim()
+      ? bearerFromSessionRoot.trim()
+      : typeof bearerFromUser === "string" && bearerFromUser.trim()
+        ? bearerFromUser.trim()
+        : typeof bearerFromLegacy === "string" && bearerFromLegacy.trim()
+          ? bearerFromLegacy.trim()
+          : undefined;
 
   const tenantFromUser = user?.tenant_id;
   const tenantFromLegacy = s.tenant_id;

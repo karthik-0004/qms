@@ -1,11 +1,21 @@
 """Gateway Service — Application configuration."""
 
 from functools import lru_cache
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolve `.env` next to this service (not process cwd) so `uvicorn` from repo root still loads
+# `backend/platform/gateway-service/.env` on Windows/macOS hybrid dev.
+_GATEWAY_SERVICE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=_GATEWAY_SERVICE_DIR / ".env",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
     service_name: str = "gateway-service"
     service_version: str = "0.1.0"
@@ -15,8 +25,8 @@ class Settings(BaseSettings):
     json_logs: bool = True
 
     # Upstream services
-    auth_service_url: str = "http://auth-service:8001"
-    tenant_service_url: str = "http://tenant-service:8002"
+    auth_service_url: str = "http://localhost:8001"
+    tenant_service_url: str = "http://localhost:8002"
     user_service_url: str = "http://user-service:8003"
     audit_service_url: str = "http://audit-service:8004"
     notification_service_url: str = "http://notification-service:8005"
