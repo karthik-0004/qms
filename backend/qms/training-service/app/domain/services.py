@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import structlog
 
-from rainer_common.exceptions import ConflictError, ForbiddenError, NotFoundError
+from rainer_common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 
 from ..infra.db.models import TrainingAssignment, TrainingCourse
 from ..infra.db.repositories import TrainingAssignmentRepository, TrainingCourseRepository
@@ -117,6 +117,7 @@ class TrainingDomainService:
         user_id: str,
         score: int | None = None,
         notes: str | None = None,
+        e_signature: str | None = None,
     ) -> TrainingAssignment:
         assignment = await self._assignments.get_by_id(assignment_id)
         if not assignment:
@@ -125,18 +126,26 @@ class TrainingDomainService:
             raise ForbiddenError("Cannot complete another user's training")
 
         course = await self.get_course(assignment.course_id)
+        if course.requires_certification and not (e_signature and e_signature.strip()):
+            raise ValidationError("E-signature is required to complete certified training")
+
         passed = score is None or score >= course.passing_score
 
         cert_expiry = None
         if passed and course.requires_certification and course.recurrence_days:
             cert_expiry = datetime.now(timezone.utc) + timedelta(days=course.recurrence_days)
 
+        combined_notes = notes
+        if e_signature and e_signature.strip():
+            tag = f"[e-signature:{e_signature.strip()}]"
+            combined_notes = f"{notes or ''}\n{tag}".strip()
+
         await self._assignments.complete(
             assignment_id,
             score=score,
             passed=passed,
             cert_expiry_date=cert_expiry,
-            notes=notes,
+            notes=combined_notes,
         )
 
         logger.info("training_completed", assignment_id=assignment_id, user_id=user_id, passed=passed)

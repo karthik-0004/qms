@@ -7,8 +7,8 @@ import structlog
 
 from rainer_common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 
-from ..infra.db.models import Document, DocumentVersion
-from ..infra.db.repositories import DocumentRepository, DocumentVersionRepository
+from ..infra.db.models import Document, DocumentDistribution, DocumentVersion
+from ..infra.db.repositories import DocumentDistributionRepository, DocumentRepository, DocumentVersionRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -28,10 +28,12 @@ class DocumentDomainService:
         self,
         doc_repo: DocumentRepository,
         version_repo: DocumentVersionRepository,
+        distribution_repo: DocumentDistributionRepository,
         tenant_id: str,
     ) -> None:
         self._docs = doc_repo
         self._versions = version_repo
+        self._distribution = distribution_repo
         self._tenant_id = tenant_id
 
     async def create_document(
@@ -123,6 +125,7 @@ class DocumentDomainService:
             document_id,
             status="under_review",
             approver_id=approver_id or doc.approver_id,
+            last_rejection_reason=None,
         )
 
         logger.info("document_submitted_for_review", doc_id=document_id, submitted_by=submitted_by)
@@ -185,7 +188,7 @@ class DocumentDomainService:
         doc = await self.get_document(document_id)
         self._assert_transition(doc.status, "reject")
 
-        await self._docs.update(document_id, status="draft")
+        await self._docs.update(document_id, status="draft", last_rejection_reason=reason)
         logger.info("document_rejected", doc_id=document_id, rejected_by=rejected_by)
         return await self.get_document(document_id)
 
@@ -226,6 +229,19 @@ class DocumentDomainService:
 
     async def get_due_for_review(self, days_ahead: int = 30) -> list[Document]:
         return await self._docs.get_due_for_review(self._tenant_id, days_ahead)
+
+    async def list_distribution(self, document_id: str) -> list[DocumentDistribution]:
+        await self.get_document(document_id)
+        return await self._distribution.list_for_document(document_id)
+
+    async def add_distribution_member(
+        self, document_id: str, user_id: str, added_by: str
+    ) -> DocumentDistribution:
+        await self.get_document(document_id)
+        existing = await self._distribution.list_for_document(document_id)
+        if any(m.user_id == user_id for m in existing):
+            raise ConflictError("User is already on the distribution list for this document")
+        return await self._distribution.add_member(document_id, user_id, added_by)
 
     def _assert_transition(self, current_status: str, action: str) -> None:
         allowed_actions = VALID_TRANSITIONS.get(current_status, set())

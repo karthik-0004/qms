@@ -75,12 +75,13 @@ export function clearSessionCache(): void {
 }
 
 /**
- * Token + tenant for API clients. Prefers NextAuth-augmented `session.user`;
+ * Token + tenant + user ID for API clients. Prefers NextAuth-augmented `session.user`;
  * falls back to legacy top-level fields for older sessions/tools.
  */
 export function resolveSessionAuthContext(session: SessionLike | null): {
   bearerToken?: string;
   tenantId?: string | null;
+  userId?: string | null;
 } {
   if (!session) return {};
   const s = session as Record<string, unknown>;
@@ -108,6 +109,15 @@ export function resolveSessionAuthContext(session: SessionLike | null): {
     tenantId = tenantFromLegacy as string | null;
   }
 
-  return { bearerToken, tenantId };
+  const userIdFromUser = user?.id;
+  const userIdFromLegacy = s.user_id;
+  let userId: string | null | undefined;
+  if (typeof userIdFromUser === "string" || userIdFromUser === null) {
+    userId = userIdFromUser as string | null;
+  } else if (typeof userIdFromLegacy === "string" || userIdFromLegacy === null) {
+    userId = userIdFromLegacy as string | null;
+  }
+
+  return { bearerToken, tenantId, userId };
 }
 

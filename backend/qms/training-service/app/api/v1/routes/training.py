@@ -6,7 +6,8 @@ import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser
+from rainer_auth_lib.dependencies import CurrentUser, require_permission
+from rainer_auth_lib.permissions import Permission
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
 
@@ -28,7 +29,9 @@ def _get_service(current_user: CurrentUser, db: Annotated[AsyncSession, Depends(
     )
 
 
-@router.get("/courses", response_model=PaginatedResponse[TrainingCourseResponse], summary="List training courses")
+@router.get("/courses", response_model=PaginatedResponse[TrainingCourseResponse],
+            dependencies=[Depends(require_permission(Permission.TRAINING_READ))],
+            summary="List training courses")
 async def list_courses(
     current_user: CurrentUser,
     service: Annotated[TrainingDomainService, Depends(_get_service)],
@@ -47,6 +50,7 @@ async def list_courses(
 
 
 @router.post("/courses", response_model=SuccessResponse[TrainingCourseResponse], status_code=201,
+             dependencies=[Depends(require_permission(Permission.TRAINING_WRITE))],
              summary="Create a training course")
 async def create_course(
     payload: CreateCourseRequest,
@@ -71,6 +75,7 @@ async def create_course(
 
 
 @router.get("/courses/{course_id}", response_model=SuccessResponse[TrainingCourseResponse],
+            dependencies=[Depends(require_permission(Permission.TRAINING_READ))],
             summary="Get course details")
 async def get_course(
     course_id: str,
@@ -82,7 +87,9 @@ async def get_course(
 
 
 @router.post("/courses/{course_id}/assign", response_model=SuccessResponse[TrainingAssignmentResponse],
-             status_code=201, summary="Assign training to a user")
+             status_code=201,
+             dependencies=[Depends(require_permission(Permission.TRAINING_ASSIGN))],
+             summary="Assign training to a user")
 async def assign_training(
     course_id: str,
     payload: AssignTrainingRequest,
@@ -99,6 +106,7 @@ async def assign_training(
 
 
 @router.get("/assignments", response_model=PaginatedResponse[TrainingAssignmentResponse],
+            dependencies=[Depends(require_permission(Permission.TRAINING_READ))],
             summary="List assignments for the current user")
 async def my_assignments(
     current_user: CurrentUser,
@@ -117,6 +125,7 @@ async def my_assignments(
 
 
 @router.post("/assignments/{assignment_id}/complete", response_model=SuccessResponse[TrainingAssignmentResponse],
+             dependencies=[Depends(require_permission(Permission.TRAINING_WRITE))],
              summary="Complete a training assignment")
 async def complete_training(
     assignment_id: str,
@@ -129,11 +138,13 @@ async def complete_training(
         user_id=current_user.sub,
         score=payload.score,
         notes=payload.notes,
+        e_signature=payload.e_signature,
     )
     return SuccessResponse.of(TrainingAssignmentResponse.model_validate(assignment, from_attributes=True))
 
 
 @router.get("/assignments/overdue", response_model=SuccessResponse[list[TrainingAssignmentResponse]],
+            dependencies=[Depends(require_permission(Permission.TRAINING_READ))],
             summary="Get overdue training assignments")
 async def overdue_assignments(
     current_user: CurrentUser,

@@ -26,3 +26,8 @@ class AssignTrainingRequest(BaseModel):
 class CompleteTrainingRequest(BaseModel):
     score: int | None = None
     notes: str | None = None
+    e_signature: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Required when the course requires certification",
+    )

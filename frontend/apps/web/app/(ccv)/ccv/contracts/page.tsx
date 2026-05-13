@@ -1,19 +1,24 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   FileText,
   Search,
   Plus,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useContracts } from "@/lib/hooks/queries/ccv";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useContracts, useCreateContract, useCustomers } from "@/lib/hooks/queries/ccv";
 import type { Contract } from "@/lib/api/services/ccv";
+import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: "Draft", color: "bg-slate-100 text-slate-700" },
@@ -38,10 +43,12 @@ const CONTRACT_TYPES = [
 const PAGE_SIZE = 10;
 
 export default function ContractsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data, isLoading: loading } = useContracts({
     search: search || undefined,
@@ -49,6 +56,10 @@ export default function ContractsPage() {
     page,
     page_size: PAGE_SIZE,
   });
+
+  const { data: customersData } = useCustomers({ page_size: 100 });
+  const customers = customersData?.items ?? [];
+  const createContract = useCreateContract();
 
   const contracts: Contract[] = data?.items ?? [];
   const totalItems = data?.total ?? 0;
@@ -59,6 +70,56 @@ export default function ContractsPage() {
     setSearch(val);
     setPage(1);
   }, []);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    customer_id: "",
+    contract_type: "service_agreement",
+    contract_number: "",
+    start_date: "",
+    end_date: "",
+    total_value: "",
+    currency: "USD",
+    payment_terms: "",
+    description: "",
+    notes: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createContract.mutateAsync({
+        title: formData.title,
+        customer_id: formData.customer_id,
+        contract_type: formData.contract_type,
+        contract_number: formData.contract_number || undefined,
+        start_date: formData.start_date || undefined,
+        end_date: formData.end_date || undefined,
+        total_value: formData.total_value ? parseFloat(formData.total_value) : undefined,
+        currency: formData.currency,
+        payment_terms: formData.payment_terms || undefined,
+        description: formData.description || undefined,
+        notes: formData.notes || undefined,
+      });
+      toast.success("Contract created successfully");
+      setShowCreateDialog(false);
+      setFormData({
+        title: "",
+        customer_id: "",
+        contract_type: "service_agreement",
+        contract_number: "",
+        start_date: "",
+        end_date: "",
+        total_value: "",
+        currency: "USD",
+        payment_terms: "",
+        description: "",
+        notes: "",
+      });
+    } catch (error) {
+      toast.error("Failed to create contract");
+    }
+  };
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
@@ -72,7 +133,7 @@ export default function ContractsPage() {
             Manage service agreements, maintenance contracts, and NDAs
           </p>
         </div>
-        <Button size="sm" className="gap-1.5">
+        <Button size="sm" className="gap-1.5" onClick={() => setShowCreateDialog(true)}>
           <Plus className="h-4 w-4" />
           New Contract
         </Button>
@@ -155,6 +216,7 @@ export default function ContractsPage() {
                       <tr
                         key={c.id}
                         className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => router.push(`/ccv/contracts/${c.id}` as any)}
                       >
                         <td className="py-3 pr-4 font-mono font-semibold text-xs">
                           {c.contract_number}
@@ -163,13 +225,13 @@ export default function ContractsPage() {
                           {c.title}
                         </td>
                         <td className="py-3 pr-4 text-muted-foreground hidden sm:table-cell">
-                          {c.customer_name}
+                          {c.customer?.company_name ?? c.customer_id}
                         </td>
                         <td className="py-3 pr-4 capitalize text-muted-foreground hidden md:table-cell">
                           {c.contract_type.replace(/_/g, " ")}
                         </td>
                         <td className="py-3 pr-4 font-medium hidden lg:table-cell">
-                          {c.total_value > 0 ? `$${c.total_value.toLocaleString()}` : "—"}
+                          {c.total_value && c.total_value > 0 ? `$${c.total_value.toLocaleString()}` : "—"}
                         </td>
                         <td className="py-3 pr-4">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.color}`}>
@@ -214,6 +276,160 @@ export default function ContractsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Contract Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Contract</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contract_number">Contract Number</Label>
+                <Input
+                  id="contract_number"
+                  value={formData.contract_number}
+                  onChange={(e) => setFormData({ ...formData, contract_number: e.target.value })}
+                  placeholder="Auto-generated if empty"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer_id">Customer *</Label>
+                <select
+                  id="customer_id"
+                  value={formData.customer_id}
+                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                  required
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Select a customer...</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.company_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contract_type">Contract Type *</Label>
+                <select
+                  id="contract_type"
+                  value={formData.contract_type}
+                  onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
+                  required
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm capitalize"
+                >
+                  {CONTRACT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="total_value">Total Value</Label>
+                <Input
+                  id="total_value"
+                  type="number"
+                  step="0.01"
+                  value={formData.total_value}
+                  onChange={(e) => setFormData({ ...formData, total_value: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payment_terms">Payment Terms</Label>
+                <Input
+                  id="payment_terms"
+                  value={formData.payment_terms}
+                  onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
+                  placeholder="e.g., Net 30"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description / Scope</Label>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="Describe the contract scope..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="Additional notes..."
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCreateDialog(false)}
+                disabled={createContract.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createContract.isPending}>
+                {createContract.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Contract"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

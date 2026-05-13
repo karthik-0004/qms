@@ -41,3 +41,11 @@ class DocumentVersionResponse(BaseModel):
     signature_hash: str | None
     created_by: str
     created_at: datetime
+
+
+class DocumentDistributionResponse(BaseModel):
+    id: str
+    document_id: str
+    user_id: str
+    added_by: str
+    created_at: datetime

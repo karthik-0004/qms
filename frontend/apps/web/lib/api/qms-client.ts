@@ -8,16 +8,15 @@ import { getSessionFast, clearSessionCache, resolveSessionAuthContext } from "@/
  */
 const DEFAULT_GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-const DEFAULT_QUALITY_EVENT_URL = process.env.NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL ?? "http://localhost:8021";
-
 const QMS_SERVICE_BASE_URLS = {
   document:
     process.env.NEXT_PUBLIC_QMS_DOCUMENT_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
     DEFAULT_GATEWAY_URL,
   qualityEvent:
+    process.env.NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
-    DEFAULT_QUALITY_EVENT_URL,
+    DEFAULT_GATEWAY_URL,
   capa:
     process.env.NEXT_PUBLIC_QMS_CAPA_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
@@ -38,7 +37,7 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
   const baseUrl = QMS_SERVICE_BASE_URLS[service];
 
   const client: AxiosInstance = axios.create({
-    baseURL: `${baseUrl}/api/v1`,
+    baseURL: typeof window === "undefined" ? `${baseUrl}/api/v1` : "/api/platform",
     headers: {
       "Content-Type": "application/json",
     },
@@ -48,10 +47,12 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
 
   client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     const session = await getSessionFast();
-    const { bearerToken, tenantId: tenantFromSession } = resolveSessionAuthContext(session);
+    const { bearerToken, tenantId: tenantFromSession, userId: userIdFromSession } = resolveSessionAuthContext(session);
     if (bearerToken) config.headers.Authorization = `Bearer ${bearerToken}`;
     const tenantId = tenantFromSession ?? useAuthStore.getState().tenant_id;
     if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
+    const userId = userIdFromSession ?? useAuthStore.getState().user?.id;
+    if (userId) config.headers["X-User-ID"] = userId;
     config.headers["X-Request-ID"] = crypto.randomUUID();
     return config;
   });
@@ -92,7 +93,7 @@ export const qmsEquipmentApiClient: AxiosInstance = createQmsApiClient("equipmen
  */
 
 export const __deprecatedQmsApiClient__ = axios.create({
-  baseURL: `${(process.env.NEXT_PUBLIC_QMS_API_URL ?? "http://localhost:8020")}/api/v1`,
+  baseURL: `${(process.env.NEXT_PUBLIC_QMS_API_URL ?? DEFAULT_GATEWAY_URL)}/api/v1`,
   headers: {
     "Content-Type": "application/json",
   },

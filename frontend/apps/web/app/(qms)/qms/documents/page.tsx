@@ -2,6 +2,7 @@
 
 import { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { FileText, Plus, Search, ChevronLeft, ChevronRight, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -260,6 +261,15 @@ export default function DocumentsPage() {
                   documents.map((doc) => (
                     <tr
                       key={doc.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => router.push(`/qms/documents/${doc.id}` as Route)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/qms/documents/${doc.id}` as Route);
+                        }
+                      }}
                       className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
                     >
                       <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">{doc.doc_number}</td>

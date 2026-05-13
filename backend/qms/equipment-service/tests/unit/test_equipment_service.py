@@ -98,6 +98,10 @@ class TestRecordCalibration:
         cal_date = datetime.now(timezone.utc)
         result = await svc.record_calibration(eq.id, str(uuid4()), cal_date, passed=True)
         repo.update.assert_called()
+        repo.create_calibration_record.assert_awaited_once()
+        call_kwargs = repo.create_calibration_record.call_args.kwargs
+        assert call_kwargs["result"] == "pass"
+        assert call_kwargs["passed"] is True
 
     @pytest.mark.asyncio
     async def test_records_failed_calibration_sets_out_of_calibration(self, svc, repo):
@@ -108,8 +112,12 @@ class TestRecordCalibration:
 
         cal_date = datetime.now(timezone.utc)
         result = await svc.record_calibration(eq.id, str(uuid4()), cal_date, passed=False)
-        call_kwargs = repo.update.call_args.kwargs
-        assert call_kwargs.get("status") == "out_of_calibration"
+        update_kwargs = repo.update.call_args.kwargs
+        assert update_kwargs.get("status") == "out_of_calibration"
+        repo.create_calibration_record.assert_awaited_once()
+        record_kwargs = repo.create_calibration_record.call_args.kwargs
+        assert record_kwargs["result"] == "fail"
+        assert record_kwargs["passed"] is False
 
     @pytest.mark.asyncio
     async def test_raises_if_calibration_not_required(self, svc, repo):
@@ -117,6 +125,28 @@ class TestRecordCalibration:
         repo.get_by_id.return_value = eq
         with pytest.raises(ConflictError, match="not require calibration"):
             await svc.record_calibration(eq.id, str(uuid4()), datetime.now(timezone.utc), True)
+
+
+class TestListCalibrationRecords:
+    @pytest.mark.asyncio
+    async def test_returns_records_for_equipment(self, svc, repo):
+        eq = make_equipment()
+        repo.get_by_id.return_value = eq
+        mock_records = [MagicMock(), MagicMock()]
+        repo.list_calibration_records.return_value = mock_records
+
+        result = await svc.list_calibration_records(eq.id)
+
+        assert result is mock_records
+        repo.list_calibration_records.assert_awaited_once_with(
+            equipment_id=eq.id, tenant_id="tenant-1"
+        )
+
+    @pytest.mark.asyncio
+    async def test_raises_not_found_for_missing_equipment(self, svc, repo):
+        repo.get_by_id.return_value = None
+        with pytest.raises(NotFoundError):
+            await svc.list_calibration_records("nonexistent")
 
 
 class TestDecommission:

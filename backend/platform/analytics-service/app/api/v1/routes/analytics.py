@@ -3,10 +3,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from rainer_auth_lib.dependencies import CurrentUser
 from rainer_common.responses import SuccessResponse
 
+from ....core.database import get_db
 from ....domain.services import AnalyticsDomainService
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -33,12 +35,14 @@ async def get_dashboard(
     dashboard_id: str,
     current_user: CurrentUser,
     service: Annotated[AnalyticsDomainService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     date_range_days: int = Query(default=30, ge=1, le=365),
 ) -> SuccessResponse[dict]:
     dashboard = await service.get_dashboard(
         dashboard_id=dashboard_id,
         tenant_id=current_user.tenant_id or "",
         date_range_days=date_range_days,
+        db=db,
     )
     return SuccessResponse.of(dashboard)
 

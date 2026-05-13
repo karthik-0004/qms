@@ -93,7 +93,7 @@ class QualityEventDomainService:
         await self.get_event(event_id)
         allowed = {"title", "description", "severity", "priority", "department", "location",
                    "assigned_to", "root_cause", "immediate_action", "capa_required",
-                   "due_date", "tags", "attachments"}
+                   "capa_id", "due_date", "tags", "attachments"}
         filtered = {k: v for k, v in fields.items() if k in allowed}
         if filtered:
             await self._repo.update(event_id, **filtered)

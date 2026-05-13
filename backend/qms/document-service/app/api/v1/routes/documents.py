@@ -8,7 +8,8 @@ import structlog
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser
+from rainer_auth_lib.dependencies import CurrentUser, require_permission
+from rainer_auth_lib.permissions import Permission
 from rainer_common.exceptions import RainerException
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
@@ -16,15 +17,20 @@ from rainer_common.pagination import PaginationParams, pagination_params
 from ....core.config import Settings, get_settings
 from ....core.database import get_db
 from ....domain.services import DocumentDomainService
-from ....infra.db.repositories import DocumentRepository, DocumentVersionRepository
+from ....infra.db.repositories import (
+    DocumentDistributionRepository,
+    DocumentRepository,
+    DocumentVersionRepository,
+)
 from ....schemas.requests import (
+    AddDistributionMemberRequest,
     ApproveDocumentRequest,
     CreateDocumentRequest,
     RejectDocumentRequest,
     SubmitForReviewRequest,
     UpdateDocumentRequest,
 )
-from ....schemas.responses import DocumentResponse, DocumentVersionResponse
+from ....schemas.responses import DocumentDistributionResponse, DocumentResponse, DocumentVersionResponse
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 logger = structlog.get_logger(__name__)
@@ -34,8 +40,6 @@ def _get_service(
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> DocumentDomainService:
-    # Tenant scoping is mandatory for all document queries. Without it we end up
-    # sending an invalid UUID to Postgres and returning a 500.
     if not getattr(current_user, "tenant_id", None):
         raise RainerException(
             code="TENANT_REQUIRED",
@@ -45,11 +49,13 @@ def _get_service(
     return DocumentDomainService(
         doc_repo=DocumentRepository(db),
         version_repo=DocumentVersionRepository(db),
+        distribution_repo=DocumentDistributionRepository(db),
         tenant_id=current_user.tenant_id or "",
     )
 
 
 @router.get("", response_model=PaginatedResponse[DocumentResponse],
+            dependencies=[Depends(require_permission(Permission.DOCUMENT_READ))],
             summary="List documents (filtered, paginated)")
 async def list_documents(
     current_user: CurrentUser,
@@ -72,7 +78,23 @@ async def list_documents(
     )
 
 
+@router.get("/due-for-review",
+            response_model=SuccessResponse[list[DocumentResponse]],
+            dependencies=[Depends(require_permission(Permission.DOCUMENT_READ))],
+            summary="Get documents due for periodic review")
+async def due_for_review(
+    current_user: CurrentUser,
+    service: Annotated[DocumentDomainService, Depends(_get_service)],
+    days_ahead: int = Query(default=30, ge=1, le=365),
+) -> SuccessResponse[list[DocumentResponse]]:
+    docs = await service.get_due_for_review(days_ahead=days_ahead)
+    return SuccessResponse.of(
+        [DocumentResponse.model_validate(d, from_attributes=True) for d in docs]
+    )
+
+
 @router.post("", response_model=SuccessResponse[DocumentResponse], status_code=201,
+             dependencies=[Depends(require_permission(Permission.DOCUMENT_WRITE))],
              summary="Create a new document")
 async def create_document(
     payload: CreateDocumentRequest,
@@ -100,6 +122,7 @@ async def create_document(
 
 
 @router.get("/{document_id}", response_model=SuccessResponse[DocumentResponse],
+            dependencies=[Depends(require_permission(Permission.DOCUMENT_READ))],
             summary="Get document details")
 async def get_document(
     document_id: str,
@@ -111,6 +134,7 @@ async def get_document(
 
 
 @router.patch("/{document_id}", response_model=SuccessResponse[DocumentResponse],
+              dependencies=[Depends(require_permission(Permission.DOCUMENT_WRITE))],
               summary="Update draft document")
 async def update_document(
     document_id: str,
@@ -124,6 +148,7 @@ async def update_document(
 
 
 @router.delete("/{document_id}", response_model=MessageResponse,
+               dependencies=[Depends(require_permission(Permission.DOCUMENT_DELETE))],
                summary="Delete a draft document")
 async def delete_document(
     document_id: str,
@@ -136,6 +161,7 @@ async def delete_document(
 
 @router.post("/{document_id}/submit-for-review",
              response_model=SuccessResponse[DocumentResponse],
+             dependencies=[Depends(require_permission(Permission.DOCUMENT_WRITE))],
              summary="Submit document for approval review")
 async def submit_for_review(
     document_id: str,
@@ -154,6 +180,7 @@ async def submit_for_review(
 
 @router.post("/{document_id}/approve",
              response_model=SuccessResponse[DocumentResponse],
+             dependencies=[Depends(require_permission(Permission.DOCUMENT_APPROVE))],
              summary="Approve document (requires e-signature)")
 async def approve_document(
     document_id: str,
@@ -174,6 +201,7 @@ async def approve_document(
 
 @router.post("/{document_id}/reject",
              response_model=SuccessResponse[DocumentResponse],
+             dependencies=[Depends(require_permission(Permission.DOCUMENT_APPROVE))],
              summary="Reject document (returns to draft)")
 async def reject_document(
     document_id: str,
@@ -191,6 +219,7 @@ async def reject_document(
 
 @router.post("/{document_id}/make-obsolete",
              response_model=SuccessResponse[DocumentResponse],
+             dependencies=[Depends(require_permission(Permission.DOCUMENT_APPROVE))],
              summary="Mark approved document as obsolete")
 async def make_obsolete(
     document_id: str,
@@ -203,6 +232,7 @@ async def make_obsolete(
 
 @router.get("/{document_id}/versions",
             response_model=SuccessResponse[list[DocumentVersionResponse]],
+            dependencies=[Depends(require_permission(Permission.DOCUMENT_READ))],
             summary="Get document version history")
 async def get_versions(
     document_id: str,
@@ -215,15 +245,35 @@ async def get_versions(
     )
 
 
-@router.get("/due-for-review",
-            response_model=SuccessResponse[list[DocumentResponse]],
-            summary="Get documents due for periodic review")
-async def due_for_review(
+@router.get("/{document_id}/distribution",
+            response_model=SuccessResponse[list[DocumentDistributionResponse]],
+            dependencies=[Depends(require_permission(Permission.DOCUMENT_READ))],
+            summary="List distribution recipients for a document")
+async def list_distribution(
+    document_id: str,
     current_user: CurrentUser,
     service: Annotated[DocumentDomainService, Depends(_get_service)],
-    days_ahead: int = Query(default=30, ge=1, le=365),
-) -> SuccessResponse[list[DocumentResponse]]:
-    docs = await service.get_due_for_review(days_ahead=days_ahead)
+) -> SuccessResponse[list[DocumentDistributionResponse]]:
+    rows = await service.list_distribution(document_id)
     return SuccessResponse.of(
-        [DocumentResponse.model_validate(d, from_attributes=True) for d in docs]
+        [DocumentDistributionResponse.model_validate(r, from_attributes=True) for r in rows]
     )
+
+
+@router.post("/{document_id}/distribution",
+             response_model=SuccessResponse[DocumentDistributionResponse],
+             status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(require_permission(Permission.DOCUMENT_WRITE))],
+             summary="Add a user to the document distribution list")
+async def add_distribution_member(
+    document_id: str,
+    payload: AddDistributionMemberRequest,
+    current_user: CurrentUser,
+    service: Annotated[DocumentDomainService, Depends(_get_service)],
+) -> SuccessResponse[DocumentDistributionResponse]:
+    row = await service.add_distribution_member(
+        document_id=document_id,
+        user_id=payload.user_id,
+        added_by=current_user.sub,
+    )
+    return SuccessResponse.of(DocumentDistributionResponse.model_validate(row, from_attributes=True))

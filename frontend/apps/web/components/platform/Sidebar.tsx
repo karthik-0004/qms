@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Wrench,
   FlaskConical,
+  BookOpen,
   Briefcase,
   FileCheck,
   Settings,
@@ -32,6 +33,7 @@ const QMS_NAV = [
   { href: "/qms/quality-events", icon: AlertTriangle, label: "Quality Events" },
   { href: "/qms/capa", icon: ClipboardList, label: "CAPA" },
   { href: "/qms/training", icon: GraduationCap, label: "Training" },
+  { href: "/qms/training/my-training", icon: BookOpen, label: "My training" },
   { href: "/qms/equipment", icon: Wrench, label: "Equipment" },
   { href: "/qms/analytics", icon: BarChart3, label: "Analytics" },
 ];

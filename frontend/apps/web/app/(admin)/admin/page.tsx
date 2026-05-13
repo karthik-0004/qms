@@ -308,7 +308,9 @@ function UsersTab() {
                     ))}
                   </tr>
                 ))
-              : users.map((u) => (
+              : users.map((u) => {
+                  const life = u.is_active ? "active" : "inactive";
+                  return (
                   <tr
                     key={u.id}
                     className="border-b last:border-0 hover:bg-muted/30 transition-colors"
@@ -328,9 +330,9 @@ function UsersTab() {
                     </td>
                     <td className="py-3 pr-4">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[u.status] ?? ""}`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[life] ?? ""}`}
                       >
-                        {STATUS_LABEL[u.status] ?? u.status}
+                        {STATUS_LABEL[life] ?? life}
                       </span>
                     </td>
                     <td className="py-3 pr-4 text-xs text-muted-foreground font-mono hidden md:table-cell">
@@ -345,7 +347,8 @@ function UsersTab() {
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
                   </tr>
-                ))}
+                );
+              })}
           </tbody>
         </table>
       </div>

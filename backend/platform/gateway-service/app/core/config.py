@@ -31,11 +31,17 @@ class Settings(BaseSettings):
     audit_service_url: str = "http://audit-service:8004"
     notification_service_url: str = "http://notification-service:8005"
     document_service_url: str = "http://document-service:8020"
+    quality_event_service_url: str = "http://quality-event-service:8021"
+    capa_service_url: str = "http://capa-service:8022"
+    training_service_url: str = "http://training-service:8023"
+    equipment_service_url: str = "http://equipment-service:8024"
+    analytics_service_url: str = "http://analytics-service:8011"
     crm_service_url: str = "http://crm-service:8040"
     contract_service_url: str = "http://contract-service:8041"
     workorder_service_url: str = "http://workorder-service:8042"
     technician_service_url: str = "http://technician-service:8043"
     billing_service_url: str = "http://billing-service:8044"
+    certificate_service_url: str = "http://certificate-service:8045"
 
     # JWT settings (for validation)
     jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"

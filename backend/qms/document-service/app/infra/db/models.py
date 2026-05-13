@@ -73,3 +73,17 @@ class DocumentAcknowledgment(Base):
     acknowledged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     version: Mapped[str] = mapped_column(String(20), nullable=False)
     ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+
+class DocumentDistribution(Base):
+    __tablename__ = "document_distribution"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True)
+    document_id: Mapped[str] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=False)
+    added_by: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("idx_document_distribution_document", "document_id"),)

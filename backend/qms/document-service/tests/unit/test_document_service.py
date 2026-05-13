@@ -20,7 +20,7 @@ def make_doc(**kwargs) -> Document:
         current_version="1.0", owner_id=str(uuid4()), approver_id=None,
         effective_date=None, review_date=None, expiry_date=None,
         workflow_instance_id=None, file_id=None, tags=[], regulatory_frameworks=[],
-        is_controlled=True, created_by=str(uuid4()), deleted_at=None,
+        is_controlled=True, last_rejection_reason=None, created_by=str(uuid4()), deleted_at=None,
         created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc),
     )
     defaults.update(kwargs)
@@ -41,8 +41,18 @@ def version_repo():
 
 
 @pytest.fixture
-def svc(doc_repo, version_repo):
-    return DocumentDomainService(doc_repo=doc_repo, version_repo=version_repo, tenant_id="tenant-1")
+def distribution_repo():
+    return AsyncMock()
+
+
+@pytest.fixture
+def svc(doc_repo, version_repo, distribution_repo):
+    return DocumentDomainService(
+        doc_repo=doc_repo,
+        version_repo=version_repo,
+        distribution_repo=distribution_repo,
+        tenant_id="tenant-1",
+    )
 
 
 class TestCreateDocument:

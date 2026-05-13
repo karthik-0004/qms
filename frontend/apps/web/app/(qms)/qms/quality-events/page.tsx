@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, lazy, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useState, lazy, Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { AlertTriangle, Plus, Search, ChevronLeft, ChevronRight, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQualityEvents, useCreateQualityEvent } from "@/lib/hooks/queries/qms";
+import { usePermission } from "@/lib/hooks/usePermission";
 import type { QualityEvent } from "@/lib/api/services/qms";
 import { toast } from "sonner";
 
@@ -37,8 +39,9 @@ const SEVERITY_CONFIG: Record<string, string> = {
 
 const PAGE_SIZE = 10;
 
-export default function QualityEventsPage() {
+function QualityEventsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -58,6 +61,13 @@ export default function QualityEventsPage() {
   });
 
   const createEvent = useCreateQualityEvent();
+  const { hasPermission, isLoading: permLoading } = usePermission();
+  const canWriteQe = hasPermission("quality_event:write");
+
+  useEffect(() => {
+    const s = searchParams.get("status");
+    if (s) setStatusFilter(s);
+  }, [searchParams]);
 
   const events: QualityEvent[] = data?.items ?? [];
   const totalItems = data?.total ?? 0;
@@ -128,6 +138,7 @@ export default function QualityEventsPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Track deviations, OOS results, and quality incidents</p>
         </div>
+        {!permLoading && canWriteQe && (
         <Suspense fallback={<Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Report Event</Button>}>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -205,6 +216,7 @@ export default function QualityEventsPage() {
             </DialogContent>
           </Dialog>
         </Suspense>
+        )}
       </div>
 
       <Card>
@@ -214,7 +226,20 @@ export default function QualityEventsPage() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search events..." className="pl-8" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
-            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                const v = e.target.value;
+                setStatusFilter(v);
+                setPage(1);
+                const p = new URLSearchParams(searchParams.toString());
+                if (v) p.set("status", v);
+                else p.delete("status");
+                const q = p.toString();
+                router.replace((q ? `/qms/quality-events?${q}` : `/qms/quality-events`) as Route);
+              }}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
               <option value="">All Statuses</option>
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (<option key={k} value={k}>{v.label}</option>))}
             </select>
@@ -246,13 +271,25 @@ export default function QualityEventsPage() {
                   const cfg = STATUS_CONFIG[ev.status] ?? { label: ev.status, color: "" };
                   const sevColor = SEVERITY_CONFIG[ev.severity] ?? "";
                   return (
-                    <tr key={ev.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr
+                      key={ev.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => router.push(`/qms/quality-events/${ev.id}` as Route)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/qms/quality-events/${ev.id}` as Route);
+                        }
+                      }}
+                      className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                    >
                       <td className="py-3 pr-4 font-mono font-semibold text-xs">{ev.event_number}</td>
                       <td className="py-3 pr-4 font-medium max-w-[200px] truncate">{ev.title}</td>
                       <td className="py-3 pr-4 hidden sm:table-cell"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${sevColor}`}>{ev.severity}</span></td>
                       <td className="py-3 pr-4 text-muted-foreground hidden md:table-cell">{ev.department ?? "—"}</td>
                       <td className="py-3 pr-4"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.color}`}>{cfg.label}</span></td>
-                      <td className="py-3 text-muted-foreground text-xs hidden md:table-cell">{new Date(ev.reported_at).toLocaleDateString()}</td>
+                      <td className="py-3 text-muted-foreground text-xs hidden md:table-cell">{new Date(ev.detected_at ?? ev.reported_at ?? ev.created_at).toLocaleDateString()}</td>
                     </tr>
                   );
                 })}
@@ -271,5 +308,17 @@ export default function QualityEventsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function QualityEventsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[30vh] p-6 text-muted-foreground">Loading quality events…</div>
+      }
+    >
+      <QualityEventsPageContent />
+    </Suspense>
   );
 }

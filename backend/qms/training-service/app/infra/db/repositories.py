@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from .models import TrainingAssignment, TrainingCourse
 
@@ -65,25 +66,35 @@ class TrainingAssignmentRepository:
         self._db = db
 
     async def get_by_id(self, assignment_id: str) -> TrainingAssignment | None:
-        result = await self._db.execute(select(TrainingAssignment).where(TrainingAssignment.id == assignment_id))
-        return result.scalar_one_or_none()
+        result = await self._db.execute(
+            select(TrainingAssignment)
+            .options(joinedload(TrainingAssignment.course))
+            .where(TrainingAssignment.id == assignment_id)
+        )
+        return result.unique().scalar_one_or_none()
 
     async def get_by_course_user(self, course_id: str, user_id: str) -> TrainingAssignment | None:
         result = await self._db.execute(
-            select(TrainingAssignment).where(
+            select(TrainingAssignment)
+            .options(joinedload(TrainingAssignment.course))
+            .where(
                 TrainingAssignment.course_id == course_id,
                 TrainingAssignment.user_id == user_id,
             )
         )
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def list_by_user(
         self, tenant_id: str, user_id: str, status: str | None = None,
         offset: int = 0, limit: int = 20,
     ) -> tuple[list[TrainingAssignment], int]:
-        query = select(TrainingAssignment).where(
-            TrainingAssignment.tenant_id == tenant_id,
-            TrainingAssignment.user_id == user_id,
+        query = (
+            select(TrainingAssignment)
+            .options(joinedload(TrainingAssignment.course))
+            .where(
+                TrainingAssignment.tenant_id == tenant_id,
+                TrainingAssignment.user_id == user_id,
+            )
         )
         count_q = select(func.count()).select_from(TrainingAssignment).where(
             TrainingAssignment.tenant_id == tenant_id,
@@ -95,18 +106,21 @@ class TrainingAssignmentRepository:
         query = query.offset(offset).limit(limit).order_by(TrainingAssignment.due_date.asc())
         result = await self._db.execute(query)
         count_result = await self._db.execute(count_q)
-        return list(result.scalars().all()), count_result.scalar_one()
+        return list(result.unique().scalars().all()), count_result.scalar_one()
 
     async def get_overdue(self, tenant_id: str) -> list[TrainingAssignment]:
         now = datetime.now(timezone.utc)
         result = await self._db.execute(
-            select(TrainingAssignment).where(
+            select(TrainingAssignment)
+            .options(joinedload(TrainingAssignment.course))
+            .where(
                 TrainingAssignment.tenant_id == tenant_id,
                 TrainingAssignment.status.in_(["assigned", "in_progress"]),
                 TrainingAssignment.due_date < now,
             )
+            .order_by(TrainingAssignment.due_date.asc())
         )
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def create(self, tenant_id: str, course_id: str, user_id: str, assigned_by: str, **kwargs) -> TrainingAssignment:
         now = datetime.now(timezone.utc)

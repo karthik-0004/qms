@@ -65,6 +65,7 @@ contracts_router = APIRouter(prefix="/contracts", tags=["Contracts (proxy)"])
 workorders_router = APIRouter(prefix="/workorders", tags=["Work orders (proxy)"])
 technicians_router = APIRouter(prefix="/technicians", tags=["Technicians (proxy)"])
 invoices_router = APIRouter(prefix="/invoices", tags=["Billing / invoices (proxy)"])
+certificates_router = APIRouter(prefix="/certificates", tags=["Certificates (proxy)"])
 
 
 @contracts_router.api_route("/{full_path:path}", methods=_CONTRACT_METHODS)
@@ -187,8 +188,39 @@ async def proxy_invoices_root(
     )
 
 
+@certificates_router.api_route("/{full_path:path}", methods=_CONTRACT_METHODS)
+async def proxy_certificates_path(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    full_path: str,
+) -> Response:
+    upstream_base = _join_url(settings.certificate_service_url, "/api/v1/certificates")
+    return await _forward(
+        upstream_base=upstream_base,
+        request=request,
+        full_path=full_path,
+        upstream_label="certificate-service",
+    )
+
+
+@certificates_router.api_route("", methods=_CONTRACT_METHODS)
+@certificates_router.api_route("/", methods=_CONTRACT_METHODS)
+async def proxy_certificates_root(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> Response:
+    upstream_base = _join_url(settings.certificate_service_url, "/api/v1/certificates")
+    return await _forward(
+        upstream_base=upstream_base,
+        request=request,
+        full_path="",
+        upstream_label="certificate-service",
+    )
+
+
 router = APIRouter()
 router.include_router(contracts_router)
 router.include_router(workorders_router)
 router.include_router(technicians_router)
 router.include_router(invoices_router)
+router.include_router(certificates_router)

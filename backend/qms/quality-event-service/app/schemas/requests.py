@@ -32,6 +32,7 @@ class UpdateQualityEventRequest(BaseModel):
     root_cause: str | None = None
     immediate_action: str | None = None
     capa_required: bool | None = None
+    capa_id: str | None = None
     due_date: datetime | None = None
     tags: list[str] | None = None
 

@@ -6,7 +6,7 @@ import structlog
 
 from rainer_common.exceptions import ConflictError, ForbiddenError, NotFoundError
 
-from ..infra.db.models import Equipment
+from ..infra.db.models import CalibrationRecord, Equipment
 from ..infra.db.repositories import EquipmentRepository
 
 logger = structlog.get_logger(__name__)
@@ -109,8 +109,27 @@ class EquipmentDomainService:
             next_calibration_date=next_cal,
             status=new_status,
         )
+
+        await self._repo.create_calibration_record(
+            equipment_id=equipment_id,
+            tenant_id=self._tenant_id,
+            calibration_date=calibration_date,
+            performed_by=calibrated_by,
+            passed=passed,
+            result="pass" if passed else "fail",
+            notes=notes,
+            next_due_date=next_cal,
+            certificate_file_id=certificate_file_id,
+        )
+
         logger.info("equipment_calibrated", equipment_id=equipment_id, passed=passed)
         return await self.get_equipment(equipment_id)
+
+    async def list_calibration_records(self, equipment_id: str) -> list[CalibrationRecord]:
+        await self.get_equipment(equipment_id)
+        return await self._repo.list_calibration_records(
+            equipment_id=equipment_id, tenant_id=self._tenant_id
+        )
 
     async def get_due_for_calibration(self, days_ahead: int = 30) -> list[Equipment]:
         return await self._repo.get_due_for_calibration(self._tenant_id, days_ahead)

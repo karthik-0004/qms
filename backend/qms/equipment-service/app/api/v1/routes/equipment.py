@@ -6,7 +6,8 @@ import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser
+from rainer_auth_lib.dependencies import CurrentUser, require_permission
+from rainer_auth_lib.permissions import Permission
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
 
@@ -19,7 +20,7 @@ from ....schemas.requests import (
     RecordCalibrationRequest,
     UpdateEquipmentRequest,
 )
-from ....schemas.responses import EquipmentResponse
+from ....schemas.responses import CalibrationRecordResponse, EquipmentResponse
 
 router = APIRouter(prefix="/equipment", tags=["Equipment"])
 logger = structlog.get_logger(__name__)
@@ -29,7 +30,9 @@ def _get_service(current_user: CurrentUser, db: Annotated[AsyncSession, Depends(
     return EquipmentDomainService(repo=EquipmentRepository(db), tenant_id=current_user.tenant_id or "")
 
 
-@router.get("", response_model=PaginatedResponse[EquipmentResponse], summary="List equipment assets")
+@router.get("", response_model=PaginatedResponse[EquipmentResponse],
+            dependencies=[Depends(require_permission(Permission.EQUIPMENT_READ))],
+            summary="List equipment assets")
 async def list_equipment(
     current_user: CurrentUser,
     service: Annotated[EquipmentDomainService, Depends(_get_service)],
@@ -51,6 +54,7 @@ async def list_equipment(
 
 
 @router.post("", response_model=SuccessResponse[EquipmentResponse], status_code=201,
+             dependencies=[Depends(require_permission(Permission.EQUIPMENT_WRITE))],
              summary="Register equipment asset")
 async def create_equipment(
     payload: CreateEquipmentRequest,
@@ -69,6 +73,7 @@ async def create_equipment(
 
 
 @router.get("/due-for-calibration", response_model=SuccessResponse[list[EquipmentResponse]],
+            dependencies=[Depends(require_permission(Permission.EQUIPMENT_READ))],
             summary="Get equipment due for calibration")
 async def due_for_calibration(
     current_user: CurrentUser,
@@ -79,7 +84,9 @@ async def due_for_calibration(
     return SuccessResponse.of([EquipmentResponse.model_validate(e, from_attributes=True) for e in items])
 
 
-@router.get("/{equipment_id}", response_model=SuccessResponse[EquipmentResponse], summary="Get equipment details")
+@router.get("/{equipment_id}", response_model=SuccessResponse[EquipmentResponse],
+            dependencies=[Depends(require_permission(Permission.EQUIPMENT_READ))],
+            summary="Get equipment details")
 async def get_equipment(
     equipment_id: str,
     current_user: CurrentUser,
@@ -89,7 +96,9 @@ async def get_equipment(
     return SuccessResponse.of(EquipmentResponse.model_validate(equipment, from_attributes=True))
 
 
-@router.patch("/{equipment_id}", response_model=SuccessResponse[EquipmentResponse], summary="Update equipment")
+@router.patch("/{equipment_id}", response_model=SuccessResponse[EquipmentResponse],
+              dependencies=[Depends(require_permission(Permission.EQUIPMENT_WRITE))],
+              summary="Update equipment")
 async def update_equipment(
     equipment_id: str,
     payload: UpdateEquipmentRequest,
@@ -102,6 +111,7 @@ async def update_equipment(
 
 
 @router.post("/{equipment_id}/calibrate", response_model=SuccessResponse[EquipmentResponse],
+             dependencies=[Depends(require_permission(Permission.EQUIPMENT_WRITE))],
              summary="Record equipment calibration")
 async def record_calibration(
     equipment_id: str,
@@ -121,6 +131,7 @@ async def record_calibration(
 
 
 @router.post("/{equipment_id}/decommission", response_model=SuccessResponse[EquipmentResponse],
+             dependencies=[Depends(require_permission(Permission.EQUIPMENT_WRITE))],
              summary="Decommission equipment")
 async def decommission(
     equipment_id: str,
@@ -136,7 +147,23 @@ async def decommission(
     return SuccessResponse.of(EquipmentResponse.model_validate(equipment, from_attributes=True))
 
 
-@router.delete("/{equipment_id}", response_model=MessageResponse, summary="Delete equipment")
+@router.get("/{equipment_id}/calibrations", response_model=SuccessResponse[list[CalibrationRecordResponse]],
+            dependencies=[Depends(require_permission(Permission.EQUIPMENT_READ))],
+            summary="List calibration history for equipment")
+async def list_calibration_records(
+    equipment_id: str,
+    current_user: CurrentUser,
+    service: Annotated[EquipmentDomainService, Depends(_get_service)],
+) -> SuccessResponse[list[CalibrationRecordResponse]]:
+    records = await service.list_calibration_records(equipment_id)
+    return SuccessResponse.of(
+        [CalibrationRecordResponse.model_validate(r, from_attributes=True) for r in records]
+    )
+
+
+@router.delete("/{equipment_id}", response_model=MessageResponse,
+               dependencies=[Depends(require_permission(Permission.EQUIPMENT_WRITE))],
+               summary="Delete equipment")
 async def delete_equipment(
     equipment_id: str,
     current_user: CurrentUser,

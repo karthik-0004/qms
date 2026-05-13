@@ -43,9 +43,12 @@ export default function TechniciansPage() {
             <HardHat className="h-6 w-6" />
             Technicians
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Field technician profiles, certifications, and availability</p>
+          <p className="text-muted-foreground text-sm mt-1">Manage field technicians and their schedules</p>
         </div>
-        <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Register Technician</Button>
+        <Button type="button" size="sm" className="gap-1.5" onClick={() => window.location.href = "/ccv/technicians/create"}>
+          <Plus className="h-4 w-4" />
+          Add Technician
+        </Button>
       </div>
 
       <Card>
@@ -84,7 +87,7 @@ export default function TechniciansPage() {
                 )) : paginated.map((t) => {
                   const cfg = STATUS_CONFIG[t.status] ?? { label: t.status, color: "" };
                   return (
-                    <tr key={t.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr key={t.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="py-3 pr-4">
                         <div>
                           <p className="font-medium">{t.first_name} {t.last_name}</p>

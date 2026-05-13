@@ -6,7 +6,8 @@ import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser
+from rainer_auth_lib.dependencies import CurrentUser, require_permission
+from rainer_auth_lib.permissions import Permission
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
 
@@ -34,7 +35,9 @@ def _get_service(current_user: CurrentUser, db: Annotated[AsyncSession, Depends(
     )
 
 
-@router.get("", response_model=PaginatedResponse[CAPAResponse], summary="List CAPAs")
+@router.get("", response_model=PaginatedResponse[CAPAResponse],
+            dependencies=[Depends(require_permission(Permission.CAPA_READ))],
+            summary="List CAPAs")
 async def list_capas(
     current_user: CurrentUser,
     service: Annotated[CAPADomainService, Depends(_get_service)],
@@ -56,7 +59,9 @@ async def list_capas(
     )
 
 
-@router.post("", response_model=SuccessResponse[CAPAResponse], status_code=201, summary="Create a CAPA")
+@router.post("", response_model=SuccessResponse[CAPAResponse], status_code=201,
+             dependencies=[Depends(require_permission(Permission.CAPA_WRITE))],
+             summary="Create a CAPA")
 async def create_capa(
     payload: CreateCAPARequest,
     current_user: CurrentUser,
@@ -79,7 +84,9 @@ async def create_capa(
     return SuccessResponse.of(CAPAResponse.model_validate(capa, from_attributes=True))
 
 
-@router.get("/{capa_id}", response_model=SuccessResponse[CAPAResponse], summary="Get CAPA details")
+@router.get("/{capa_id}", response_model=SuccessResponse[CAPAResponse],
+            dependencies=[Depends(require_permission(Permission.CAPA_READ))],
+            summary="Get CAPA details")
 async def get_capa(
     capa_id: str,
     current_user: CurrentUser,
@@ -89,7 +96,9 @@ async def get_capa(
     return SuccessResponse.of(CAPAResponse.model_validate(capa, from_attributes=True))
 
 
-@router.patch("/{capa_id}", response_model=SuccessResponse[CAPAResponse], summary="Update a CAPA")
+@router.patch("/{capa_id}", response_model=SuccessResponse[CAPAResponse],
+              dependencies=[Depends(require_permission(Permission.CAPA_WRITE))],
+              summary="Update a CAPA")
 async def update_capa(
     capa_id: str,
     payload: UpdateCAPARequest,
@@ -101,7 +110,9 @@ async def update_capa(
     return SuccessResponse.of(CAPAResponse.model_validate(capa, from_attributes=True))
 
 
-@router.post("/{capa_id}/close", response_model=SuccessResponse[CAPAResponse], summary="Close a CAPA")
+@router.post("/{capa_id}/close", response_model=SuccessResponse[CAPAResponse],
+             dependencies=[Depends(require_permission(Permission.CAPA_APPROVE))],
+             summary="Close a CAPA")
 async def close_capa(
     capa_id: str,
     current_user: CurrentUser,
@@ -112,6 +123,7 @@ async def close_capa(
 
 
 @router.post("/{capa_id}/verify-effectiveness", response_model=SuccessResponse[CAPAResponse],
+             dependencies=[Depends(require_permission(Permission.CAPA_APPROVE))],
              summary="Verify CAPA effectiveness")
 async def verify_effectiveness(
     capa_id: str,
@@ -127,6 +139,7 @@ async def verify_effectiveness(
 
 
 @router.get("/{capa_id}/actions", response_model=SuccessResponse[list[CAPAActionResponse]],
+            dependencies=[Depends(require_permission(Permission.CAPA_READ))],
             summary="List CAPA actions")
 async def list_actions(
     capa_id: str,
@@ -138,6 +151,7 @@ async def list_actions(
 
 
 @router.post("/{capa_id}/actions", response_model=SuccessResponse[CAPAActionResponse], status_code=201,
+             dependencies=[Depends(require_permission(Permission.CAPA_WRITE))],
              summary="Add action to CAPA")
 async def add_action(
     capa_id: str,
@@ -157,6 +171,7 @@ async def add_action(
 
 
 @router.post("/{capa_id}/actions/{action_id}/complete", response_model=SuccessResponse[CAPAActionResponse],
+             dependencies=[Depends(require_permission(Permission.CAPA_WRITE))],
              summary="Complete a CAPA action")
 async def complete_action(
     capa_id: str,

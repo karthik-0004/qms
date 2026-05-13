@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Briefcase, Loader2, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
@@ -36,6 +37,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 const PAGE_SIZE = 10;
 
 export default function CRMPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -200,7 +202,11 @@ export default function CRMPage() {
                 )) : paginated.map((c) => {
                   const cfg = STATUS_CONFIG[c.status] ?? { label: c.status, color: "" };
                   return (
-                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr
+                      key={c.id}
+                      className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => router.push(`/ccv/crm/${c.id}` as any)}
+                    >
                       <td className="py-3 pr-4 font-medium">{c.company_name}</td>
                       <td className="py-3 pr-4 text-muted-foreground hidden sm:table-cell">{c.industry ?? "—"}</td>
                       <td className="py-3 pr-4 text-muted-foreground hidden md:table-cell">{c.city && c.state ? `${c.city}, ${c.state}` : "—"}</td>

@@ -12,6 +12,10 @@ import {
   Users,
 } from "lucide-react";
 import { ProductCard } from "./ProductCard";
+import { DocumentsDueReviewWidget } from "@/components/qms/DocumentsDueReviewWidget";
+import { QualityEventsSummaryWidget } from "@/components/qms/QualityEventsSummaryWidget";
+import { EquipmentDueCalibrationWidget } from "@/components/qms/EquipmentDueCalibrationWidget";
+import { TrainingOverdueWidget } from "@/components/qms/TrainingOverdueWidget";
 import { usePlatformKPIs } from "@/lib/hooks/queries/analytics";
 import { useSuperAdminDashboardMetrics } from "@/lib/hooks/queries/platform";
 import { Card, CardContent } from "@/components/ui/card";
@@ -299,6 +303,15 @@ export function DashboardProducts({ productAccess, userName, role }: DashboardPr
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
+
+      {isProductAvailable("qms", productAccess, role) && (
+        <div className="grid gap-4 md:grid-cols-2 max-w-5xl">
+          <DocumentsDueReviewWidget />
+          <QualityEventsSummaryWidget />
+          <EquipmentDueCalibrationWidget />
+          <TrainingOverdueWidget />
+        </div>
+      )}
     </div>
   );
 }

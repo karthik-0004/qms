@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
       beforeFiles: [],
       fallback: [
         {
-          source: "/api/platform/:path*",
+          source: "/api/:path*",
           destination: `${apiUrl}/api/v1/:path*`,
         },
       ],

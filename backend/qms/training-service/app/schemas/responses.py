@@ -28,6 +28,7 @@ class TrainingAssignmentResponse(BaseModel):
     id: str
     tenant_id: str
     course_id: str
+    course_title: str | None = None
     user_id: str
     assigned_by: str | None
     due_date: datetime | None

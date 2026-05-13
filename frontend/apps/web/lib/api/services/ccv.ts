@@ -15,12 +15,19 @@ export interface Customer {
   company_name: string;
   status: string;
   industry: string | null;
+  website: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
   city: string | null;
   state: string | null;
+  country: string | null;
+  postal_code: string | null;
+  notes: string | null;
+  tags: string[];
   contact_count: number;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Contract {
@@ -28,28 +35,50 @@ export interface Contract {
   contract_number: string;
   title: string;
   customer_id: string;
-  customer_name: string;
   contract_type: string;
   status: string;
-  start_date: string;
+  description: string | null;
+  start_date: string | null;
   end_date: string | null;
-  total_value: number;
+  total_value: number | null;
   currency: string;
+  payment_terms: string | null;
+  notes: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  signed_at: string | null;
+  signed_by: string | null;
+  terminated_at: string | null;
+  termination_reason: string | null;
   created_at: string;
+  updated_at: string;
+  customer?: Customer;
 }
 
 export interface WorkOrder {
   id: string;
   work_order_number: string;
   title: string;
-  customer_name: string;
+  customer_id: string;
   contract_id: string | null;
   status: string;
   priority: string;
+  work_type: string;
+  description: string | null;
   assigned_technician_id: string | null;
-  scheduled_date: string | null;
-  completed_date: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  estimated_hours: number | null;
+  actual_hours: number | null;
+  site_address: string | null;
+  site_city: string | null;
+  site_state: string | null;
+  site_postal_code: string | null;
+  notes: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Technician {
@@ -68,15 +97,25 @@ export interface Technician {
 
 export interface Invoice {
   id: string;
+  tenant_id: string;
+  customer_id: string;
+  contract_id: string | null;
+  work_order_id: string | null;
   invoice_number: string;
-  customer_name: string;
   status: string;
+  subtotal: number;
+  tax_amount: number;
   total_amount: number;
   amount_paid: number;
   amount_due: number;
   currency: string;
+  tax_rate: number;
   due_date: string | null;
+  paid_at: string | null;
+  notes: string | null;
+  payment_terms: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Certificate {
@@ -89,6 +128,82 @@ export interface Certificate {
   issued_date: string | null;
   expiry_date: string | null;
   issued_by: string;
+}
+
+export interface ContractLineItem {
+  id: string;
+  contract_id: string;
+  description: string;
+  unit_price: number;
+  quantity: number;
+  unit: string | null;
+  total_price: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface CreateLineItemRequest {
+  description: string;
+  unit_price: number;
+  quantity: number;
+  unit?: string | null;
+  sort_order?: number;
+}
+
+export interface ContractHistoryEntry {
+  id: string;
+  contract_id: string;
+  from_status: string | null;
+  to_status: string;
+  changed_by: string;
+  comment: string | null;
+  created_at: string;
+}
+
+export interface CustomerContact {
+  id: string;
+  tenant_id: string;
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateContactRequest {
+  first_name: string;
+  last_name: string;
+  email?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  title?: string | null;
+  is_primary?: boolean;
+}
+
+export interface CustomerInteraction {
+  id: string;
+  tenant_id: string;
+  customer_id: string;
+  interaction_type: string;
+  subject: string;
+  body: string | null;
+  contact_id: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface CreateInteractionRequest {
+  interaction_type: string;
+  subject: string;
+  body?: string | null;
+  contact_id?: string | null;
+  scheduled_at?: string | null;
+  duration_minutes?: number | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -135,6 +250,24 @@ export const customersApi = {
 
   update: (id: string, data: Partial<Customer>) =>
     apiClient.patch<Customer>(`/crm/customers/${id}`, data).then((r) => r.data),
+
+  // Contacts
+  listContacts: (customerId: string) =>
+    apiClient.get<CustomerContact[]>(`/crm/customers/${customerId}/contacts`).then((r) => r.data),
+
+  addContact: (customerId: string, data: CreateContactRequest) =>
+    apiClient.post<CustomerContact>(`/crm/customers/${customerId}/contacts`, data).then((r) => r.data),
+
+  // Interactions
+  listInteractions: (customerId: string) =>
+    apiClient.get<CustomerInteraction[]>(`/crm/customers/${customerId}/interactions`).then((r) => r.data),
+
+  logInteraction: (customerId: string, data: CreateInteractionRequest) =>
+    apiClient.post<CustomerInteraction>(`/crm/customers/${customerId}/interactions`, data).then((r) => r.data),
+
+  // Status transition
+  transitionStatus: (customerId: string, data: { new_status: string }) =>
+    apiClient.post<Customer>(`/crm/customers/${customerId}/status`, data).then((r) => r.data),
 };
 
 // ─── Contracts ──────────────────────────────────────────────────────────────
@@ -169,10 +302,14 @@ export const contractsApi = {
     title: string;
     customer_id: string;
     contract_type: string;
-    start_date: string;
-    total_value: number;
     contract_number?: string;
+    description?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    total_value?: number | null;
     currency?: string;
+    payment_terms?: string | null;
+    notes?: string | null;
   }) =>
     apiClient.post<Contract>("/contracts", {
       ...data,
@@ -188,6 +325,17 @@ export const contractsApi = {
         comment: data.comments,
       })
       .then((r) => r.data),
+
+  // Line Items
+  listLineItems: (contractId: string) =>
+    apiClient.get<ContractLineItem[]>(`/contracts/${contractId}/line-items`).then((r) => r.data),
+
+  addLineItem: (contractId: string, data: CreateLineItemRequest) =>
+    apiClient.post<ContractLineItem>(`/contracts/${contractId}/line-items`, data).then((r) => r.data),
+
+  // History
+  getHistory: (contractId: string) =>
+    apiClient.get<ContractHistoryEntry[]>(`/contracts/${contractId}/history`).then((r) => r.data),
 };
 
 // ─── Work Orders ────────────────────────────────────────────────────────────
@@ -223,10 +371,19 @@ export const workOrdersApi = {
   create: (data: {
     title: string;
     customer_id: string;
-    priority: string;
-    scheduled_date?: string;
     work_order_number?: string;
     work_type?: string;
+    description?: string | null;
+    priority?: string;
+    contract_id?: string | null;
+    site_address?: string | null;
+    site_city?: string | null;
+    site_state?: string | null;
+    site_postal_code?: string | null;
+    scheduled_start?: string | null;
+    scheduled_end?: string | null;
+    estimated_hours?: number | null;
+    notes?: string | null;
   }) =>
     apiClient.post<WorkOrder>("/workorders", {
       work_order_number: data.work_order_number ?? tempRef("WO"),
@@ -234,7 +391,16 @@ export const workOrdersApi = {
       customer_id: data.customer_id,
       priority: data.priority ?? "normal",
       work_type: data.work_type ?? "other",
-      scheduled_start: data.scheduled_date,
+      scheduled_start: data.scheduled_start,
+      scheduled_end: data.scheduled_end,
+      contract_id: data.contract_id,
+      description: data.description,
+      site_address: data.site_address,
+      site_city: data.site_city,
+      site_state: data.site_state,
+      site_postal_code: data.site_postal_code,
+      estimated_hours: data.estimated_hours,
+      notes: data.notes,
     }).then((r) => r.data),
 
   assign: (id: string, data: { technician_id: string }) =>
@@ -268,20 +434,18 @@ export const techniciansApi = {
     apiClient.get<Technician>(`/technicians/${id}`).then((r) => r.data),
 
   create: (data: {
+    user_id: string;
     first_name: string;
     last_name: string;
     email: string;
     specializations: string[];
     employee_number?: string;
+    phone?: string;
+    service_area?: string;
   }) =>
     apiClient.post<Technician>("/technicians", {
       ...data,
       employee_number: data.employee_number ?? tempRef("EMP"),
-      /** Platform user link not plumbed through UI yet; random UUID satisfies API shape. */
-      user_id:
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : "00000000-0000-4000-8000-000000000001",
     }).then((r) => r.data),
 
   updateAvailability: (id: string, data: { is_available: boolean }) =>
@@ -317,13 +481,20 @@ export const invoicesApi = {
 
   create: (data: {
     customer_id: string;
-    work_order_id?: string;
-    due_date?: string;
+    contract_id?: string | null;
+    work_order_id?: string | null;
     invoice_number?: string;
+    due_date?: string | null;
+    currency?: string;
+    tax_rate?: number;
+    notes?: string | null;
+    payment_terms?: string | null;
   }) =>
     apiClient.post<Invoice>("/invoices", {
       ...data,
       invoice_number: data.invoice_number ?? tempRef("INV"),
+      currency: data.currency ?? "USD",
+      tax_rate: data.tax_rate ?? 0,
     }).then((r) => r.data),
 
   recordPayment: (id: string, data: { amount: number; payment_method: string; reference?: string }) =>
@@ -351,7 +522,15 @@ export const certificatesApi = {
   get: (id: string) =>
     apiClient.get<Certificate>(`/certificates/certificates/${id}`).then((r) => r.data),
 
-  create: (data: { title: string; customer_id: string; certificate_type: string }) =>
+  create: (data: { 
+    title: string; 
+    certificate_number: string; 
+    certificate_type: string; 
+    customer_id: string; 
+    issue_date: string; 
+    expiry_date?: string; 
+    description?: string; 
+  }) =>
     apiClient.post<Certificate>("/certificates/certificates", data).then((r) => r.data),
 
   issue: (id: string) =>

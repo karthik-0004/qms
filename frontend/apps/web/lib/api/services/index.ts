@@ -1,7 +1,16 @@
 export { type PaginatedResponse } from "./qms";
 
 export {
-    type Document, type QualityEvent, type CAPA, type Course, type Equipment,
+    type Document,
+    type DocumentVersion,
+    type DocumentDistribution,
+    type QualityEvent,
+    type QualityEventSummary,
+    type CAPA,
+    type CAPAAction,
+    type Course,
+    type TrainingAssignment,
+    type Equipment,
     documentsApi, qualityEventsApi, capaApi, trainingApi, equipmentApi,
 } from "./qms";
 

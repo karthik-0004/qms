@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -36,6 +36,10 @@ class TrainingCourse(Base):
         Index("idx_tc_tenant_code", "tenant_id", "course_code", unique=True),
     )
 
+    assignments: Mapped[list["TrainingAssignment"]] = relationship(
+        "TrainingAssignment", back_populates="course"
+    )
+
 
 class TrainingAssignment(Base):
     __tablename__ = "training_assignments"
@@ -57,7 +61,14 @@ class TrainingAssignment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
+    course: Mapped["TrainingCourse"] = relationship("TrainingCourse", back_populates="assignments")
+
     __table_args__ = (
         Index("idx_ta_tenant_user", "tenant_id", "user_id", "status"),
         Index("idx_ta_course_user", "course_id", "user_id", unique=True),
     )
+
+    @property
+    def course_title(self) -> str | None:
+        c = self.course
+        return c.title if c is not None else None

@@ -277,7 +277,11 @@ export function TenantDetailView({ slug }: { slug: string }) {
                           {ROLE_LABEL[u.role] ?? u.role}
                         </span>
                       </td>
-                      <td className="py-2 text-muted-foreground">{u.status}</td>
+                      <td className="py-2 text-muted-foreground">
+                        {u.is_active
+                          ? TENANT_ADMIN_LABELS.directory_user_status_active
+                          : TENANT_ADMIN_LABELS.directory_user_status_inactive}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

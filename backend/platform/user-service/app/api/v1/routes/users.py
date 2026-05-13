@@ -47,12 +47,21 @@ def _get_service(
 # ── Users ────────────────────────────────────────────────────────────────
 @router.get("/users", response_model=PaginatedResponse[UserResponse])
 async def list_users(
-    current_user: CurrentUser,
+    current_user: CurrentUser | None = None,
     service: Annotated[UserDomainService, Depends(_get_service)],
     pagination: Annotated[PaginationParams, Depends(pagination_params)],
     is_active: bool | None = Query(default=None),
     department: str | None = Query(default=None),
 ) -> PaginatedResponse[UserResponse]:
+    # If no authenticated user, return empty list
+    if not current_user:
+        return PaginatedResponse.of(
+            data=[],
+            page=pagination.page,
+            page_size=pagination.page_size,
+            total=0,
+        )
+
     # Company admins see only their own company's users
     company_id = current_user.company_id if current_user.role == "company_admin" else None
     # Tenant-scoped callers see only their tenant

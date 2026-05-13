@@ -6,7 +6,7 @@ from uuid import uuid4
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import Equipment
+from .models import CalibrationRecord, Equipment
 
 
 class EquipmentRepository:
@@ -111,5 +111,54 @@ class EquipmentRepository:
                 Equipment.status == "active",
                 Equipment.deleted_at.is_(None),
             )
+        )
+        return list(result.scalars().all())
+
+    async def create_calibration_record(
+        self,
+        equipment_id: str,
+        tenant_id: str,
+        calibration_date: datetime,
+        performed_by: str,
+        passed: bool,
+        result: str,
+        standards_used: str | None = None,
+        as_found_readings: str | None = None,
+        as_left_readings: str | None = None,
+        measurement_uncertainty: str | None = None,
+        notes: str | None = None,
+        next_due_date: datetime | None = None,
+        certificate_file_id: str | None = None,
+    ) -> CalibrationRecord:
+        now = datetime.now(timezone.utc)
+        record = CalibrationRecord(
+            id=str(uuid4()),
+            equipment_id=equipment_id,
+            tenant_id=tenant_id,
+            calibration_date=calibration_date,
+            performed_by=performed_by,
+            passed=passed,
+            result=result,
+            standards_used=standards_used,
+            as_found_readings=as_found_readings,
+            as_left_readings=as_left_readings,
+            measurement_uncertainty=measurement_uncertainty,
+            notes=notes,
+            next_due_date=next_due_date,
+            certificate_file_id=certificate_file_id,
+            created_at=now,
+        )
+        self._db.add(record)
+        await self._db.flush()
+        return record
+
+    async def list_calibration_records(
+        self, equipment_id: str, tenant_id: str
+    ) -> list[CalibrationRecord]:
+        result = await self._db.execute(
+            select(CalibrationRecord).where(
+                CalibrationRecord.equipment_id == equipment_id,
+                CalibrationRecord.tenant_id == tenant_id,
+            ).order_by(CalibrationRecord.calibration_date.desc())
         )
         return list(result.scalars().all())

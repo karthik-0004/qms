@@ -46,7 +46,7 @@ export default function CertificatesPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Calibration, qualification, and compliance certificates</p>
         </div>
-        <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />New Certificate</Button>
+        <Button size="sm" className="gap-1.5" onClick={() => window.location.href = "/ccv/certificates/create"}><Plus className="h-4 w-4" />New Certificate</Button>
       </div>
 
       <Card>
@@ -85,7 +85,7 @@ export default function CertificatesPage() {
                 )) : paginated.map((c) => {
                   const cfg = STATUS_CONFIG[c.status] ?? { label: c.status, color: "" };
                   return (
-                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="py-3 pr-4 font-mono font-semibold text-xs">{c.certificate_number}</td>
                       <td className="py-3 pr-4 font-medium max-w-[200px] truncate">{c.title}</td>
                       <td className="py-3 pr-4 text-muted-foreground hidden sm:table-cell">{c.customer_name}</td>

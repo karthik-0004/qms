@@ -29,7 +29,8 @@ export function useDashboard(dashboardId: string, dateRangeDays?: number) {
     queryKey: ["analytics", "dashboard", dashboardId, dateRangeDays],
     queryFn: () => analyticsApi.getDashboard(dashboardId, dateRangeDays),
     enabled: !!dashboardId,
-    staleTime: 60_000,
+    staleTime: 10_000,
+    refetchInterval: 30_000,
   });
 }
 

@@ -2,28 +2,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { ClipboardList, Plus, Search, ChevronLeft, ChevronRight, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCAPAs } from "@/lib/hooks/queries/qms";
+import { usePermission } from "@/lib/hooks/usePermission";
 import type { CAPA } from "@/lib/api/services/qms";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   open: { label: "Open", color: "bg-blue-100 text-blue-700" },
-  investigation: { label: "Investigation", color: "bg-amber-100 text-amber-700" },
-  action_planning: { label: "Action Planning", color: "bg-purple-100 text-purple-700" },
+  under_investigation: { label: "Under investigation", color: "bg-amber-100 text-amber-700" },
+  root_cause_identified: { label: "Root cause identified", color: "bg-purple-100 text-purple-700" },
   implementation: { label: "Implementation", color: "bg-cyan-100 text-cyan-700" },
-  effectiveness_check: { label: "Effectiveness Check", color: "bg-orange-100 text-orange-700" },
+  effectiveness_check: { label: "Effectiveness check", color: "bg-orange-100 text-orange-700" },
   closed: { label: "Closed", color: "bg-green-100 text-green-700" },
   cancelled: { label: "Cancelled", color: "bg-slate-100 text-slate-500" },
 };
 
-const PRIORITY_COLORS: Record<string, string> = {
+const SEVERITY_COLORS: Record<string, string> = {
   critical: "bg-red-100 text-red-700",
   high: "bg-orange-100 text-orange-700",
+  major: "bg-orange-100 text-orange-700",
   medium: "bg-yellow-100 text-yellow-700",
+  minor: "bg-yellow-100 text-yellow-700",
   low: "bg-slate-100 text-slate-600",
 };
 
@@ -31,12 +35,13 @@ const PAGE_SIZE = 10;
 
 export default function CAPAPage() {
   const router = useRouter();
+  const { hasPermission, isLoading: permLoading } = usePermission();
+  const canWriteCapa = hasPermission("capa:write");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
   const { data, isLoading: loading } = useCAPAs({
-    search: search || undefined,
     status: statusFilter || undefined,
     page,
     page_size: PAGE_SIZE,
@@ -82,7 +87,9 @@ export default function CAPAPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Corrective and preventive action tracking</p>
         </div>
+        {!permLoading && canWriteCapa && (
         <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />New CAPA</Button>
+        )}
       </div>
 
       <Card>
@@ -110,7 +117,7 @@ export default function CAPAPage() {
                   <th className="pb-2 pr-4 font-medium">CAPA #</th>
                   <th className="pb-2 pr-4 font-medium">Title</th>
                   <th className="pb-2 pr-4 font-medium hidden sm:table-cell">Type</th>
-                  <th className="pb-2 pr-4 font-medium hidden md:table-cell">Priority</th>
+                  <th className="pb-2 pr-4 font-medium hidden md:table-cell">Severity</th>
                   <th className="pb-2 pr-4 font-medium">Status</th>
                   <th className="pb-2 font-medium hidden md:table-cell">Due Date</th>
                 </tr>
@@ -120,13 +127,25 @@ export default function CAPAPage() {
                   <tr key={i} className="border-b">{Array.from({ length: 6 }).map((_, j) => (<td key={j} className="py-3 pr-4"><Skeleton className="h-4 w-24" /></td>))}</tr>
                 )) : paginated.map((c) => {
                   const cfg = STATUS_CONFIG[c.status] ?? { label: c.status, color: "" };
-                  const priColor = PRIORITY_COLORS[c.priority] ?? "";
+                  const sevColor = SEVERITY_COLORS[c.severity] ?? "";
                   return (
-                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr
+                      key={c.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => router.push(`/qms/capa/${c.id}` as Route)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/qms/capa/${c.id}` as Route);
+                        }
+                      }}
+                      className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                    >
                       <td className="py-3 pr-4 font-mono font-semibold text-xs">{c.capa_number}</td>
                       <td className="py-3 pr-4 font-medium max-w-[200px] truncate">{c.title}</td>
                       <td className="py-3 pr-4 capitalize text-muted-foreground hidden sm:table-cell">{c.capa_type}</td>
-                      <td className="py-3 pr-4 hidden md:table-cell"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${priColor}`}>{c.priority}</span></td>
+                      <td className="py-3 pr-4 hidden md:table-cell"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${sevColor}`}>{c.severity}</span></td>
                       <td className="py-3 pr-4"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.color}`}>{cfg.label}</span></td>
                       <td className="py-3 text-muted-foreground text-xs hidden md:table-cell">{c.due_date ? new Date(c.due_date).toLocaleDateString() : "—"}</td>
                     </tr>

@@ -7,7 +7,8 @@ import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser
+from rainer_auth_lib.dependencies import CurrentUser, require_permission
+from rainer_auth_lib.permissions import Permission
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
 
@@ -34,7 +35,9 @@ def _get_service(current_user: CurrentUser, db: Annotated[AsyncSession, Depends(
     return QualityEventDomainService(repo=QualityEventRepository(db), tenant_id=current_user.tenant_id or "")
 
 
-@router.get("", response_model=PaginatedResponse[QualityEventResponse], summary="List quality events")
+@router.get("", response_model=PaginatedResponse[QualityEventResponse],
+            dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_READ))],
+            summary="List quality events")
 async def list_events(
     current_user: CurrentUser,
     service: Annotated[QualityEventDomainService, Depends(_get_service)],
@@ -60,6 +63,7 @@ async def list_events(
 
 
 @router.post("", response_model=SuccessResponse[QualityEventResponse], status_code=201,
+             dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_WRITE))],
              summary="Create a quality event")
 async def create_event(
     payload: CreateQualityEventRequest,
@@ -87,6 +91,7 @@ async def create_event(
 
 
 @router.get("/summary", response_model=SuccessResponse[QualityEventSummaryResponse],
+            dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_READ))],
             summary="Get quality events summary by status")
 async def get_summary(
     current_user: CurrentUser,
@@ -97,6 +102,7 @@ async def get_summary(
 
 
 @router.get("/{event_id}", response_model=SuccessResponse[QualityEventResponse],
+            dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_READ))],
             summary="Get quality event details")
 async def get_event(
     event_id: str,
@@ -108,6 +114,7 @@ async def get_event(
 
 
 @router.patch("/{event_id}", response_model=SuccessResponse[QualityEventResponse],
+              dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_WRITE))],
               summary="Update a quality event")
 async def update_event(
     event_id: str,
@@ -121,6 +128,7 @@ async def update_event(
 
 
 @router.post("/{event_id}/close", response_model=SuccessResponse[QualityEventResponse],
+             dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_WRITE))],
              summary="Close a quality event")
 async def close_event(
     event_id: str,
@@ -132,7 +140,9 @@ async def close_event(
     return SuccessResponse.of(QualityEventResponse.model_validate(event, from_attributes=True))
 
 
-@router.delete("/{event_id}", response_model=MessageResponse, summary="Delete a quality event")
+@router.delete("/{event_id}", response_model=MessageResponse,
+               dependencies=[Depends(require_permission(Permission.QUALITY_EVENT_WRITE))],
+               summary="Delete a quality event")
 async def delete_event(
     event_id: str,
     current_user: CurrentUser,

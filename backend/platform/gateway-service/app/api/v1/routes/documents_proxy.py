@@ -27,8 +27,8 @@ async def proxy_documents(
     settings: Annotated[Settings, Depends(get_settings)],
     full_path: str = "",
 ) -> Response:
-    upstream_base = _join_url(settings.document_service_url, "/api/v1/documents")
-    upstream_url = _join_url(upstream_base, full_path)
+    upstream_base = settings.document_service_url
+    upstream_url = _join_url(upstream_base, f"/api/v1/documents/{full_path}")
 
     headers = dict(request.headers)
     headers.pop("host", None)
@@ -36,7 +36,7 @@ async def proxy_documents(
     body = await request.body()
     params = dict(request.query_params)
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
         upstream_resp = await client.request(
             method=request.method,
             url=upstream_url,

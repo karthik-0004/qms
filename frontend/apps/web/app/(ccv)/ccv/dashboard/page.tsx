@@ -125,10 +125,10 @@ export default function CCVDashboardPage() {
                     <div key={c.id} className="flex items-start justify-between py-2 border-b last:border-0">
                       <div>
                         <p className="font-mono text-xs font-semibold">{c.contract_number}</p>
-                        <p className="text-sm font-medium">{c.customer_name}</p>
+                        <p className="text-sm font-medium">{c.customer_id}</p>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">{c.title}</p>
                         <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                          ${c.total_value.toLocaleString()}
+                          ${c.total_value ? c.total_value.toLocaleString() : "—"}
                         </p>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.color}`}>
@@ -168,7 +168,7 @@ export default function CCVDashboardPage() {
                     <div key={wo.id} className="flex items-start justify-between py-2 border-b last:border-0">
                       <div>
                         <p className="font-mono text-xs font-semibold">{wo.work_order_number}</p>
-                        <p className="text-sm font-medium">{wo.customer_name}</p>
+                        <p className="text-sm font-medium">{wo.customer_id}</p>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">{wo.title}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${pcfg}`}>

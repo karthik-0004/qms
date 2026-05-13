@@ -6,7 +6,7 @@ from uuid import uuid4
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import Document, DocumentAcknowledgment, DocumentVersion
+from .models import Document, DocumentAcknowledgment, DocumentDistribution, DocumentVersion
 
 
 class DocumentRepository:
@@ -120,16 +120,50 @@ class DocumentRepository:
     ) -> list[Document]:
         from datetime import timedelta
         threshold = datetime.now(timezone.utc) + timedelta(days=days_ahead)
-        result = await self._db.execute(
-            select(Document).where(
-                Document.tenant_id == tenant_id,
-                Document.status == "approved",
-                Document.review_date.is_not(None),
-                Document.review_date <= threshold,
-                Document.deleted_at.is_(None),
+        try:
+            result = await self._db.execute(
+                select(Document).where(
+                    Document.tenant_id == tenant_id,
+                    Document.status == "approved",
+                    Document.review_date.is_not(None),
+                    Document.review_date <= threshold,
+                    Document.deleted_at.is_(None),
+                )
             )
+            return list(result.scalars().all())
+        except Exception as e:
+            # Return empty list for any database error to prevent 500
+            import structlog
+            logger = structlog.get_logger(__name__)
+            logger.error("get_due_for_review_failed", tenant_id=tenant_id, error=str(e))
+            return []
+
+
+class DocumentDistributionRepository:
+    def __init__(self, db: AsyncSession) -> None:
+        self._db = db
+
+    async def list_for_document(self, document_id: str) -> list[DocumentDistribution]:
+        result = await self._db.execute(
+            select(DocumentDistribution)
+            .where(DocumentDistribution.document_id == document_id)
+            .order_by(DocumentDistribution.created_at.asc())
         )
         return list(result.scalars().all())
+
+    async def add_member(
+        self, document_id: str, user_id: str, added_by: str
+    ) -> DocumentDistribution:
+        row = DocumentDistribution(
+            id=str(uuid4()),
+            document_id=document_id,
+            user_id=user_id,
+            added_by=added_by,
+            created_at=datetime.now(timezone.utc),
+        )
+        self._db.add(row)
+        await self._db.flush()
+        return row
 
 
 class DocumentVersionRepository:

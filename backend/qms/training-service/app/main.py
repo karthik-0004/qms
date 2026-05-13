@@ -24,6 +24,7 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     setup_logging(settings.service_name, settings.service_version, settings.log_level, settings.json_logs)
     logger.info("service_starting", service=settings.service_name)
+    # TODO(Kafka): publish training assignment / completion events for audit trail and downstream sync.
     yield
     await dispose_engine()
 

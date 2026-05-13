@@ -125,6 +125,8 @@ export const TENANT_ADMIN_LABELS = {
   directory_col_user: "User",
   directory_col_role: "Role",
   directory_col_status: "Status",
+  directory_user_status_active: "Active",
+  directory_user_status_inactive: "Inactive",
   role_super_admin: "Super Admin",
   role_tenant_admin: "Tenant Admin",
   role_tenant_user: "User",

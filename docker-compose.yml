@@ -577,6 +577,13 @@ services:
       - workorder-service
       - technician-service
       - billing-service
+      - certificate-service
+      - document-service
+      - quality-event-service
+      - capa-service
+      - training-service
+      - equipment-service
+      - analytics-service
     ports:
       - "8000:8000"
     environment:
@@ -589,6 +596,13 @@ services:
       WORKORDER_SERVICE_URL: "http://workorder-service:8042"
       TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
       BILLING_SERVICE_URL: "http://billing-service:8044"
+      CERTIFICATE_SERVICE_URL: "http://certificate-service:8045"
+      DOCUMENT_SERVICE_URL: "http://document-service:8020"
+      QUALITY_EVENT_SERVICE_URL: "http://quality-event-service:8021"
+      CAPA_SERVICE_URL: "http://capa-service:8022"
+      TRAINING_SERVICE_URL: "http://training-service:8023"
+      EQUIPMENT_SERVICE_URL: "http://equipment-service:8024"
+      ANALYTICS_SERVICE_URL: "http://analytics-service:8011"
       JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
       JWT_ALGORITHM: "HS256"
       REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
@@ -812,8 +826,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       SERVICE_NAME: "plate-service"
       SERVICE_VERSION: "0.1.0"
@@ -834,8 +848,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       S3_ENDPOINT_URL: "http://minio:9000"
       S3_ACCESS_KEY_ID: "rainer_minio"
@@ -860,8 +874,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       S3_ENDPOINT_URL: "http://minio:9000"
       S3_ACCESS_KEY_ID: "rainer_minio"
@@ -889,8 +903,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       MAX_RETRY_ATTEMPTS: "3"
       RETRY_BACKOFF_SECONDS: "60"
@@ -913,8 +927,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       SERVICE_NAME: "qa-review-service"
       SERVICE_VERSION: "0.1.0"
@@ -936,8 +950,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       SERVICE_NAME: "crm-service"
       SERVICE_VERSION: "0.1.0"
@@ -956,8 +970,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       SERVICE_NAME: "contract-service"
       SERVICE_VERSION: "0.1.0"
@@ -976,8 +990,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
       SERVICE_NAME: "workorder-service"
@@ -997,8 +1011,8 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       SERVICE_NAME: "technician-service"
       SERVICE_VERSION: "0.1.0"
@@ -1036,14 +1050,34 @@ services:
     environment:
       <<: *common-env
       DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
-      REDIS_URL: "redis://redis:6379/0"
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
       DEFAULT_CURRENCY: "USD"
       PAYMENT_DUE_DAYS: "30"
       SERVICE_NAME: "billing-service"
       SERVICE_VERSION: "0.1.0"
       PORT: "8044"
+
+  certificate-service:
+    build:
+      context: ./backend/ccv/certificate-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8045:8045"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "certificate-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8045"
 
   # ============================================================
   # FRONTEND
@@ -1052,8 +1086,11 @@ services:
     build:
       context: ./frontend/apps/web
       dockerfile: Dockerfile
+      # NEXT_PUBLIC_* is embedded at build time for the browser — use a URL reachable from the user's machine
+      # (typically http://localhost:8000, the gateway port map), not http://gateway-service:8000.
       args:
         NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+        NEXT_PUBLIC_QMS_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
     <<: *service-defaults
     depends_on:
       - auth-service
@@ -1065,7 +1102,8 @@ services:
       # When browsing from another PC, use that machine's reachable API URL here and rebuild `web`.
       NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
       NEXTAUTH_SECRET: "dev-nextauth-secret-change-in-production"
+      # Browser calls gateway on host port 8000 (maps to gateway-service:8000). Do not set NEXT_PUBLIC_* to gateway-service hostname.
       NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
-      NEXT_PUBLIC_QMS_QUALITY_EVENT_API_URL: "http://quality-event-service:8021"
+      NEXT_PUBLIC_QMS_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
       AUTH_SERVICE_URL: "http://auth-service:8001"
       NODE_ENV: "development"
