@@ -58,7 +58,7 @@ function SettingsSkeleton() {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { theme, setTheme } = useUIStore();
   const { isTenantAdmin, isSuperAdmin } = usePermission();
   const canEdit = isTenantAdmin || isSuperAdmin;
@@ -69,6 +69,7 @@ export default function SettingsPage() {
   const {
     data: settings,
     isLoading,
+    isFetching,
     isError,
     refetch,
   } = useTenantSettings(tenantId || undefined);
@@ -143,9 +144,9 @@ export default function SettingsPage() {
     );
   }
 
-  if (isLoading) return <SettingsSkeleton />;
+  if (status === "loading" || isLoading || (isError && isFetching)) return <SettingsSkeleton />;
 
-  if (isError) {
+  if (isError && !isFetching) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 flex items-center justify-between">
