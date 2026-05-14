@@ -36,16 +36,16 @@ case "$STACK" in
 esac
 
 echo "Starting infrastructure..."
-docker compose -f "$REPO_ROOT/docker-compose.infra.yml" -p rainerinfra up -d
+docker compose -f "$REPO_ROOT/docker-compose.infra.yml" up -d
 
 echo "Starting $STACK services..."
 docker compose $FILES up -d
 
 if [ -n "${ALL_EXTRA:-}" ]; then
   echo "Starting remaining domains..."
-  docker compose -f "$REPO_ROOT/docker-compose.qms.yml" -p rainerqms up -d
-  docker compose -f "$REPO_ROOT/docker-compose.em.yml" -p rainerem up -d
-  docker compose -f "$REPO_ROOT/docker-compose.ccv.yml" -p rainerccv up -d
+  docker compose -f "$REPO_ROOT/docker-compose.qms.yml" up -d
+  docker compose -f "$REPO_ROOT/docker-compose.em.yml" up -d
+  docker compose -f "$REPO_ROOT/docker-compose.ccv.yml" up -d
 fi
 
 echo ""
@@ -72,4 +72,4 @@ fi
 
 echo ""
 echo "Containers are grouped in Docker Desktop as:"
-echo "  rainerinfra / rainerplatform / rainerqms / rainerem / rainerccv"
+echo "  infra / platform / qms / em / ccv"

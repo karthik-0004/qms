@@ -29,7 +29,7 @@ function Start-Stack {
   param([string]$ComposeFile)
   Push-Location (Get-RepoRoot)
   try {
-    docker compose -f docker-compose.infra.yml -p rainerinfra up -d | Out-Host
+    docker compose -f docker-compose.infra.yml up -d | Out-Host
     docker compose -f $ComposeFile up -d | Out-Host
   } finally {
     Pop-Location
@@ -59,9 +59,9 @@ switch ($Stack) {
   'ccv'      { Start-Stack -ComposeFile 'docker-compose.ccv.yml' }
   'all'      {
     Start-Stack -ComposeFile 'docker-compose.platform.yml'
-    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.qms.yml') -p rainerqms up -d | Out-Host
-    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.em.yml') -p rainerem up -d | Out-Host
-    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.ccv.yml') -p rainerccv up -d | Out-Host
+    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.qms.yml') up -d | Out-Host
+    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.em.yml') up -d | Out-Host
+    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.ccv.yml') up -d | Out-Host
   }
 }
 
@@ -79,4 +79,4 @@ if ($Stack -in @('qms', 'all')) {
 
 Write-Host ""
 Write-Host "Containers are grouped in Docker Desktop as:"
-Write-Host "  rainerinfra / rainerplatform / rainerqms / rainerem / rainerccv"
+Write-Host "  infra / platform / qms / em / ccv"

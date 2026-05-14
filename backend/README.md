@@ -122,82 +122,87 @@ Each service ships its own `.env.example` under its directory, e.g.:
 
 **Do not hardcode secrets**; use `.env` files or Docker Compose environment overrides.
 
-### Local development (recommended flow)
+### Local development
 
-The repo’s local run guide is in `docs/run-local.md`.
-At a high level, local development usually looks like:
+Services are split into separate Docker Compose files — each domain shows as its own group in Docker Desktop.
 
-- Start infrastructure (DB/Redis/Kafka/MinIO/etc.)
-- Run migrations (master DB + any service migrations)
-- Start the services you need
+| File | `name:` | Docker Desktop group | Services |
+|---|---|---|---|
+| `docker-compose.infra.yml` | `infra` | **infra** | PostgreSQL, Redis, Kafka, MinIO, Vault |
+| `docker-compose.platform.yml` | `platform` | **platform** | Auth, Tenant, User, Audit, Notification, Config, Workflow, File, Gateway, Schedule, Reporting, Analytics |
+| `docker-compose.qms.yml` | `qms` | **qms** | Documents, Quality Events, CAPA, Training, Equipment |
+| `docker-compose.em.yml` | `em` | **em** | Plate, Image, AI, Jobs, QA Review |
+| `docker-compose.ccv.yml` | `ccv` | **ccv** | CRM, Contracts, Work Orders, Technicians, Billing, Certificates |
 
-Example (platform subset) from `docs/run-local.md`:
+All domain files connect to a shared `rainer-net` network created by `docker-compose.infra.yml`.
 
-```33:37:docs/run-local.md
-### Start platform backend services (Phase A)
-
-```bash
-docker-compose up auth-service tenant-service user-service audit-service
-```
-```
-
-### Docker Compose tips (start only what you need)
-
-- **Start selected services**:
+#### Start (from repo root)
 
 ```bash
-docker compose up -d auth-service tenant-service user-service audit-service
+# Using scripts (recommended)
+./backend/scripts/dev.sh platform          # infra + platform
+./backend/scripts/dev.sh qms               # infra + qms
+./backend/scripts/dev.sh em                # infra + em
+./backend/scripts/dev.sh ccv               # infra + ccv
+./backend/scripts/dev.sh all               # all domains
+
+# Or directly with docker compose:
+docker compose -f docker-compose.infra.yml up -d
+docker compose -f docker-compose.platform.yml up -d
+docker compose -f docker-compose.qms.yml up -d
+docker compose -f docker-compose.em.yml up -d
+docker compose -f docker-compose.ccv.yml up -d
 ```
 
-- **Start Platform services (copy/paste)**:
-  Run from the **repo root** (where `docker-compose.yml` is).
+#### Stop
 
 ```bash
-docker compose up -d \
-  postgres redis zookeeper kafka schema-registry minio mailhog vault \
-  auth-service-init auth-service tenant-service user-service audit-service gateway-service \
-  notification-service config-service workflow-engine file-service schedule-service \
-  reporting-service analytics-service
+docker compose -f docker-compose.qms.yml down
+docker compose -f docker-compose.platform.yml down
+docker compose -f docker-compose.infra.yml down
 ```
 
-- **Start QMS services (copy/paste)**:
+#### Check status
 
 ```bash
-docker compose up -d \
-  postgres redis zookeeper kafka schema-registry minio \
-  auth-service-init auth-service gateway-service workflow-engine file-service \
-  document-service quality-event-service capa-service training-service equipment-service
+docker compose -f docker-compose.infra.yml ps
+docker compose -f docker-compose.platform.yml ps
+docker compose -f docker-compose.qms.yml ps
 ```
 
-- **Check status**:
+#### View logs
 
 ```bash
-docker compose ps
-```
-
-- **View logs**:
-
-```bash
-docker compose logs -f auth-service
+docker compose -f docker-compose.platform.yml logs -f auth-service
+docker compose -f docker-compose.qms.yml logs -f document-service
 ```
 
 ### Common ports (local)
 
-These are the commonly used local ports (as configured in `docker-compose.yml`):
-
-- **Gateway**: `8000`
-- **Auth**: `8001`
-- **Tenant**: `8002`
-- **User**: `8003`
-- **Audit**: `8004`
-- **Notifications**: `8005`
-- **Config**: `8006`
-- **Workflow engine**: `8007`
-- **Schedule**: `8008`
-- **File service**: `8009`
-- **Reporting**: `8010`
-- **Analytics**: `8011`
-- **QMS**: documents `8020`, quality-events `8021`, capa `8022`, training `8023`, equipment `8024`
+| Service | Port |
+|---|---|
+| **Gateway** | `8000` |
+| **Auth** | `8001` |
+| **Tenant** | `8002` |
+| **User** | `8003` |
+| **Audit** | `8004` |
+| **Notifications** | `8005` |
+| **Config** | `8006` |
+| **Workflow engine** | `8007` |
+| **Schedule** | `8008` |
+| **File service** | `8009` |
+| **Reporting** | `8010` |
+| **Analytics** | `8011` |
+| **Documents** | `8020` |
+| **Quality Events** | `8021` |
+| **CAPA** | `8022` |
+| **Training** | `8023` |
+| **Equipment** | `8024` |
+| **PostgreSQL** | `5435` (host) |
+| **Redis** | `6379` |
+| **Kafka** | `9092` |
+| **MinIO** | `9000` (API), `9001` (Console) |
+| **Vault** | `8200` |
 
 ### Testing
 
