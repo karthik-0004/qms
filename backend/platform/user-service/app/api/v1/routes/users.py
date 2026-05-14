@@ -47,9 +47,9 @@ def _get_service(
 # ── Users ────────────────────────────────────────────────────────────────
 @router.get("/users", response_model=PaginatedResponse[UserResponse])
 async def list_users(
-    current_user: CurrentUser | None = None,
     service: Annotated[UserDomainService, Depends(_get_service)],
     pagination: Annotated[PaginationParams, Depends(pagination_params)],
+    current_user: CurrentUser | None = None,
     is_active: bool | None = Query(default=None),
     department: str | None = Query(default=None),
 ) -> PaginatedResponse[UserResponse]:

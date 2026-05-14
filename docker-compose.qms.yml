@@ -1,0 +1,129 @@
+name: qms
+
+x-common-env: &common-env
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  LOG_LEVEL: "INFO"
+  JSON_LOGS: "true"
+  RAINER_ENV: "development"
+  JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+  JWT_ALGORITHM: "HS256"
+  DB_POOL_SIZE: "3"
+  DB_MAX_OVERFLOW: "5"
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - rainer-net
+  mem_limit: 512m
+  mem_reservation: 256m
+
+networks:
+  rainer-net:
+    name: rainer-net
+    external: true
+
+services:
+  quality-event-service-init:
+    build:
+      context: .
+      dockerfile: backend/qms/quality-event-service/Dockerfile
+    <<: *service-defaults
+    restart: "no"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      SERVICE_NAME: "quality-event-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "alembic upgrade head || alembic stamp head"
+
+  document-service:
+    build:
+      context: .
+      dockerfile: backend/qms/document-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8020:8020"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8020", "--workers", "1"]
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      WORKFLOW_SERVICE_URL: "http://workflow-engine:8007"
+      FILE_SERVICE_URL: "http://file-service:8009"
+      JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+      JWT_ALGORITHM: "HS256"
+      SERVICE_NAME: "document-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8020"
+
+  quality-event-service:
+    build:
+      context: .
+      dockerfile: backend/qms/quality-event-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8021:8021"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8021", "--workers", "1"]
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "quality-event-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8021"
+
+  capa-service:
+    build:
+      context: .
+      dockerfile: backend/qms/capa-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8022:8022"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8022", "--workers", "1"]
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "capa-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8022"
+
+  training-service:
+    build:
+      context: .
+      dockerfile: backend/qms/training-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8023:8023"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8023", "--workers", "1"]
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "training-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8023"
+
+  equipment-service:
+    build:
+      context: .
+      dockerfile: backend/qms/equipment-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8024:8024"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8024", "--workers", "1"]
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "equipment-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8024"

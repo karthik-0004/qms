@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('qms', 'platform', 'all')]
+  [ValidateSet('qms', 'platform', 'em', 'ccv', 'all')]
   [string]$Stack = 'qms',
   [int]$TimeoutSec = 180
 )
@@ -10,9 +10,9 @@ function Get-RepoRoot {
   $start = Split-Path -Parent $PSScriptRoot
   $here = $start
   while ($true) {
-    if (Test-Path (Join-Path $here 'docker-compose.yml')) { return $here }
+    if (Test-Path (Join-Path $here 'docker-compose.infra.yml')) { return $here }
     $parent = Split-Path -Parent $here
-    if ($parent -eq $here) { throw "Could not find docker-compose.yml above $start" }
+    if ($parent -eq $here) { throw "Could not find docker-compose.infra.yml above $start" }
     $here = $parent
   }
 }
@@ -25,22 +25,19 @@ function Require-Docker {
   }
 }
 
-function Invoke-ComposeUp {
-  param([string[]]$Services)
+function Start-Stack {
+  param([string]$ComposeFile)
   Push-Location (Get-RepoRoot)
   try {
-    if ($Services.Count -eq 0) { throw "No services provided" }
-    docker compose up -d @Services | Out-Host
+    docker compose -f docker-compose.infra.yml -p rainerinfra up -d | Out-Host
+    docker compose -f $ComposeFile up -d | Out-Host
   } finally {
     Pop-Location
   }
 }
 
 function Wait-HttpOk {
-  param(
-    [string]$Url,
-    [int]$TimeoutSecLocal
-  )
+  param([string]$Url, [int]$TimeoutSecLocal)
   $deadline = (Get-Date).AddSeconds($TimeoutSecLocal)
   while ((Get-Date) -lt $deadline) {
     try {
@@ -55,38 +52,31 @@ function Wait-HttpOk {
 
 Require-Docker
 
-$infra = @('postgres', 'redis', 'zookeeper', 'kafka', 'schema-registry', 'minio')
-
-$platform = @(
-  'auth-service-init', 'auth-service', 'tenant-service', 'user-service', 'audit-service', 'gateway-service',
-  'notification-service', 'config-service', 'workflow-engine', 'file-service', 'schedule-service',
-  'reporting-service', 'analytics-service'
-)
-
-$qms = @(
-  'document-service', 'quality-event-service', 'capa-service', 'training-service', 'equipment-service'
-)
-
 switch ($Stack) {
-  'platform' { Invoke-ComposeUp -Services ($infra + $platform) }
-  'qms'      { Invoke-ComposeUp -Services ($infra + @('auth-service-init', 'auth-service', 'gateway-service', 'workflow-engine', 'file-service') + $qms) }
-  'all'      { Invoke-ComposeUp -Services ($infra + $platform + $qms) }
+  'platform' { Start-Stack -ComposeFile 'docker-compose.platform.yml' }
+  'qms'      { Start-Stack -ComposeFile 'docker-compose.qms.yml' }
+  'em'       { Start-Stack -ComposeFile 'docker-compose.em.yml' }
+  'ccv'      { Start-Stack -ComposeFile 'docker-compose.ccv.yml' }
+  'all'      {
+    Start-Stack -ComposeFile 'docker-compose.platform.yml'
+    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.qms.yml') -p rainerqms up -d | Out-Host
+    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.em.yml') -p rainerem up -d | Out-Host
+    docker compose -f (Join-Path (Get-RepoRoot) 'docker-compose.ccv.yml') -p rainerccv up -d | Out-Host
+  }
 }
 
 Write-Host ""
-Write-Host "Waiting for core Swagger endpoints..."
+Write-Host "Waiting for gateway..."
+$ok = Wait-HttpOk -Url 'http://localhost:8000/docs' -TimeoutSecLocal $TimeoutSec
+$status = if ($ok) { 'OK' } else { 'NOT READY' }
+Write-Host "- gateway $status  (http://localhost:8000/docs)"
 
-$checks = @(
-  @{ name = 'gateway'; url = 'http://localhost:8000/docs' },
-  @{ name = 'documents'; url = 'http://localhost:8020/docs' },
-  @{ name = 'quality-events'; url = 'http://localhost:8021/docs' }
-)
-
-foreach ($c in $checks) {
-  $ok = Wait-HttpOk -Url $c.url -TimeoutSecLocal $TimeoutSec
+if ($Stack -in @('qms', 'all')) {
+  $ok = Wait-HttpOk -Url 'http://localhost:8020/docs' -TimeoutSecLocal $TimeoutSec
   $status = if ($ok) { 'OK' } else { 'NOT READY' }
-  Write-Host ("- {0,-15} {1}  ({2})" -f $c.name, $status, $c.url)
+  Write-Host "- documents $status  (http://localhost:8020/docs)"
 }
 
 Write-Host ""
-Write-Host "Tip: run backend/scripts/dev-check.ps1 to see port status."
+Write-Host "Containers are grouped in Docker Desktop as:"
+Write-Host "  rainerinfra / rainerplatform / rainerqms / rainerem / rainerccv"

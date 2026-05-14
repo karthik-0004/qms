@@ -1,0 +1,125 @@
+name: em
+
+x-common-env: &common-env
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  LOG_LEVEL: "INFO"
+  JSON_LOGS: "true"
+  RAINER_ENV: "development"
+  JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+  JWT_ALGORITHM: "HS256"
+  DB_POOL_SIZE: "3"
+  DB_MAX_OVERFLOW: "5"
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - rainer-net
+  mem_limit: 512m
+  mem_reservation: 256m
+
+networks:
+  rainer-net:
+    name: rainer-net
+    external: true
+
+services:
+  plate-service:
+    build:
+      context: .
+      dockerfile: backend/em/plate-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8030:8030"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "plate-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8030"
+
+  image-service:
+    build:
+      context: ./backend/em/image-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8031:8031"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      S3_ENDPOINT_URL: "http://minio:9000"
+      S3_ACCESS_KEY_ID: "rainer_minio"
+      S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
+      S3_IMAGES_BUCKET: "rainer-em-images"
+      SERVICE_NAME: "image-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8031"
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: backend/em/ai-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8032:8032"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      S3_ENDPOINT_URL: "http://minio:9000"
+      S3_ACCESS_KEY_ID: "rainer_minio"
+      S3_SECRET_ACCESS_KEY: "rainer_minio_dev_secret"
+      S3_IMAGES_BUCKET: "rainer-em-images"
+      MODEL_NAME: "endgame-colony-detector-v1"
+      MODEL_VERSION: "1.0.0"
+      CONFIDENCE_THRESHOLD: "0.75"
+      SERVICE_NAME: "ai-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8032"
+
+  job-service:
+    build:
+      context: ./backend/em/job-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8033:8033"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      MAX_RETRY_ATTEMPTS: "3"
+      RETRY_BACKOFF_SECONDS: "60"
+      JOB_TIMEOUT_SECONDS: "600"
+      WORKER_CONCURRENCY: "1"
+      SERVICE_NAME: "job-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8033"
+
+  qa-review-service:
+    build:
+      context: ./backend/em/qa-review-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8034:8034"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "qa-review-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8034"

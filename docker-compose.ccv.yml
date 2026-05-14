@@ -1,0 +1,144 @@
+name: ccv
+
+x-common-env: &common-env
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  LOG_LEVEL: "INFO"
+  JSON_LOGS: "true"
+  RAINER_ENV: "development"
+  JWT_SECRET_KEY: "dev-jwt-secret-change-in-production-min-32-chars"
+  JWT_ALGORITHM: "HS256"
+  DB_POOL_SIZE: "3"
+  DB_MAX_OVERFLOW: "5"
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - rainer-net
+  mem_limit: 512m
+  mem_reservation: 256m
+
+networks:
+  rainer-net:
+    name: rainer-net
+    external: true
+
+services:
+  crm-service:
+    build:
+      context: ./backend/ccv/crm-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8040:8040"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "crm-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8040"
+
+  contract-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/contract-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8041:8041"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "contract-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8041"
+
+  workorder-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/workorder-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8042:8042"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      TECHNICIAN_SERVICE_URL: "http://technician-service:8043"
+      SERVICE_NAME: "workorder-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8042"
+
+  technician-service:
+    build:
+      context: .
+      dockerfile: backend/ccv/technician-service/Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8043:8043"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "technician-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8043"
+
+  billing-service-init:
+    build:
+      context: ./backend/ccv/billing-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    restart: "no"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      SERVICE_NAME: "billing-service"
+      SERVICE_VERSION: "0.1.0"
+    command: >
+      sh -lc "set -e; alembic upgrade head"
+
+  billing-service:
+    build:
+      context: ./backend/ccv/billing-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8044:8044"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      DEFAULT_CURRENCY: "USD"
+      PAYMENT_DUE_DAYS: "30"
+      SERVICE_NAME: "billing-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8044"
+
+  certificate-service:
+    build:
+      context: ./backend/ccv/certificate-service
+      dockerfile: Dockerfile
+    <<: *service-defaults
+    ports:
+      - "8045:8045"
+    environment:
+      <<: *common-env
+      DATABASE_URL: "postgresql+asyncpg://rainer:rainer_dev_password@postgres:5432/rainer_master"
+      REDIS_URL: "redis://:rainer_redis_dev@redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      RAINER_MASTER_SECRET: "dev-master-secret-change-in-production"
+      SERVICE_NAME: "certificate-service"
+      SERVICE_VERSION: "0.1.0"
+      PORT: "8045"
