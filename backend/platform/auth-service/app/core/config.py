@@ -1,5 +1,6 @@
 """Auth Service — Application configuration via Pydantic Settings."""
 
+import os
 from functools import lru_cache
 
 from pydantic import field_validator
@@ -40,8 +41,8 @@ class Settings(BaseSettings):
     kafka_bootstrap_servers: str = "localhost:9092"
     kafka_group_id: str = "auth-service"
 
-    # JWT
-    jwt_secret_key: str = "dev-secret-change-in-production-min-32-chars"
+    # JWT — same as gateway and user-service for consistency
+    jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 15
     jwt_refresh_token_expire_days: int = 7
@@ -126,6 +127,19 @@ class Settings(BaseSettings):
     @property
     def is_testing(self) -> bool:
         return self.rainer_env == "testing"
+
+
+def ensure_jwt_environment() -> None:
+    """Expose JWT to os.environ so rainer_auth_lib.JWTSettings() works correctly.
+
+    rainer_auth_lib only reads OS env for JWT (not auth-service .env). Must run before any import
+    that triggers get_settings()/database setup if JWT_* is only defined in .env.
+    """
+    s = Settings()
+    if not os.environ.get("JWT_SECRET_KEY", "").strip():
+        os.environ["JWT_SECRET_KEY"] = s.jwt_secret_key
+    if not os.environ.get("JWT_ALGORITHM", "").strip():
+        os.environ["JWT_ALGORITHM"] = s.jwt_algorithm
 
 
 @lru_cache

@@ -14,6 +14,9 @@ declare module "next-auth" {
       company_id: string | null;
       /** Present for bearer API calls from the browser. */
       access_token: string;
+      mfa_enabled?: boolean;
+      permissions?: string[];
+      product_access?: string[];
     };
   }
 }

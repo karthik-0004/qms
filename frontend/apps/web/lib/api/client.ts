@@ -22,36 +22,26 @@ export const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000,
+  timeout: 60000, // Increased to 60 seconds to match proxy timeout
   withCredentials: true,
 });
 
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Browser: always use Next.js `/api/platform/*` rewrite → gateway `/api/v1/*` so a mis-set
-  // NEXT_PUBLIC_API_URL (e.g. auth :8001) cannot break CRM/CCV/platform JSON calls.
+  // Browser: use Next.js `/api/platform` route handler → gateway `/api/v1/*`
+  // Server: use direct SERVER_API_BASE
   config.baseURL = typeof window === "undefined" ? SERVER_API_BASE : "/api/platform";
 
-  // For platform users endpoint, ensure we have a fresh session
-  const isPlatformUsers = config.url?.includes('/users');
-  const isTenantOperation = config.url?.includes('/tenants');
-  let session;
-  if (isPlatformUsers || isTenantOperation) {
-    // For platform users and tenant operations, clear cache and get fresh session to ensure we have latest token
-    clearSessionCache();
-    session = await getSessionFast();
-  } else {
-    session = await getSessionFast();
-  }
+  // Use cached session — do NOT clear cache on every request as that forces a network
+  // round-trip to /api/auth/session on each call and can return null under load,
+  // causing the Authorization header to be missing and producing 401s.
+  const session = await getSessionFast();
 
   const { bearerToken, tenantId: tenantFromSession, userId: userIdFromSession } = resolveSessionAuthContext(session);
 
-  // CRITICAL: Always set Authorization header if we have a bearer token
-  // This is required for all authenticated endpoints including tenant operations
-  if (bearerToken) {
-    config.headers.Authorization = `Bearer ${bearerToken}`;
-  } else {
-    console.warn('[apiClient] No bearer token available for request:', config.url);
-  }
+  // Fall back to auth store access_token if session doesn't have bearer token
+  const storeToken = useAuthStore.getState().access_token;
+  const authToken = bearerToken ?? storeToken;
+  if (authToken) config.headers.Authorization = `Bearer ${authToken}`;
 
   const tenantId = tenantFromSession ?? useAuthStore.getState().tenant_id;
   if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
@@ -71,8 +61,10 @@ apiClient.interceptors.response.use(
       clearSessionCache();
       const freshSession = await getSessionFast();
       const { bearerToken } = resolveSessionAuthContext(freshSession);
-      if (bearerToken) {
-        originalConfig.headers.Authorization = `Bearer ${bearerToken}`;
+      // Fall back to auth store access_token if session doesn't have bearer token
+      const authToken = bearerToken ?? useAuthStore.getState().access_token;
+      if (authToken) {
+        originalConfig.headers.Authorization = `Bearer ${authToken}`;
         return apiClient(originalConfig);
       }
       window.location.href = "/signin?reason=session_expired";

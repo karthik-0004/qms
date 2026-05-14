@@ -354,8 +354,6 @@ services:
         condition: service_healthy
       auth-service-init:
         condition: service_completed_successfully
-      platform-dev-login-seed:
-        condition: service_completed_successfully
     ports:
       - "8001:8001"
     environment:

@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     # Upstream services
     auth_service_url: str = "http://localhost:8001"
     tenant_service_url: str = "http://localhost:8002"
-    user_service_url: str = "http://user-service:8003"
-    audit_service_url: str = "http://audit-service:8004"
-    notification_service_url: str = "http://notification-service:8005"
+    user_service_url: str = "http://localhost:8003"
+    audit_service_url: str = "http://localhost:8004"
+    notification_service_url: str = "http://localhost:8005"
     document_service_url: str = "http://document-service:8020"
     quality_event_service_url: str = "http://quality-event-service:8021"
     capa_service_url: str = "http://capa-service:8022"

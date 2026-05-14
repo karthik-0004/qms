@@ -323,9 +323,9 @@ function UsersTab() {
                     </td>
                     <td className="py-3 pr-4 hidden sm:table-cell">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role ?? ""] ?? "bg-slate-100 text-slate-600"}`}
                       >
-                        {ROLE_LABEL[u.role] ?? u.role}
+                        {ROLE_LABEL[u.role ?? ""] ?? u.role}
                       </span>
                     </td>
                     <td className="py-3 pr-4">
@@ -475,16 +475,16 @@ function AuditTab() {
                       </span>
                     </td>
                     <td className="py-3 pr-4 text-xs text-muted-foreground hidden sm:table-cell">
-                      {e.entity_type}
+                      {e.resource_type}
                     </td>
                     <td className="py-3 pr-4 text-xs text-muted-foreground font-mono hidden md:table-cell">
-                      {e.entity_id.slice(0, 8)}…
+                      {e.resource_id ? e.resource_id.slice(0, 8) + "…" : "—"}
                     </td>
                     <td className="py-3 pr-4 text-xs text-muted-foreground font-mono hidden lg:table-cell">
-                      {e.user_id.slice(0, 8)}…
+                      {e.user_id ? e.user_id.slice(0, 8) + "…" : "—"}
                     </td>
                     <td className="py-3 pr-4 text-xs text-muted-foreground font-mono hidden xl:table-cell">
-                      {e.tenant_id.slice(0, 8)}…
+                      {e.tenant_id ? e.tenant_id.slice(0, 8) + "…" : "—"}
                     </td>
                     <td className="py-3 pr-4 text-xs text-muted-foreground">
                       {new Date(e.created_at).toLocaleString()}

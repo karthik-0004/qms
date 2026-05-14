@@ -54,7 +54,12 @@ export default function CreateTechnicianPage() {
   const handleUserSelect = (userId: string) => {
     const user = users.find((u) => u.id === userId);
     if (user) {
-      setSelectedUser(user);
+      setSelectedUser({
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email ?? "",
+      });
       form.setValue("user_id", user.id);
       form.setValue("first_name", user.first_name ?? "");
       form.setValue("last_name", user.last_name ?? "");

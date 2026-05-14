@@ -7,7 +7,7 @@ import structlog
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rainer_auth_lib.dependencies import CurrentUser, require_role
+from rainer_auth_lib.dependencies import CurrentUser, OptionalCurrentUser, require_role
 from rainer_common.responses import MessageResponse, PaginatedResponse, SuccessResponse
 from rainer_common.pagination import PaginationParams, pagination_params
 
@@ -49,7 +49,7 @@ def _get_service(
 async def list_users(
     service: Annotated[UserDomainService, Depends(_get_service)],
     pagination: Annotated[PaginationParams, Depends(pagination_params)],
-    current_user: CurrentUser | None = None,
+    current_user: OptionalCurrentUser = None,
     is_active: bool | None = Query(default=None),
     department: str | None = Query(default=None),
 ) -> PaginatedResponse[UserResponse]:

@@ -21,9 +21,13 @@ from rainer_common.middleware import (
 )
 from rainer_common.responses import ErrorResponse, ResponseMeta
 
-from .api.v1 import api_v1_router
-from .core.config import get_settings
+from .core.config import ensure_jwt_environment, get_settings
 from .core.database import check_db_health, dispose_engine
+
+# Must run before any import that uses rainer_auth_lib
+ensure_jwt_environment()
+
+from .api.v1 import api_v1_router
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()

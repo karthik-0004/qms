@@ -17,20 +17,25 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  // Additional fields from auth service
-  email: string;
-  role: string;
-  last_login: string | null;
+  // Augmented client-side from session/auth — not in UserResponse spec
+  email?: string;
+  role?: string;
+  last_login?: string | null;
 }
 
 export interface AuditEntry {
   id: string;
+  tenant_id: string | null;
+  user_id: string | null;
   action: string;
-  entity_type: string;
-  entity_id: string;
-  user_id: string;
-  tenant_id: string;
-  details: Record<string, unknown> | null;
+  resource_type: string | null;
+  resource_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  metadata: Record<string, unknown>;
+  severity: string;
+  source_service: string | null;
+  event_id: string | null;
   created_at: string;
 }
 
@@ -142,19 +147,26 @@ export const usersApi = {
   get: (id: string) =>
     apiClient.get<BackendItem<User>>(`/users/${id}`).then((r) => r.data.data),
 
-  create: (data: { 
-    email: string; 
-    first_name: string; 
-    last_name: string; 
+  create: (data: {
+    email?: string;
+    platform_user_id?: string;
+    first_name: string;
+    last_name: string;
     display_name?: string;
     phone?: string;
     department?: string;
     job_title?: string;
-    role: string;
   }) =>
     apiClient.post<BackendItem<User>>("/users", data).then((r) => r.data.data),
 
-  update: (id: string, data: Partial<User>) =>
+  update: (id: string, data: {
+    first_name?: string;
+    last_name?: string;
+    display_name?: string;
+    phone?: string;
+    department?: string;
+    job_title?: string;
+  }) =>
     apiClient.patch<BackendItem<User>>(`/users/${id}`, data).then((r) => r.data.data),
 
   deactivate: (id: string) => apiClient.delete(`/users/${id}`).then((r) => r.data),
@@ -285,11 +297,106 @@ export const companiesApi = {
     apiClient.delete(`/companies/${companyId}/users/${userId}/roles/${roleId}`).then((r) => r.data),
 };
 
-// ─── Audit ──────────────────────────────────────────────────────────────────
+export interface Role {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  is_system_role: boolean;
+  product: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPermissions {
+  user_id: string;
+  permissions: string[];
+}
+
+export interface MFASetupData {
+  secret: string;
+  provisioning_uri: string;
+  qr_code_url: string;
+}
+
+// ─── Roles & Permissions ─────────────────────────────────────────────────────
+
+export const rolesApi = {
+  list: (params?: { product?: string }) =>
+    apiClient
+      .get<BackendItem<Role[]>>("/roles", { params })
+      .then((r) => r.data.data),
+};
+
+export const userPermissionsApi = {
+  get: (userId: string) =>
+    apiClient
+      .get<BackendItem<UserPermissions>>(`/users/${userId}/permissions`)
+      .then((r) => r.data.data),
+
+  assignRole: (userId: string, data: { role_id: string }) =>
+    apiClient
+      .post(`/users/${userId}/roles`, data)
+      .then((r) => r.data),
+
+  removeRole: (userId: string, roleId: string) =>
+    apiClient
+      .delete(`/users/${userId}/roles/${roleId}`)
+      .then((r) => r.data),
+};
+
+// ─── Auth (MFA / logout-all) ─────────────────────────────────────────────────
+
+export const authApi = {
+  setupMFA: () =>
+    apiClient
+      .post<BackendItem<MFASetupData>>("/auth/mfa/setup")
+      .then((r) => r.data.data),
+
+  verifyMFA: (code: string) =>
+    apiClient
+      .post("/auth/mfa/verify", { code })
+      .then((r) => r.data),
+
+  disableMFA: (password: string) =>
+    apiClient
+      .post("/auth/mfa/disable", { password })
+      .then((r) => r.data),
+
+  logoutAll: () =>
+    apiClient
+      .post("/auth/logout-all")
+      .then((r) => r.data),
+};
 
 export const auditApi = {
-  list: (params?: { entity_type?: string; entity_id?: string; user_id?: string; page?: number; page_size?: number }) =>
-    apiClient.get<PaginatedResponse<AuditEntry>>("/audit/entries", { params }).then((r) => r.data),
+  list: (params?: {
+    tenant_id?: string;
+    user_id?: string;
+    action?: string;
+    resource_type?: string;
+    resource_id?: string;
+    severity?: string;
+    from_date?: string;
+    to_date?: string;
+    page?: number;
+    page_size?: number;
+    sort?: string;
+  }) =>
+    apiClient
+      .get<{ data: AuditEntry[]; pagination: { total: number; page: number; page_size: number; total_pages: number; has_next: boolean; has_prev: boolean } }>(
+        "/audit/logs",
+        { params },
+      )
+      .then((r) => ({
+        items: r.data.data,
+        total: r.data.pagination.total,
+        page: r.data.pagination.page,
+        page_size: r.data.pagination.page_size,
+        total_pages: r.data.pagination.total_pages,
+        has_next: r.data.pagination.has_next,
+        has_prev: r.data.pagination.has_prev,
+      })),
 };
 
 // ─── Tenants ─────────────────────────────────────────────────────────────────

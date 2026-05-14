@@ -3,11 +3,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   auditApi,
+  authApi,
   companiesApi,
+  rolesApi,
   tenantsApi,
+  userPermissionsApi,
   type UpdateTenantSettingsPayload,
   usersApi,
 } from "@/lib/api/services/platform";
+import { toast } from "sonner";
 
 // ─── Users ──────────────────────────────────────────────────────────────────
 
@@ -31,7 +35,11 @@ export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: usersApi.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      toast.success("User created successfully");
+    },
+    onError: () => toast.error("Failed to create user"),
   });
 }
 
@@ -40,7 +48,83 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof usersApi.update>[1] }) =>
       usersApi.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: ["users", vars.id] });
+      toast.success("User updated");
+    },
+    onError: () => toast.error("Failed to update user"),
+  });
+}
+
+export function useDeactivateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => usersApi.deactivate(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      toast.success("User deactivated");
+    },
+    onError: () => toast.error("Failed to deactivate user"),
+  });
+}
+
+export function useReactivateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    // Reactivate via PATCH with is_active — backend UpdateUserRequest doesn't have is_active.
+    // The spec deactivate is DELETE /users/{id}. There is no separate reactivate endpoint in the spec.
+    // We surface this as a TODO — the UI will show the state but the button is disabled.
+    // TODO: Wire when a reactivate endpoint is implemented in user-service
+    mutationFn: (_id: string) => Promise.reject(new Error("Reactivate endpoint not yet implemented")),
+    onError: () => toast.error("Reactivate is not yet available"),
+  });
+}
+
+// ─── Roles & Permissions ─────────────────────────────────────────────────────
+
+export function useRoles(params?: Parameters<typeof rolesApi.list>[0]) {
+  return useQuery({
+    queryKey: ["roles", params],
+    queryFn: () => rolesApi.list(params),
+    staleTime: 60_000,
+  });
+}
+
+export function useUserPermissions(userId: string) {
+  return useQuery({
+    queryKey: ["users", userId, "permissions"],
+    queryFn: () => userPermissionsApi.get(userId),
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+}
+
+export function useAssignRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
+      userPermissionsApi.assignRole(userId, { role_id: roleId }),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ["users", vars.userId, "permissions"] });
+      qc.invalidateQueries({ queryKey: ["users", vars.userId] });
+      toast.success("Role assigned");
+    },
+    onError: () => toast.error("Failed to assign role"),
+  });
+}
+
+export function useRemoveRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
+      userPermissionsApi.removeRole(userId, roleId),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ["users", vars.userId, "permissions"] });
+      qc.invalidateQueries({ queryKey: ["users", vars.userId] });
+      toast.success("Role removed");
+    },
+    onError: () => toast.error("Failed to remove role"),
   });
 }
 
@@ -50,6 +134,20 @@ export function useAuditLog(params?: Parameters<typeof auditApi.list>[0]) {
   return useQuery({
     queryKey: ["audit", params],
     queryFn: () => auditApi.list(params),
+    staleTime: 60_000,
+  });
+}
+
+export function useUserAuditLogs(userId: string, page = 1) {
+  return useQuery({
+    queryKey: ["audit-logs", "user", userId, page],
+    queryFn: () =>
+      auditApi.list({
+        user_id: userId,
+        page,
+        page_size: 20,
+      }),
+    enabled: !!userId,
     staleTime: 60_000,
   });
 }
@@ -176,7 +274,9 @@ export function useUpdateTenantSettings() {
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: ["tenants", "settings", vars.tenantId] });
       qc.invalidateQueries({ queryKey: ["tenants"] });
+      toast.success("Settings saved");
     },
+    onError: () => toast.error("Failed to save settings"),
   });
 }
 
@@ -188,6 +288,39 @@ export function useDeleteTenant() {
       qc.invalidateQueries({ queryKey: ["tenants"] });
       qc.invalidateQueries({ queryKey: ["users"] });
     },
+  });
+}
+
+// ─── Auth (MFA / logout-all) ─────────────────────────────────────────────────
+
+export function useSetupMFA() {
+  return useMutation({
+    mutationFn: authApi.setupMFA,
+    onError: () => toast.error("Failed to start MFA setup"),
+  });
+}
+
+export function useVerifyMFA() {
+  return useMutation({
+    mutationFn: (code: string) => authApi.verifyMFA(code),
+    onSuccess: () => toast.success("MFA enabled successfully"),
+    onError: () => toast.error("Invalid code — please try again"),
+  });
+}
+
+export function useDisableMFA() {
+  return useMutation({
+    mutationFn: (password: string) => authApi.disableMFA(password),
+    onSuccess: () => toast.success("MFA disabled"),
+    onError: () => toast.error("Failed to disable MFA — check your password"),
+  });
+}
+
+export function useLogoutAll() {
+  return useMutation({
+    mutationFn: authApi.logoutAll,
+    onSuccess: () => toast.success("Signed out from all devices"),
+    onError: () => toast.error("Failed to sign out all devices"),
   });
 }
 

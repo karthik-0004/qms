@@ -1,7 +1,13 @@
 """Tenant Service — FastAPI application factory."""
 
+import os
 from contextlib import asynccontextmanager
 from typing import Any
+
+# MUST be imported before any rainer_auth_lib usage
+from .core.config import ensure_jwt_environment
+
+ensure_jwt_environment()
 
 import structlog
 from fastapi import FastAPI, Request, status

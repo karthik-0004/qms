@@ -272,9 +272,9 @@ export function TenantDetailView({ slug }: { slug: string }) {
                       </td>
                       <td className="py-2 pr-4">
                         <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100"}`}
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role ?? ""] ?? "bg-slate-100"}`}
                         >
-                          {ROLE_LABEL[u.role] ?? u.role}
+                          {ROLE_LABEL[u.role ?? ""] ?? u.role}
                         </span>
                       </td>
                       <td className="py-2 text-muted-foreground">

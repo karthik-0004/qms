@@ -1,5 +1,6 @@
 """Analytics Service — Application configuration."""
 
+import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,6 +22,23 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     rainer_master_secret: str = "dev-master-secret-change-in-production"
     cors_allowed_origins: list[str] = ["http://localhost:3000"]
+
+    # JWT — same as other services
+    jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars"
+    jwt_algorithm: str = "HS256"
+
+
+def ensure_jwt_environment() -> None:
+    """Expose JWT to os.environ so rainer_auth_lib.JWTSettings() works correctly.
+
+    rainer_auth_lib only reads OS env for JWT (not analytics-service .env). Must run before any import
+    that triggers get_settings()/database setup if JWT_* is only defined in .env.
+    """
+    s = Settings()
+    if not os.environ.get("JWT_SECRET_KEY", "").strip():
+        os.environ["JWT_SECRET_KEY"] = s.jwt_secret_key
+    if not os.environ.get("JWT_ALGORITHM", "").strip():
+        os.environ["JWT_ALGORITHM"] = s.jwt_algorithm
 
 
 @lru_cache

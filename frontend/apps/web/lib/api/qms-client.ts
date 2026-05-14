@@ -48,7 +48,9 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
   client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     const session = await getSessionFast();
     const { bearerToken, tenantId: tenantFromSession, userId: userIdFromSession } = resolveSessionAuthContext(session);
-    if (bearerToken) config.headers.Authorization = `Bearer ${bearerToken}`;
+    // Fall back to auth store access_token if session doesn't have bearer token
+    const authToken = bearerToken ?? useAuthStore.getState().access_token;
+    if (authToken) config.headers.Authorization = `Bearer ${authToken}`;
     const tenantId = tenantFromSession ?? useAuthStore.getState().tenant_id;
     if (tenantId) config.headers["X-Tenant-ID"] = tenantId;
     const userId = userIdFromSession ?? useAuthStore.getState().user?.id;
@@ -66,8 +68,10 @@ export function createQmsApiClient(service: QmsServiceKey): AxiosInstance {
         clearSessionCache();
         const freshSession = await getSessionFast();
         const { bearerToken } = resolveSessionAuthContext(freshSession);
-        if (bearerToken) {
-          originalConfig.headers.Authorization = `Bearer ${bearerToken}`;
+        // Fall back to auth store access_token if session doesn't have bearer token
+        const authToken = bearerToken ?? useAuthStore.getState().access_token;
+        if (authToken) {
+          originalConfig.headers.Authorization = `Bearer ${authToken}`;
           return client(originalConfig);
         }
         window.location.href = "/signin?reason=session_expired";

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { NotificationBell } from "@/components/platform/notification-bell";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 interface HeaderProps {
   session: Session;
@@ -91,15 +92,21 @@ export function Header({ session }: HeaderProps) {
 
         {/* User menu */}
         <div className="flex items-center gap-2 pl-2 border-l border-border">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <User size={16} className="text-primary" />
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-sm font-medium leading-none">
-              {session.user?.email?.split("@")[0] ?? "User"}
-            </p>
-            <p className="text-xs text-muted-foreground capitalize">{session.user.role ?? "user"}</p>
-          </div>
+          <Link
+            href={"/profile" as any}
+            className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted transition"
+            title="My Profile"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <User size={16} className="text-primary" />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium leading-none">
+                {session.user?.email?.split("@")[0] ?? "User"}
+              </p>
+              <p className="text-xs text-muted-foreground capitalize">{session.user.role ?? "user"}</p>
+            </div>
+          </Link>
           <button
             onClick={handleSignOut}
             className="p-2 rounded-lg hover:bg-muted transition text-muted-foreground hover:text-foreground"
