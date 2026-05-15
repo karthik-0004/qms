@@ -88,11 +88,17 @@ async def create_tenant(
     # `get_db` also commits at request end, but provision_welcome runs inside this request.
     await db.commit()
 
-    await provision_tenant_admin_and_notify(
-        settings=app_settings,
-        authorization=authorization,
-        tenant=tenant,
-    )
+    try:
+        await provision_tenant_admin_and_notify(
+            settings=app_settings,
+            authorization=authorization,
+            tenant=tenant,
+        )
+    except Exception:
+        logger.exception(
+            "tenant_provision_post_commit_failed",
+            tenant_id=tenant.id,
+        )
 
     return SuccessResponse.of(tenant_to_response(tenant))
 

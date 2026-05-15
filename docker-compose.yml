@@ -1099,7 +1099,8 @@ services:
     environment:
       # When browsing from another PC, use that machine's reachable API URL here and rebuild `web`.
       NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
-      NEXTAUTH_SECRET: "dev-nextauth-secret-change-in-production"
+      AUTH_SECRET: "${AUTH_SECRET:-dev-nextauth-secret-change-in-production}"
+      NEXTAUTH_SECRET: "${AUTH_SECRET:-dev-nextauth-secret-change-in-production}"
       # Browser calls gateway on host port 8000 (maps to gateway-service:8000). Do not set NEXT_PUBLIC_* to gateway-service hostname.
       NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
       NEXT_PUBLIC_QMS_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
