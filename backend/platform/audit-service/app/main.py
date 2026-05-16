@@ -18,6 +18,7 @@ from rainer_common.responses import ErrorResponse
 from .api.v1 import api_v1_router
 from .core.config import get_settings
 from .core.database import check_db_health, dispose_engine
+from .kafka_consumer import start_document_consumer, stop_document_consumer
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -27,7 +28,9 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     setup_logging(settings.service_name, settings.service_version, settings.log_level, settings.json_logs)
     logger.info("service_starting", service=settings.service_name)
+    await start_document_consumer()
     yield
+    await stop_document_consumer()
     await dispose_engine()
 
 

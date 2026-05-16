@@ -1,67 +1,54 @@
 "use client";
 
-import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
-  ClipboardList,
-  Home,
-  Loader2,
-  CheckCircle2,
-  Circle,
-  Trash2,
+  ClipboardList, ArrowLeft, Loader2, Save, X, Plus, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FBSForm } from "@/components/qms-shared/FBSForm";
+import { WorkflowStepBar } from "@/components/qms-shared/WorkflowStepBar";
+import { StatusBadge } from "@/components/qms-shared/StatusBadge";
+import { SeverityBadge } from "@/components/qms-shared/SeverityBadge";
+import { ModuleHeader } from "@/components/qms-shared/ModuleHeader";
 import {
-  useCAPA,
-  useCAPAActions,
-  useAddCapaAction,
-  useCloseCAPA,
-  useCompleteCapaAction,
-  useDeleteCAPA,
-  useUpdateCAPA,
-  useVerifyCapaEffectiveness,
+  useCAPA, useCAPAActions, useAddCapaAction, useCloseCAPA, useCompleteCapaAction,
+  useDeleteCAPA, useUpdateCAPA, useVerifyCapaEffectiveness,
 } from "@/lib/hooks/queries/qms";
 import { usePermission } from "@/lib/hooks/usePermission";
 import { handleApiError } from "@/lib/api/client";
 import { toast } from "sonner";
 
 const LIFECYCLE_STEPS = [
-  { status: "open", label: "Open" },
-  { status: "under_investigation", label: "Investigation" },
-  { status: "root_cause_identified", label: "Root cause" },
-  { status: "implementation", label: "Implementation" },
-  { status: "effectiveness_check", label: "Effectiveness" },
-  { status: "closed", label: "Closed" },
-] as const;
+  { key: "open", label: "Open", icon: "📋" },
+  { key: "under_investigation", label: "Investigation", icon: "🔍" },
+  { key: "root_cause_identified", label: "Root Cause", icon: "🧩" },
+  { key: "implementation", label: "Implementation", icon: "⚙️" },
+  { key: "effectiveness_check", label: "Effectiveness", icon: "📊" },
+  { key: "closed", label: "Closed", icon: "✅" },
+];
 
-function stepIndexForStatus(status: string): number {
-  const i = LIFECYCLE_STEPS.findIndex((s) => s.status === status);
-  return i === -1 ? 0 : i;
+const STATUS_ORDER = ["open", "under_investigation", "root_cause_identified", "implementation", "effectiveness_check", "closed"];
+
+function getCompletedSteps(status: string): string[] {
+  const idx = STATUS_ORDER.indexOf(status);
+  return STATUS_ORDER.slice(0, Math.max(0, idx));
 }
 
 export default function CapaDetailPage() {
@@ -83,457 +70,564 @@ export default function CapaDetailPage() {
   const closeMut = useCloseCAPA();
   const deleteMut = useDeleteCAPA();
 
-  const [rootCauseOpen, setRootCauseOpen] = useState(false);
-  const [rootCause, setRootCause] = useState("");
-  const [rootMethod, setRootMethod] = useState("");
+  const [editField, setEditField] = useState<string | null>(null);
+  const [fieldVal, setFieldVal] = useState("");
+
+  // risk assessment sliders
+  const [riskSeverity, setRiskSeverity] = useState(3);
+  const [riskOccurrence, setRiskOccurrence] = useState(3);
+  const [riskDetectability, setRiskDetectability] = useState(3);
+  const rpn = riskSeverity * riskOccurrence * riskDetectability;
+
+  // dialogs
   const [actionOpen, setActionOpen] = useState(false);
   const [actionType, setActionType] = useState("corrective");
   const [actionDesc, setActionDesc] = useState("");
+  const [actionAssignedTo, setActionAssignedTo] = useState("");
+  const [actionDueDate, setActionDueDate] = useState("");
+
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyOk, setVerifyOk] = useState(true);
   const [verifyNotes, setVerifyNotes] = useState("");
+
   const [completeOpen, setCompleteOpen] = useState(false);
   const [completeActionId, setCompleteActionId] = useState<string | null>(null);
   const [completeEvidence, setCompleteEvidence] = useState("");
 
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const onDeleteConfirm = () => {
-    deleteMut.mutate(id, {
-      onSuccess: () => {
-        toast.success("CAPA deleted");
-        router.push("/qms/capa" as Route);
-      },
-      onError: (e) => toast.error(`Failed to delete CAPA: ${handleApiError(e)}`),
-    });
-  };
+  if (!id) return <p className="p-6 text-muted-foreground">Invalid CAPA.</p>;
+  if (permLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh] gap-2 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" /> Loading…
+      </div>
+    );
+  }
+  if (!canRead) return <p className="p-6 text-destructive text-sm">No permission.</p>;
+  if (isError) return <p className="p-6 text-destructive text-sm">{handleApiError(error)}</p>;
+  if (!capa) return null;
 
-  const closed = capa?.status === "closed";
-  const currentStep = capa ? stepIndexForStatus(capa.status) : 0;
-
+  const closed = capa.status === "closed";
   const allowWrite = canWrite && !closed;
   const allowApprove = canApprove && !closed;
 
-  const sourceQeHref = useMemo(() => {
-    if (!capa?.source_id) return null;
-    const st = (capa.source_type ?? "").toLowerCase();
-    if (st.includes("quality") || st === "quality_event") {
-      return `/qms/quality-events/${capa.source_id}` as Route;
-    }
-    return null;
-  }, [capa?.source_id, capa?.source_type]);
-
-  if (!id) {
-    return <p className="p-6 text-muted-foreground">Invalid CAPA.</p>;
-  }
-
-  if (permLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh] gap-2 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        Loading…
-      </div>
-    );
-  }
-
-  if (!canRead) {
-    return <p className="p-6 text-destructive text-sm">You do not have permission to view this CAPA.</p>;
-  }
-
-  if (isError) {
-    return (
-      <div className="p-6 space-y-4">
-        <p className="text-destructive text-sm">{handleApiError(error)}</p>
-        <Button variant="outline" onClick={() => router.push("/qms/capa" as Route)}>
-          Back to CAPAs
-        </Button>
-      </div>
-    );
-  }
-
-  if (isLoading || !capa) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh] gap-2 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        Loading CAPA…
-      </div>
-    );
-  }
-
-  const onSaveRootCause = () => {
-    if (!rootCause.trim()) {
-      toast.error("Root cause is required.");
-      return;
-    }
-    updateMut.mutate(
-      { id, data: { root_cause: rootCause.trim(), root_cause_method: rootMethod.trim() || null } },
-      {
-        onSuccess: () => {
-          toast.success("Root cause updated.");
-          setRootCauseOpen(false);
-          void refetch();
-        },
-        onError: (e) => toast.error(handleApiError(e)),
-      },
-    );
-  };
-
-  const onAddAction = () => {
-    if (!actionDesc.trim()) {
-      toast.error("Description is required.");
-      return;
-    }
-    addActionMut.mutate(
-      { capaId: id, data: { action_type: actionType, description: actionDesc.trim() } },
-      {
-        onSuccess: () => {
-          toast.success("Action added.");
-          setActionOpen(false);
-          setActionDesc("");
-        },
-        onError: (e) => toast.error(handleApiError(e)),
-      },
-    );
-  };
-
-  const onCompleteAction = () => {
-    if (!completeActionId) return;
-    completeActionMut.mutate(
-      { capaId: id, actionId: completeActionId, data: { evidence: completeEvidence.trim() || null } },
-      {
-        onSuccess: () => {
-          toast.success("Action marked complete.");
-          setCompleteOpen(false);
-          setCompleteActionId(null);
-          setCompleteEvidence("");
-        },
-        onError: (e) => toast.error(handleApiError(e)),
-      },
-    );
-  };
-
-  const onVerify = () => {
-    verifyMut.mutate(
-      { id, data: { verified: verifyOk, notes: verifyNotes.trim() || null } },
-      {
-        onSuccess: () => {
-          toast.success("Effectiveness recorded.");
-          setVerifyOpen(false);
-          void refetch();
-        },
-        onError: (e) => toast.error(handleApiError(e)),
-      },
-    );
-  };
-
-  const onClose = () => {
-    closeMut.mutate(id, {
-      onSuccess: () => {
-        toast.success("CAPA closed.");
-        void refetch();
-      },
+  const saveField = (field: string, value: unknown) => {
+    updateMut.mutate({ id, data: { [field]: value } }, {
+      onSuccess: () => { toast.success("Saved."); setEditField(null); void refetch(); },
       onError: (e) => toast.error(handleApiError(e)),
     });
   };
 
-  return (
-    <div className="space-y-6 p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-2 text-sm flex-wrap">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")} className="h-7 px-2">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
-        </Button>
-        <span className="text-muted-foreground">/</span>
-        <Button variant="ghost" size="sm" onClick={() => router.push("/qms/capa" as Route)} className="h-7 px-2">
-          <Home className="h-4 w-4 mr-1" />
-          CAPA
-        </Button>
-        <span className="text-muted-foreground">/</span>
-        <span className="font-medium font-mono text-xs">{capa.capa_number}</span>
-      </div>
+  const sourceHref = useMemo(() => {
+    if (!capa.source_id) return null;
+    const st = (capa.source_type ?? "").toLowerCase();
+    if (st.includes("quality") || st === "quality_event") return `/qms/quality-events/${capa.source_id}`;
+    if (st.includes("audit")) return `/qms/audit/${capa.source_id}`;
+    if (st.includes("complaint")) return `/qms/complaints/${capa.source_id}`;
+    return null;
+  }, [capa.source_id, capa.source_type]);
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <ClipboardList className="h-6 w-6 shrink-0" />
-              <span className="break-words">{capa.title}</span>
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1 font-mono">{capa.capa_number}</p>
+  const tabs = [
+    {
+      id: "about",
+      label: "About",
+      icon: "📋",
+      content: (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-3 text-sm">
+            {[
+              ["CAPA #", <span className="font-mono font-medium" key="n">{capa.capa_number}</span>],
+              ["Type", capa.capa_type],
+              ["Status", <StatusBadge key="s" status={capa.status} />],
+              ["Severity", <SeverityBadge key="sv" severity={capa.severity} />],
+              ["Created", new Date(capa.created_at).toLocaleDateString()],
+              ["Owner", capa.owner_id ? <span key="o" className="font-mono text-xs">{capa.owner_id}</span> : "—"],
+              ["Target Close", capa.target_close_date ? new Date(capa.target_close_date).toLocaleDateString() : "—"],
+              ["Actual Close", capa.actual_close_date ? new Date(capa.actual_close_date).toLocaleDateString() : "—"],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="flex justify-between border-b pb-2">
+                <span className="text-muted-foreground">{label}</span>
+                <span>{value}</span>
+              </div>
+            ))}
           </div>
-          {sourceQeHref && (
-            <Button variant="outline" size="sm" className="w-fit min-h-11" asChild>
-              <Link href={sourceQeHref}>Linked quality event</Link>
+          <div>
+            <Label>Title</Label>
+            {editField === "title" ? (
+              <div className="flex gap-2 mt-1">
+                <Input value={fieldVal} onChange={(e) => setFieldVal(e.target.value)} autoFocus />
+                <Button size="sm" onClick={() => saveField("title", fieldVal)}><Save className="h-4 w-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditField(null)}><X className="h-4 w-4" /></Button>
+              </div>
+            ) : (
+              <p
+                className={`mt-1 p-2 rounded border border-transparent text-sm ${allowWrite ? "hover:border-border cursor-pointer" : ""}`}
+                onClick={() => { if (allowWrite) { setEditField("title"); setFieldVal(capa.title); } }}
+              >
+                {capa.title}
+              </p>
+            )}
+            <Label className="mt-3">Description</Label>
+            {editField === "description" ? (
+              <div className="mt-1 space-y-2">
+                <Textarea value={fieldVal} onChange={(e) => setFieldVal(e.target.value)} rows={4} autoFocus />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => saveField("description", fieldVal)}><Save className="h-4 w-4 mr-1" />Save</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditField(null)}>Cancel</Button>
+                </div>
+              </div>
+            ) : (
+              <p
+                className={`mt-1 p-2 rounded border border-transparent text-sm whitespace-pre-wrap ${allowWrite ? "hover:border-border cursor-pointer" : ""}`}
+                onClick={() => { if (allowWrite) { setEditField("description"); setFieldVal(capa.description ?? ""); } }}
+              >
+                {capa.description || <span className="text-muted-foreground italic">Click to add…</span>}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "source",
+      label: "Source",
+      icon: "🔗",
+      content: (
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label>Source Type</Label>
+              <p className="mt-1 p-2 text-sm capitalize">{capa.source_type?.replace(/_/g, " ") ?? "—"}</p>
+            </div>
+            <div>
+              <Label>Source Reference</Label>
+              {sourceHref ? (
+                <Button size="sm" variant="outline" className="mt-1" asChild>
+                  <a href={sourceHref as Route}>View Source Record ↗</a>
+                </Button>
+              ) : (
+                <p className="mt-1 p-2 text-sm font-mono text-xs">{capa.source_id ?? "—"}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "risk",
+      label: "Risk Assessment",
+      icon: "⚠️",
+      content: (
+        <div className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              ["Severity", riskSeverity, setRiskSeverity],
+              ["Occurrence", riskOccurrence, setRiskOccurrence],
+              ["Detectability", riskDetectability, setRiskDetectability],
+            ].map(([label, val, setter]) => (
+              <div key={String(label)}>
+                <Label>{String(label)} (1–5)</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    value={Number(val)}
+                    onChange={(e) => (setter as React.Dispatch<React.SetStateAction<number>>)(Number(e.target.value))}
+                    className="flex-1"
+                    disabled={!allowWrite}
+                  />
+                  <span className="font-bold text-lg w-6 text-center">{String(val)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-4 p-4 rounded-lg border bg-muted/30">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">RPN</p>
+              <p className={`text-3xl font-bold ${rpn > 60 ? "text-red-600" : rpn > 30 ? "text-amber-500" : "text-emerald-600"}`}>
+                {rpn}
+              </p>
+              <p className="text-xs text-muted-foreground">= {riskSeverity} × {riskOccurrence} × {riskDetectability}</p>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>{rpn > 60 ? "🔴 High Risk — immediate action required" : rpn > 30 ? "🟡 Medium Risk — monitor closely" : "🟢 Low Risk — standard controls sufficient"}</p>
+            </div>
+          </div>
+          {allowWrite && (
+            <Button
+              size="sm"
+              onClick={() => saveField("risk_score", rpn)}
+            >
+              <Save className="h-4 w-4 mr-1" /> Save Risk Assessment
             </Button>
           )}
         </div>
-        {canWrite && (
-          <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)} className="min-h-11 shrink-0">
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete
-          </Button>
-        )}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Lifecycle (6 steps)</CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Step highlights follow backend status values. Read-only while closed.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <ol className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {LIFECYCLE_STEPS.map((step, idx) => {
-              const done = closed || idx < currentStep;
-              const active = !closed && idx === currentStep;
-              return (
-                <li
-                  key={step.status}
-                  className={`rounded-lg border px-2 py-3 text-center text-xs font-medium min-h-[72px] flex flex-col items-center justify-center gap-1 ${
-                    active ? "border-primary bg-primary/5" : "border-border"
-                  }`}
-                >
-                  {done ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-hidden />
-                  ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
-                  )}
-                  <span className="leading-tight">{step.label}</span>
-                </li>
-              );
-            })}
-          </ol>
-          <p className="text-xs text-muted-foreground mt-3 capitalize">
-            Current status: <span className="font-mono">{capa.status.replace(/_/g, " ")}</span>
-          </p>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm space-y-2 text-muted-foreground">
-            <p>
-              <span className="font-medium text-foreground">Type:</span> {capa.capa_type}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Severity:</span> {capa.severity}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Owner:</span>{" "}
-              <span className="font-mono text-xs">{capa.owner_id ?? "—"}</span>
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Due:</span>{" "}
-              {capa.due_date ? new Date(capa.due_date).toLocaleDateString() : "—"}
-            </p>
-            {capa.description && (
-              <p className="pt-2 whitespace-pre-wrap text-foreground/90">{capa.description}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Effectiveness & close</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {capa.effectiveness_verified !== undefined && capa.effectiveness_verified !== null && (
-              <p className="text-sm text-muted-foreground">
-                Verified:{" "}
-                <span className="font-medium text-foreground">{String(capa.effectiveness_verified)}</span>
-                {capa.effectiveness_check_date && (
-                  <span className="block text-xs mt-1">
-                    {new Date(capa.effectiveness_check_date).toLocaleString()}
-                  </span>
-                )}
+      ),
+    },
+    {
+      id: "investigation",
+      label: "Investigation",
+      icon: "🔍",
+      content: (
+        <div className="space-y-4">
+          <div>
+            <Label>Root Cause Method</Label>
+            {editField === "root_cause_method" ? (
+              <div className="flex gap-2 mt-1">
+                <Input value={fieldVal} onChange={(e) => setFieldVal(e.target.value)} placeholder="e.g. 5-Why, Fishbone" autoFocus />
+                <Button size="sm" onClick={() => saveField("root_cause_method", fieldVal)}><Save className="h-4 w-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditField(null)}><X className="h-4 w-4" /></Button>
+              </div>
+            ) : (
+              <p
+                className={`mt-1 p-2 rounded border border-transparent text-sm ${allowWrite ? "hover:border-border cursor-pointer" : ""}`}
+                onClick={() => { if (allowWrite) { setEditField("root_cause_method"); setFieldVal(capa.root_cause_method ?? ""); } }}
+              >
+                {capa.root_cause_method || <span className="text-muted-foreground italic">Click to set method…</span>}
               </p>
             )}
-            <div className="flex flex-wrap gap-2 mt-2">
-              {allowApprove && (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setVerifyOpen(true)} className="min-h-11">
-                    Verify effectiveness
-                  </Button>
-                  <Button size="sm" onClick={onClose} disabled={closeMut.isPending} className="min-h-11">
-                    {closeMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Close CAPA"}
-                  </Button>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
-          <CardTitle className="text-base">Actions</CardTitle>
-          {allowWrite && (
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => setRootCauseOpen(true)} className="min-h-11">
-                Edit root cause
+          </div>
+          <div>
+            <Label>Root Cause</Label>
+            {editField === "root_cause" ? (
+              <div className="mt-1 space-y-2">
+                <Textarea value={fieldVal} onChange={(e) => setFieldVal(e.target.value)} rows={5} autoFocus />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => saveField("root_cause", fieldVal)}><Save className="h-4 w-4 mr-1" />Save</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditField(null)}>Cancel</Button>
+                </div>
+              </div>
+            ) : (
+              <p
+                className={`mt-1 p-2 rounded border border-transparent text-sm whitespace-pre-wrap min-h-[80px] ${allowWrite ? "hover:border-border cursor-pointer" : ""}`}
+                onClick={() => { if (allowWrite) { setEditField("root_cause"); setFieldVal(capa.root_cause ?? ""); } }}
+              >
+                {capa.root_cause || <span className="text-muted-foreground italic">Click to document root cause…</span>}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "action-plan",
+      label: "Action Plan",
+      icon: "📋",
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">CAPA Actions ({actions.length})</h3>
+            {allowWrite && (
+              <Button size="sm" onClick={() => setActionOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Add Action
               </Button>
-              <Button size="sm" onClick={() => setActionOpen(true)} className="min-h-11">
-                Add action
-              </Button>
+            )}
+          </div>
+          {actionsLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
+          ) : actions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No actions yet. Add corrective or preventive actions above.</p>
+          ) : (
+            <div className="space-y-3">
+              {actions.map((a) => (
+                <Card key={a.id}>
+                  <CardContent className="pt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={a.action_type === "corrective" ? "default" : "secondary"} className="text-xs">
+                            {a.action_type}
+                          </Badge>
+                          <Badge variant={a.status === "completed" ? "outline" : "secondary"} className="text-xs capitalize">
+                            {a.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm">{a.description}</p>
+                        {a.assigned_to && <p className="text-xs text-muted-foreground mt-1">Assigned: {a.assigned_to}</p>}
+                        {a.due_date && <p className="text-xs text-muted-foreground">Due: {new Date(a.due_date).toLocaleDateString()}</p>}
+                        {a.completed_at && <p className="text-xs text-emerald-600">Completed: {new Date(a.completed_at).toLocaleDateString()}</p>}
+                      </div>
+                      {allowWrite && a.status !== "completed" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setCompleteActionId(a.id); setCompleteOpen(true); }}
+                        >
+                          Complete
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
-        </CardHeader>
-        <CardContent>
-          {actionsLoading ? (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading actions…
-            </p>
-          ) : actions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No actions yet.</p>
+        </div>
+      ),
+    },
+    {
+      id: "implementation",
+      label: "Implementation",
+      icon: "⚙️",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Track completion of each action item. Use the Action Plan tab to mark actions complete with evidence.
+          </p>
+          <div className="space-y-2">
+            {actions.map((a) => (
+              <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                <span className={`text-lg ${a.status === "completed" ? "text-emerald-600" : "text-slate-400"}`}>
+                  {a.status === "completed" ? "✅" : "⬜"}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{a.description}</p>
+                  {a.evidence && <p className="text-xs text-muted-foreground mt-1">Evidence: {a.evidence}</p>}
+                </div>
+              </div>
+            ))}
+            {actions.length === 0 && (
+              <p className="text-sm text-muted-foreground italic">No actions defined yet.</p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "effectiveness",
+      label: "Effectiveness",
+      icon: "📊",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Verify that corrective actions have been effective after implementation.
+          </p>
+          {capa.effectiveness_verified !== undefined && capa.effectiveness_verified !== null ? (
+            <Card>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={capa.effectiveness_verified ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}>
+                    {capa.effectiveness_verified ? "✅ Effective" : "❌ Not Effective"}
+                  </span>
+                </div>
+                {capa.effectiveness_check_date && (
+                  <p className="text-xs text-muted-foreground">Checked: {new Date(capa.effectiveness_check_date).toLocaleString()}</p>
+                )}
+              </CardContent>
+            </Card>
           ) : (
-            <ul className="space-y-3">
-              {actions.map((a) => (
-                <li key={a.id} className="rounded-md border border-border p-3 text-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div>
-                      <p className="font-medium capitalize">{a.action_type}</p>
-                      <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{a.description}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Status: {a.status}
-                        {a.completed_at && ` · ${new Date(a.completed_at).toLocaleString()}`}
-                      </p>
-                    </div>
-                    {allowWrite && a.status !== "completed" && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="min-h-11 shrink-0"
-                        onClick={() => {
-                          setCompleteActionId(a.id);
-                          setCompleteOpen(true);
-                        }}
-                      >
-                        Complete
-                      </Button>
+            <p className="text-sm text-muted-foreground italic">Effectiveness not yet verified.</p>
+          )}
+          {allowApprove && (
+            <Button size="sm" variant="outline" onClick={() => setVerifyOpen(true)}>
+              Verify Effectiveness
+            </Button>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "closure",
+      label: "Closure",
+      icon: "🔒",
+      content: (
+        <div className="space-y-4">
+          {closed ? (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold text-lg">✅</span>
+                  <div>
+                    <p className="font-medium">CAPA Closed</p>
+                    {capa.actual_close_date && (
+                      <p className="text-xs text-muted-foreground">{new Date(capa.actual_close_date).toLocaleDateString()}</p>
                     )}
                   </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Closing a CAPA requires effectiveness verification. Ensure all actions are complete before closing.
+              </p>
+              {allowApprove && (
+                <Button
+                  onClick={() => closeMut.mutate(id, {
+                    onSuccess: () => { toast.success("CAPA closed."); void refetch(); },
+                    onError: (e) => toast.error(handleApiError(e)),
+                  })}
+                  disabled={closeMut.isPending}
+                >
+                  {closeMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : "🔒"} Close CAPA
+                </Button>
+              )}
+            </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      ),
+    },
+  ];
 
-      <Dialog open={rootCauseOpen} onOpenChange={setRootCauseOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Root cause</DialogTitle>
-            <DialogDescription>Update investigation outcome (requires CAPA write).</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <Label htmlFor="rc">Root cause</Label>
-              <Textarea id="rc" value={rootCause} onChange={(e) => setRootCause(e.target.value)} rows={4} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="rm">Method (optional)</Label>
-              <Input id="rm" value={rootMethod} onChange={(e) => setRootMethod(e.target.value)} className="mt-1" />
-            </div>
+  return (
+    <div className="space-y-6 p-6 max-w-5xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => router.push("/qms/capa" as Route)}>
+          <ArrowLeft className="h-3 w-3 mr-1" />CAPA
+        </Button>
+        <span>/</span>
+        <span className="font-mono text-xs text-foreground">{capa.capa_number}</span>
+      </div>
+
+      {/* Header */}
+      <ModuleHeader
+        icon={<ClipboardList className="h-6 w-6" />}
+        title={capa.title}
+        description={capa.capa_number}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge status={capa.status} />
+            <SeverityBadge severity={capa.severity} />
+            {canWrite && (
+              <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />Delete
+              </Button>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRootCauseOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={onSaveRootCause} disabled={updateMut.isPending}>
-              {updateMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        }
+      />
 
+      {/* 6-step lifecycle bar */}
+      <WorkflowStepBar
+        steps={LIFECYCLE_STEPS}
+        currentStep={capa.status}
+        completedSteps={getCompletedSteps(capa.status)}
+      />
+
+      {/* FBS Tabbed Form */}
+      <FBSForm tabs={tabs} defaultTab="about" />
+
+      {/* Add Action dialog */}
       <Dialog open={actionOpen} onOpenChange={setActionOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add CAPA action</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Add CAPA Action</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label htmlFor="at">Action type</Label>
-              <Input id="at" value={actionType} onChange={(e) => setActionType(e.target.value)} className="mt-1" />
+              <Label>Action Type</Label>
+              <Select value={actionType} onValueChange={setActionType}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="corrective">Corrective</SelectItem>
+                  <SelectItem value="preventive">Preventive</SelectItem>
+                  <SelectItem value="systemic">Systemic</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <Label htmlFor="ad">Description</Label>
-              <Textarea id="ad" value={actionDesc} onChange={(e) => setActionDesc(e.target.value)} rows={3} className="mt-1" />
+              <Label>Description *</Label>
+              <Textarea value={actionDesc} onChange={(e) => setActionDesc(e.target.value)} rows={3} className="mt-1" />
+            </div>
+            <div>
+              <Label>Assigned To</Label>
+              <Input value={actionAssignedTo} onChange={(e) => setActionAssignedTo(e.target.value)} className="mt-1" placeholder="User ID or name" />
+            </div>
+            <div>
+              <Label>Due Date</Label>
+              <Input type="date" value={actionDueDate} onChange={(e) => setActionDueDate(e.target.value)} className="mt-1" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActionOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={onAddAction} disabled={addActionMut.isPending}>
-              {addActionMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+            <Button variant="outline" onClick={() => setActionOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!actionDesc.trim()) return toast.error("Description required.");
+                addActionMut.mutate(
+                  { capaId: id, data: { action_type: actionType, description: actionDesc.trim(), assigned_to: actionAssignedTo || null, due_date: actionDueDate || null } },
+                  {
+                    onSuccess: () => { toast.success("Action added."); setActionOpen(false); setActionDesc(""); setActionAssignedTo(""); setActionDueDate(""); },
+                    onError: (e) => toast.error(handleApiError(e)),
+                  },
+                );
+              }}
+              disabled={addActionMut.isPending}
+            >
+              {addActionMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Add
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Complete action dialog */}
+      <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Complete Action</DialogTitle></DialogHeader>
+          <div className="py-2">
+            <Label>Evidence / Notes</Label>
+            <Textarea value={completeEvidence} onChange={(e) => setCompleteEvidence(e.target.value)} rows={3} className="mt-1" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!completeActionId) return;
+                completeActionMut.mutate(
+                  { capaId: id, actionId: completeActionId, data: { evidence: completeEvidence || null } },
+                  {
+                    onSuccess: () => { toast.success("Action completed."); setCompleteOpen(false); setCompleteActionId(null); setCompleteEvidence(""); },
+                    onError: (e) => toast.error(handleApiError(e)),
+                  },
+                );
+              }}
+              disabled={completeActionMut.isPending}
+            >
+              {completeActionMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Complete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verify effectiveness dialog */}
       <Dialog open={verifyOpen} onOpenChange={setVerifyOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Verify effectiveness</DialogTitle>
-            <DialogDescription>Requires CAPA approve permission.</DialogDescription>
+            <DialogTitle>Verify Effectiveness</DialogTitle>
+            <DialogDescription>Record the outcome of the effectiveness check.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={verifyOk} onChange={(e) => setVerifyOk(e.target.checked)} className="h-4 w-4" />
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={verifyOk} onChange={(e) => setVerifyOk(e.target.checked)} className="h-4 w-4 rounded" />
               Mark as effective
             </label>
             <div>
-              <Label htmlFor="vn">Notes</Label>
-              <Textarea id="vn" value={verifyNotes} onChange={(e) => setVerifyNotes(e.target.value)} rows={2} className="mt-1" />
+              <Label>Notes</Label>
+              <Textarea value={verifyNotes} onChange={(e) => setVerifyNotes(e.target.value)} rows={3} className="mt-1" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setVerifyOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={onVerify} disabled={verifyMut.isPending}>
-              {verifyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit"}
+            <Button variant="outline" onClick={() => setVerifyOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => verifyMut.mutate({ id, data: { verified: verifyOk, notes: verifyNotes || null } }, {
+                onSuccess: () => { toast.success("Effectiveness recorded."); setVerifyOpen(false); void refetch(); },
+                onError: (e) => toast.error(handleApiError(e)),
+              })}
+              disabled={verifyMut.isPending}
+            >
+              {verifyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Submit
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Complete action</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Label htmlFor="ev">Evidence (optional)</Label>
-            <Textarea
-              id="ev"
-              value={completeEvidence}
-              onChange={(e) => setCompleteEvidence(e.target.value)}
-              rows={3}
-              className="mt-1"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCompleteOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={onCompleteAction} disabled={completeActionMut.isPending}>
-              {completeActionMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Complete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete dialog */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete CAPA</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{capa.capa_number}</strong> — {capa.title}? This action cannot be undone.
+              Delete <strong>{capa.capa_number}</strong>? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -542,11 +636,14 @@ export default function CapaDetailPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(e: React.MouseEvent) => {
                 e.preventDefault();
-                onDeleteConfirm();
+                deleteMut.mutate(id, {
+                  onSuccess: () => { toast.success("Deleted."); router.push("/qms/capa" as Route); },
+                  onError: (e) => toast.error(handleApiError(e)),
+                });
               }}
               disabled={deleteMut.isPending}
             >
-              {deleteMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+              {deleteMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379/0"
     kafka_bootstrap_servers: str = "localhost:9092"
+    kafka_group_id: str = "training-service"
+    document_service_url: str = "http://document-service:8015"
     rainer_master_secret: str = "dev-master-secret-change-in-production"
     cors_allowed_origins: list[str] = ["http://localhost:3000"]
 

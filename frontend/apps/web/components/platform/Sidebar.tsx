@@ -25,6 +25,14 @@ import {
   DollarSign,
   Crown,
   Building2,
+  ClipboardCheck,
+  Thermometer,
+  ShieldAlert,
+  TestTube2,
+  MessageSquareWarning,
+  ClipboardSignature,
+  FlaskRound,
+  Activity,
 } from "lucide-react";
 import { useUIStore } from "@/lib/stores/ui.store";
 
@@ -33,8 +41,14 @@ const QMS_NAV = [
   { href: "/qms/quality-events", icon: AlertTriangle, label: "Quality Events" },
   { href: "/qms/capa", icon: ClipboardList, label: "CAPA" },
   { href: "/qms/training", icon: GraduationCap, label: "Training" },
-  { href: "/qms/training/my-training", icon: BookOpen, label: "My training" },
+  { href: "/qms/training/my-training", icon: BookOpen, label: "My Training" },
   { href: "/qms/equipment", icon: Wrench, label: "Equipment" },
+  { href: "/qms/audit", icon: ClipboardCheck, label: "Audit Management" },
+  { href: "/qms/complaints", icon: MessageSquareWarning, label: "Complaints" },
+  { href: "/qms/risk", icon: ShieldAlert, label: "Risk Management" },
+  { href: "/qms/management-reviews", icon: ClipboardSignature, label: "Mgmt Review" },
+  { href: "/qms/em", icon: Thermometer, label: "Env. Monitoring" },
+  { href: "/qms/pt", icon: FlaskRound, label: "Proficiency Testing" },
   { href: "/qms/analytics", icon: BarChart3, label: "Analytics" },
 ];
 
