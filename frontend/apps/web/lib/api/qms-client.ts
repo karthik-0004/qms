@@ -29,6 +29,30 @@ const QMS_SERVICE_BASE_URLS = {
     process.env.NEXT_PUBLIC_QMS_EQUIPMENT_API_URL ??
     process.env.NEXT_PUBLIC_QMS_API_URL ??
     DEFAULT_GATEWAY_URL,
+  audit:
+    process.env.NEXT_PUBLIC_QMS_AUDIT_API_URL ??
+    process.env.NEXT_PUBLIC_QMS_API_URL ??
+    DEFAULT_GATEWAY_URL,
+  complaint:
+    process.env.NEXT_PUBLIC_QMS_COMPLAINT_API_URL ??
+    process.env.NEXT_PUBLIC_QMS_API_URL ??
+    DEFAULT_GATEWAY_URL,
+  risk:
+    process.env.NEXT_PUBLIC_QMS_RISK_API_URL ??
+    process.env.NEXT_PUBLIC_QMS_API_URL ??
+    DEFAULT_GATEWAY_URL,
+  managementReview:
+    process.env.NEXT_PUBLIC_QMS_MGMT_REVIEW_API_URL ??
+    process.env.NEXT_PUBLIC_QMS_API_URL ??
+    DEFAULT_GATEWAY_URL,
+  envMonitoring:
+    process.env.NEXT_PUBLIC_QMS_ENV_MONITORING_API_URL ??
+    process.env.NEXT_PUBLIC_QMS_API_URL ??
+    DEFAULT_GATEWAY_URL,
+  pt:
+    process.env.NEXT_PUBLIC_QMS_PT_API_URL ??
+    process.env.NEXT_PUBLIC_QMS_API_URL ??
+    DEFAULT_GATEWAY_URL,
 } as const;
 
 export type QmsServiceKey = keyof typeof QMS_SERVICE_BASE_URLS;
@@ -89,6 +113,12 @@ export const qmsTrainingApiClient: AxiosInstance = createQmsApiClient("training"
 export const qmsQualityEventApiClient: AxiosInstance = createQmsApiClient("qualityEvent");
 export const qmsCapaApiClient: AxiosInstance = createQmsApiClient("capa");
 export const qmsEquipmentApiClient: AxiosInstance = createQmsApiClient("equipment");
+export const qmsAuditApiClient: AxiosInstance = createQmsApiClient("audit");
+export const qmsComplaintApiClient: AxiosInstance = createQmsApiClient("complaint");
+export const qmsRiskApiClient: AxiosInstance = createQmsApiClient("risk");
+export const qmsMgmtReviewApiClient: AxiosInstance = createQmsApiClient("managementReview");
+export const qmsEnvMonitoringApiClient: AxiosInstance = createQmsApiClient("envMonitoring");
+export const qmsPtApiClient: AxiosInstance = createQmsApiClient("pt");
 
 /*
  * Backward-compat note:

@@ -15,6 +15,8 @@ from rainer_common.responses import ErrorResponse
 from .api.v1 import api_v1_router
 from .core.config import get_settings
 from .core.database import check_db_health, dispose_engine
+from .events import close_training_event_publisher, init_training_event_publisher
+from .kafka_consumer import start_training_consumer, stop_training_consumer
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -24,8 +26,21 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     setup_logging(settings.service_name, settings.service_version, settings.log_level, settings.json_logs)
     logger.info("service_starting", service=settings.service_name)
-    # TODO(Kafka): publish training assignment / completion events for audit trail and downstream sync.
+
+    # Initialize Kafka event publisher (gracefully handles missing Kafka)
+    try:
+        await init_training_event_publisher(settings.kafka_bootstrap_servers)
+        logger.info("training_event_publisher_initialized")
+    except Exception as exc:
+        logger.warning("training_event_publisher_init_failed", error=str(exc))
+
+    # Start Kafka consumer for Document.Effective events
+    await start_training_consumer()
+
     yield
+
+    await stop_training_consumer()
+    await close_training_event_publisher()
     await dispose_engine()
 
 

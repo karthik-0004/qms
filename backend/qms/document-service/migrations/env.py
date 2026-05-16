@@ -1,4 +1,4 @@
-ok"""Alembic env.py — async migrations for document-service."""
+"""Alembic env.py — async migrations for document-service."""
 
 import asyncio
 import os
@@ -28,6 +28,8 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         version_table="alembic_version_document_service",
+        version_table_pk=True,
+        version_table_length=255,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -40,6 +42,8 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         version_table="alembic_version_document_service",
+        version_table_pk=True,
+        version_table_length=255,
     )
     with context.begin_transaction():
         context.run_migrations()

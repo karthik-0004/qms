@@ -46,3 +46,59 @@ class RejectDocumentRequest(BaseModel):
 
 class AddDistributionMemberRequest(BaseModel):
     user_id: str = Field(min_length=1)
+
+
+class CreateVersionRequest(BaseModel):
+    change_type: str = Field(default="major", pattern=r"^(major|minor)$")
+    change_summary: str = Field(min_length=1, max_length=1000)
+    file_id: str | None = None
+
+
+class AcknowledgeDocumentRequest(BaseModel):
+    signature: str = Field(min_length=1, description="E-signature passphrase")
+    ip_address: str | None = None
+
+
+# ── §7.1 Taxonomy / Folder / ControlledCopy ─────────────────────────────────
+
+class CreateTaxonomyRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = None
+    sort_order: int = 0
+
+
+class UpdateTaxonomyRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+    sort_order: int | None = None
+
+
+class CreateFolderRequest(BaseModel):
+    taxonomy_id: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=200)
+    parent_id: str | None = None
+    description: str | None = None
+    path: str = ""
+    sort_order: int = 0
+
+
+class UpdateFolderRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+    parent_id: str | None = None
+    path: str | None = None
+    sort_order: int | None = None
+
+
+class IssueControlledCopyRequest(BaseModel):
+    copy_number: str = Field(min_length=1, max_length=50)
+    issued_to: str = Field(min_length=1, max_length=255)
+    notes: str | None = None
+
+
+# ── Editor content (Mode A) ─────────────────────────────────────────────────
+
+class SaveContentRequest(BaseModel):
+    authoring_mode: str = Field(default="editor", pattern=r"^(editor|upload)$")
+    content_ast: dict | None = None
+    html_snapshot: str | None = None

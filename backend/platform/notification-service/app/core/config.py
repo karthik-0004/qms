@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     smtp_from_name: str = "Rainer Platform"
 
     rainer_master_secret: str = "dev-master-secret-change-in-production"
+    auth_service_url: str = "http://auth-service:8003"
 
     @field_validator("smtp_password", mode="before")
     @classmethod

@@ -1,8 +1,14 @@
 import {
   qmsApiClient,
+  qmsAuditApiClient,
   qmsCapaApiClient,
+  qmsComplaintApiClient,
+  qmsEnvMonitoringApiClient,
   qmsEquipmentApiClient,
+  qmsMgmtReviewApiClient,
+  qmsPtApiClient,
   qmsQualityEventApiClient,
+  qmsRiskApiClient,
   qmsTrainingApiClient,
 } from "../qms-client";
 
@@ -28,6 +34,13 @@ export interface Document {
   is_controlled?: boolean;
   created_by?: string;
   last_rejection_reason?: string | null;
+  vault?: string;
+  taxonomy_id?: string | null;
+  folder_id?: string | null;
+  category_path?: string | null;
+  review_interval_days?: number | null;
+  next_review_date?: string | null;
+  obsolete_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -172,6 +185,129 @@ export interface TrainingAssignment {
   updated_at: string;
 }
 
+// ── Phase 4: Job Codes ───────────────────────────────────────────────────────
+
+export interface JobCode {
+  id: string;
+  tenant_id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  department: string | null;
+  requires_certification: boolean;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  course_count: number;
+  user_count: number;
+  compliance_pct: number | null;
+}
+
+export interface JobCodeCourseLink {
+  id: string;
+  job_code_id: string;
+  course_id: string;
+  course_title: string | null;
+  is_required: boolean;
+  sort_order: number;
+}
+
+export interface JobCodeAssignment {
+  id: string;
+  tenant_id: string;
+  job_code_id: string;
+  user_id: string;
+  assigned_by: string | null;
+  assigned_at: string;
+  is_primary: boolean;
+}
+
+export interface Trainer {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  job_code_id: string | null;
+  qualification: string | null;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Exam {
+  id: string;
+  tenant_id: string;
+  course_id: string;
+  course_title: string | null;
+  title: string;
+  description: string | null;
+  passing_score: number;
+  duration_minutes: number | null;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  question_count: number;
+}
+
+export interface ExamQuestion {
+  id: string;
+  exam_id: string;
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+  sort_order: number;
+}
+
+export interface ExamAttempt {
+  id: string;
+  tenant_id: string;
+  exam_id: string;
+  user_id: string;
+  score: number | null;
+  passed: boolean | null;
+  answers: Record<string, string> | null;
+  started_at: string;
+  completed_at: string | null;
+  status: string;
+}
+
+export interface TrainingDashboardStats {
+  total_courses: number;
+  total_assignments: number;
+  completed_assignments: number;
+  overdue_assignments: number;
+  in_progress_assignments: number;
+  pending_assignments: number;
+  total_job_codes: number;
+  users_with_overdue: number;
+  overall_compliance_pct: number;
+  upcoming_recertifications: number;
+  total_trainers: number;
+}
+
+export interface JobCodeUserStatus {
+  user_id: string;
+  user_name: string | null;
+  job_code_id: string;
+  job_code_title: string;
+  is_primary: boolean;
+  courses: CourseStatusItem[];
+}
+
+export interface CourseStatusItem {
+  course_id: string;
+  course_title: string;
+  is_required: boolean;
+  assignment_id: string | null;
+  status: string | null;
+  score: number | null;
+  passed: boolean | null;
+  completed_at: string | null;
+  due_date: string | null;
+}
+
 export interface Equipment {
   id: string;
   tenant_id?: string;
@@ -203,6 +339,66 @@ export interface Equipment {
   updated_at?: string;
 }
 
+export interface CalibrationRecord {
+  id: string;
+  equipment_id: string;
+  calibration_date: string;
+  calibrated_by: string | null;
+  passed: boolean;
+  certificate_file_id: string | null;
+  notes: string | null;
+  standards_used?: string[] | null;
+  as_found_reading?: string | null;
+  as_left_reading?: string | null;
+  measurement_uncertainty?: number | null;
+  created_at: string;
+}
+
+export interface Taxonomy {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description?: string | null;
+  sort_order: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Folder {
+  id: string;
+  tenant_id: string;
+  taxonomy_id: string;
+  parent_id?: string | null;
+  name: string;
+  description?: string | null;
+  path: string;
+  sort_order: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ControlledCopy {
+  id: string;
+  document_id: string;
+  version: string;
+  copy_number: string;
+  issued_to: string;
+  issued_by: string;
+  issued_at: string;
+  recalled_at?: string | null;
+  status: string;
+  notes?: string | null;
+}
+
+export interface ContentDto {
+  authoring_mode: string;
+  content_ast?: unknown;
+  html_snapshot?: string;
+  editor_nonce?: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -230,6 +426,13 @@ type DocumentDto = {
   is_controlled?: boolean;
   created_by?: string;
   last_rejection_reason?: string | null;
+  vault?: string;
+  taxonomy_id?: string | null;
+  folder_id?: string | null;
+  category_path?: string | null;
+  review_interval_days?: number | null;
+  next_review_date?: string | null;
+  obsolete_reason?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -255,6 +458,13 @@ function mapDocument(dto: DocumentDto): Document {
     is_controlled: dto.is_controlled,
     created_by: dto.created_by,
     last_rejection_reason: dto.last_rejection_reason,
+    vault: dto.vault,
+    taxonomy_id: dto.taxonomy_id,
+    folder_id: dto.folder_id,
+    category_path: dto.category_path,
+    review_interval_days: dto.review_interval_days,
+    next_review_date: dto.next_review_date,
+    obsolete_reason: dto.obsolete_reason,
     created_at: dto.created_at,
     updated_at: dto.updated_at,
   };
@@ -357,7 +567,7 @@ function mapQualityEventDto(raw: unknown): QualityEvent {
 // ─── Documents ──────────────────────────────────────────────────────────────
 
 export const documentsApi = {
-  list: (params?: { search?: string; status?: string; page?: number; page_size?: number }) =>
+  list: (params?: { search?: string; status?: string; doc_type?: string; department?: string; taxonomy_id?: string; folder_id?: string; page?: number; page_size?: number }) =>
     qmsApiClient
       .get<PaginatedResponse<DocumentDto> | PaginatedEnvelope<DocumentDto>>("/documents", { params })
       .then((r) => normalizePaginated<Document>(r.data, (v) => mapDocument(v as DocumentDto))),
@@ -432,6 +642,16 @@ export const documentsApi = {
       .post<SuccessEnvelope<DocumentDto> | DocumentDto>(`/documents/${id}/make-obsolete`, {})
       .then((r) => ("data" in (r.data as object) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
 
+  makeEffective: (id: string) =>
+    qmsApiClient
+      .post<SuccessEnvelope<DocumentDto> | DocumentDto>(`/documents/${id}/make-effective`, {})
+      .then((r) => ("data" in (r.data as object) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
+
+  makeSuperseded: (id: string) =>
+    qmsApiClient
+      .post<SuccessEnvelope<DocumentDto> | DocumentDto>(`/documents/${id}/make-superseded`, {})
+      .then((r) => ("data" in (r.data as object) ? mapDocument((r.data as SuccessEnvelope<DocumentDto>).data) : mapDocument(r.data as DocumentDto))),
+
   getVersions: (id: string) =>
     qmsApiClient.get<unknown>(`/documents/${id}/versions`).then((r) => unwrapSuccessData<DocumentVersion[]>(r.data)),
 
@@ -447,6 +667,58 @@ export const documentsApi = {
     qmsApiClient
       .post<unknown>(`/documents/${id}/distribution`, data)
       .then((r) => unwrapSuccessData<DocumentDistribution>(r.data)),
+
+  // §4.4 — Editor content
+  saveContent: (id: string, data: { authoring_mode: string; content_ast?: unknown; html_snapshot?: string }) =>
+    qmsApiClient.post<unknown>(`/documents/${id}/content`, data).then((r) => unwrapSuccessData(r.data)),
+
+  getContent: (id: string) =>
+    qmsApiClient.get<unknown>(`/documents/${id}/content`).then((r) => unwrapSuccessData(r.data)),
+
+  // §4.4 — File upload
+  uploadFile: (id: string, formData: FormData) =>
+    qmsApiClient
+      .post<unknown>(`/documents/${id}/file`, formData, { headers: { "Content-Type": "multipart/form-data" } })
+      .then((r) => unwrapSuccessData<{ file_id: string; filename: string; size_bytes: number }>(r.data)),
+
+  // §7.1 — Controlled copies
+  listControlledCopies: (id: string) =>
+    qmsApiClient.get<unknown>(`/documents/${id}/controlled-copies`).then((r) => unwrapSuccessData(r.data)),
+
+  issueControlledCopy: (id: string, data: { copy_number: string; issued_to: string; notes?: string }) =>
+    qmsApiClient.post<unknown>(`/documents/${id}/controlled-copies`, data).then((r) => unwrapSuccessData(r.data)),
+
+  recallControlledCopy: (docId: string, copyId: string) =>
+    qmsApiClient.post<unknown>(`/documents/${docId}/controlled-copies/${copyId}/recall`).then((r) => unwrapSuccessData(r.data)),
+
+  acknowledge: (id: string, data: { signature: string }) =>
+    qmsApiClient
+      .post<unknown>(`/documents/${id}/acknowledge`, data)
+      .then((r) => unwrapSuccessData(r.data)),
+
+  createVersion: (id: string, data: { change_type: string; change_summary: string }) =>
+    qmsApiClient
+      .post<unknown>(`/documents/${id}/versions`, data)
+      .then((r) => unwrapSuccessData(r.data)),
+};
+
+// ─── Taxonomies & Folders ────────────────────────────────────────────────────
+
+export const taxonomyApi = {
+  list: () =>
+    qmsApiClient.get<unknown>("/taxonomies").then((r) => unwrapSuccessData<Taxonomy[]>(r.data)),
+
+  get: (id: string) =>
+    qmsApiClient.get<unknown>(`/taxonomies/${id}`).then((r) => unwrapSuccessData<Taxonomy>(r.data)),
+
+  create: (data: { name: string; description?: string; sort_order?: number }) =>
+    qmsApiClient.post<unknown>("/taxonomies", data).then((r) => unwrapSuccessData<Taxonomy>(r.data)),
+
+  listFolders: (taxonomyId: string) =>
+    qmsApiClient.get<unknown>(`/taxonomies/${taxonomyId}/folders`).then((r) => unwrapSuccessData<Folder[]>(r.data)),
+
+  createFolder: (taxonomyId: string, data: { name: string; parent_id?: string; description?: string; path?: string; sort_order?: number }) =>
+    qmsApiClient.post<unknown>(`/taxonomies/${taxonomyId}/folders`, data).then((r) => unwrapSuccessData<Folder>(r.data)),
 };
 
 // ─── Quality Events ─────────────────────────────────────────────────────────
@@ -648,6 +920,86 @@ export const trainingApi = {
 
   listOverdueAssignments: () =>
     qmsTrainingApiClient.get<unknown>("/training/assignments/overdue").then((r) => unwrapSuccessData<TrainingAssignment[]>(r.data)),
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  dashboardStats: () =>
+    qmsTrainingApiClient.get<unknown>("/training/dashboard").then((r) => unwrapSuccessData<TrainingDashboardStats>(r.data)),
+
+  // ── Job Codes ──────────────────────────────────────────────────────────────
+
+  listJobCodes: (params?: { department?: string }) =>
+    qmsTrainingApiClient.get<unknown>("/training/job-codes", { params }).then((r) => unwrapSuccessData<JobCode[]>(r.data)),
+
+  getJobCode: (id: string) =>
+    qmsTrainingApiClient.get<unknown>(`/training/job-codes/${id}`).then((r) => unwrapSuccessData<JobCode>(r.data)),
+
+  createJobCode: (data: { code: string; title: string; description?: string; department?: string; requires_certification?: boolean }) =>
+    qmsTrainingApiClient.post<unknown>("/training/job-codes", data).then((r) => unwrapSuccessData<JobCode>(r.data)),
+
+  updateJobCode: (id: string, data: { title?: string; description?: string; department?: string; requires_certification?: boolean; is_active?: boolean }) =>
+    qmsTrainingApiClient.patch<unknown>(`/training/job-codes/${id}`, data).then((r) => unwrapSuccessData<JobCode>(r.data)),
+
+  deleteJobCode: (id: string) =>
+    qmsTrainingApiClient.delete(`/training/job-codes/${id}`).then((r) => r.data as { message: string }),
+
+  getJobCodeCourses: (jobCodeId: string) =>
+    qmsTrainingApiClient.get<unknown>(`/training/job-codes/${jobCodeId}/courses`).then((r) => unwrapSuccessData<JobCodeCourseLink[]>(r.data)),
+
+  linkCourseToJobCode: (jobCodeId: string, data: { course_id: string; is_required?: boolean; sort_order?: number }) =>
+    qmsTrainingApiClient.post<unknown>(`/training/job-codes/${jobCodeId}/courses`, data).then((r) => unwrapSuccessData<JobCodeCourseLink>(r.data)),
+
+  unlinkCourseFromJobCode: (jobCodeId: string, courseId: string) =>
+    qmsTrainingApiClient.delete(`/training/job-codes/${jobCodeId}/courses/${courseId}`).then((r) => r.data as { message: string }),
+
+  getJobCodeAssignees: (jobCodeId: string) =>
+    qmsTrainingApiClient.get<unknown>(`/training/job-codes/${jobCodeId}/assignees`).then((r) => unwrapSuccessData<JobCodeAssignment[]>(r.data)),
+
+  assignUserToJobCode: (jobCodeId: string, data: { user_id: string; is_primary?: boolean }) =>
+    qmsTrainingApiClient.post<unknown>(`/training/job-codes/${jobCodeId}/assignees`, data).then((r) => unwrapSuccessData<JobCodeAssignment>(r.data)),
+
+  unassignUserFromJobCode: (jobCodeId: string, userId: string) =>
+    qmsTrainingApiClient.delete(`/training/job-codes/${jobCodeId}/assignees/${userId}`).then((r) => r.data as { message: string }),
+
+  getJobCodeStatusMatrix: (jobCodeId: string) =>
+    qmsTrainingApiClient.get<unknown>(`/training/job-codes/${jobCodeId}/status`).then((r) => unwrapSuccessData<JobCodeUserStatus[]>(r.data)),
+
+  // ── Trainers ───────────────────────────────────────────────────────────────
+
+  listTrainers: (params?: { is_active?: boolean }) =>
+    qmsTrainingApiClient.get<unknown>("/training/trainers", { params }).then((r) => unwrapSuccessData<Trainer[]>(r.data)),
+
+  createTrainer: (data: { user_id: string; job_code_id?: string; qualification?: string }) =>
+    qmsTrainingApiClient.post<unknown>("/training/trainers", data).then((r) => unwrapSuccessData<Trainer>(r.data)),
+
+  updateTrainer: (id: string, data: { job_code_id?: string; qualification?: string; is_active?: boolean }) =>
+    qmsTrainingApiClient.patch<unknown>(`/training/trainers/${id}`, data).then((r) => unwrapSuccessData<Trainer>(r.data)),
+
+  // ── Exams ──────────────────────────────────────────────────────────────────
+
+  listExams: (params?: { course_id?: string }) =>
+    qmsTrainingApiClient.get<unknown>("/training/exams", { params }).then((r) => unwrapSuccessData<Exam[]>(r.data)),
+
+  getExam: (id: string) =>
+    qmsTrainingApiClient.get<unknown>(`/training/exams/${id}`).then((r) => unwrapSuccessData<Exam>(r.data)),
+
+  createExam: (data: { course_id: string; title: string; description?: string; passing_score?: number; duration_minutes?: number }) =>
+    qmsTrainingApiClient.post<unknown>("/training/exams", data).then((r) => unwrapSuccessData<Exam>(r.data)),
+
+  addExamQuestion: (examId: string, data: { question_text: string; options: string[]; correct_answer: string; sort_order?: number }) =>
+    qmsTrainingApiClient.post<unknown>(`/training/exams/${examId}/questions`, data).then((r) => unwrapSuccessData<ExamQuestion>(r.data)),
+
+  listExamQuestions: (examId: string) =>
+    qmsTrainingApiClient.get<unknown>(`/training/exams/${examId}/questions`).then((r) => unwrapSuccessData<ExamQuestion[]>(r.data)),
+
+  startExamAttempt: (examId: string) =>
+    qmsTrainingApiClient.post<unknown>(`/training/exams/${examId}/attempts`).then((r) => unwrapSuccessData<ExamAttempt>(r.data)),
+
+  submitExamAttempt: (attemptId: string, data: { answers: Record<string, string> }) =>
+    qmsTrainingApiClient.post<unknown>(`/training/exam-attempts/${attemptId}/submit`, data).then((r) => unwrapSuccessData<ExamAttempt>(r.data)),
+
+  listMyExamAttempts: () =>
+    qmsTrainingApiClient.get<unknown>("/training/my-exam-attempts").then((r) => unwrapSuccessData<ExamAttempt[]>(r.data)),
 };
 
 // ─── Equipment ──────────────────────────────────────────────────────────────
@@ -719,4 +1071,522 @@ export const equipmentApi = {
     qmsEquipmentApiClient
       .delete<unknown>(`/equipment/${id}`)
       .then((r) => unwrapSuccessData<{ message: string }>(r.data)),
+
+  listCalibrations: (id: string) =>
+    qmsEquipmentApiClient
+      .get<unknown>(`/equipment/${id}/calibrations`)
+      .then((r) => unwrapSuccessData<CalibrationRecord[]>(r.data)),
+};
+
+// ─── Audit Management ────────────────────────────────────────────────────────
+
+export interface AuditFinding {
+  id: string;
+  audit_id: string;
+  finding_number: string;
+  classification: string;
+  description: string;
+  iso_clause: string | null;
+  evidence_file_ids: string[];
+  capa_id: string | null;
+  auditee_response: string | null;
+  response_due_date: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditChecklistItem {
+  id: string;
+  checklist_id: string;
+  iso_clause: string | null;
+  question: string;
+  expected_evidence: string | null;
+  sort_order: number;
+}
+
+export interface AuditChecklist {
+  id: string;
+  tenant_id: string;
+  name: string;
+  criteria: string | null;
+  description: string | null;
+  is_active: boolean;
+  items: AuditChecklistItem[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Audit {
+  id: string;
+  tenant_id: string;
+  audit_number: string;
+  title: string;
+  audit_type: string;
+  entity_type: string | null;
+  entity_ref: string | null;
+  scope: string | null;
+  criteria: string | null;
+  status: string;
+  lead_auditor_id: string | null;
+  audit_team: string[];
+  auditee_id: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  performed_start: string | null;
+  performed_end: string | null;
+  checklist_id: string | null;
+  summary: string | null;
+  report_file_id: string | null;
+  score: number | null;
+  tags: string[];
+  findings: AuditFinding[];
+  finding_count: number;
+  major_nc_count: number;
+  minor_nc_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditSummary {
+  total: number;
+  by_status: Record<string, number>;
+  by_type: Record<string, number>;
+  open_findings: number;
+}
+
+export const auditApi = {
+  list: (params?: { status?: string; audit_type?: string; page?: number; page_size?: number }) =>
+    qmsAuditApiClient
+      .get<unknown>("/audits", { params })
+      .then((r) => normalizePaginated<Audit>(r.data)),
+
+  get: (id: string) =>
+    qmsAuditApiClient.get<unknown>(`/audits/${id}`).then((r) => unwrapSuccessData<Audit>(r.data)),
+
+  create: (data: {
+    audit_number: string;
+    title: string;
+    audit_type: string;
+    scope?: string | null;
+    criteria?: string | null;
+    lead_auditor_id?: string | null;
+    auditee_id?: string | null;
+    scheduled_start?: string | null;
+    scheduled_end?: string | null;
+    checklist_id?: string | null;
+    tags?: string[];
+  }) =>
+    qmsAuditApiClient.post<unknown>("/audits", data).then((r) => unwrapSuccessData<Audit>(r.data)),
+
+  update: (id: string, data: Partial<{
+    title: string;
+    scope: string | null;
+    criteria: string | null;
+    lead_auditor_id: string | null;
+    auditee_id: string | null;
+    scheduled_start: string | null;
+    scheduled_end: string | null;
+    summary: string | null;
+    score: number | null;
+    tags: string[];
+  }>) =>
+    qmsAuditApiClient.patch<unknown>(`/audits/${id}`, data).then((r) => unwrapSuccessData<Audit>(r.data)),
+
+  start: (id: string) =>
+    qmsAuditApiClient.post<unknown>(`/audits/${id}/start`, {}).then((r) => unwrapSuccessData<Audit>(r.data)),
+
+  complete: (id: string, summary?: string) =>
+    qmsAuditApiClient
+      .post<unknown>(`/audits/${id}/complete`, {}, { params: summary ? { summary } : undefined })
+      .then((r) => unwrapSuccessData<Audit>(r.data)),
+
+  delete: (id: string) =>
+    qmsAuditApiClient.delete<unknown>(`/audits/${id}`).then((r) => unwrapSuccessData<{ message: string }>(r.data)),
+
+  addFinding: (auditId: string, data: {
+    classification: string;
+    description: string;
+    iso_clause?: string | null;
+    response_due_date?: string | null;
+  }) =>
+    qmsAuditApiClient
+      .post<unknown>(`/audits/${auditId}/findings`, data)
+      .then((r) => unwrapSuccessData<AuditFinding>(r.data)),
+
+  listFindings: (auditId: string) =>
+    qmsAuditApiClient
+      .get<unknown>(`/audits/${auditId}/findings`)
+      .then((r) => unwrapSuccessData<AuditFinding[]>(r.data)),
+
+  updateFinding: (findingId: string, data: Partial<{
+    classification: string;
+    description: string;
+    iso_clause: string | null;
+    auditee_response: string | null;
+    response_due_date: string | null;
+  }>) =>
+    qmsAuditApiClient
+      .patch<unknown>(`/audits/findings/${findingId}`, data)
+      .then((r) => unwrapSuccessData<AuditFinding>(r.data)),
+
+  listChecklists: () =>
+    qmsAuditApiClient.get<unknown>("/checklists").then((r) => unwrapSuccessData<AuditChecklist[]>(r.data)),
+
+  createChecklist: (data: {
+    name: string;
+    description?: string | null;
+    criteria?: string | null;
+    items: { question: string; iso_clause?: string | null; expected_evidence?: string | null; sort_order?: number }[];
+  }) =>
+    qmsAuditApiClient.post<unknown>("/checklists", data).then((r) => unwrapSuccessData<AuditChecklist>(r.data)),
+};
+
+// ─── Customer Complaints ─────────────────────────────────────────────────────
+
+export interface Complaint {
+  id: string;
+  tenant_id: string;
+  complaint_number: string;
+  customer_name: string | null;
+  received_via: string;
+  severity: string;
+  category: string | null;
+  description: string;
+  status: string;
+  investigator_id: string | null;
+  root_cause: string | null;
+  response_text: string | null;
+  response_sent_at: string | null;
+  capa_id: string | null;
+  received_at: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const complaintsApi = {
+  list: (params?: { status?: string; severity?: string; category?: string; page?: number; page_size?: number }) =>
+    qmsComplaintApiClient.get<unknown>("/complaints", { params }).then((r) => normalizePaginated<Complaint>(r.data)),
+
+  get: (id: string) =>
+    qmsComplaintApiClient.get<unknown>(`/complaints/${id}`).then((r) => unwrapSuccessData<Complaint>(r.data)),
+
+  create: (data: {
+    complaint_number: string;
+    description: string;
+    received_at: string;
+    customer_name?: string | null;
+    received_via?: string;
+    severity?: string;
+    category?: string | null;
+    investigator_id?: string | null;
+  }) =>
+    qmsComplaintApiClient.post<unknown>("/complaints", data).then((r) => unwrapSuccessData<Complaint>(r.data)),
+
+  update: (id: string, data: Partial<{
+    customer_name: string | null;
+    received_via: string;
+    severity: string;
+    category: string | null;
+    description: string;
+    status: string;
+    investigator_id: string | null;
+    root_cause: string | null;
+    capa_id: string | null;
+  }>) =>
+    qmsComplaintApiClient.patch<unknown>(`/complaints/${id}`, data).then((r) => unwrapSuccessData<Complaint>(r.data)),
+
+  respond: (id: string, data: { response_text: string }) =>
+    qmsComplaintApiClient.post<unknown>(`/complaints/${id}/respond`, data).then((r) => unwrapSuccessData<Complaint>(r.data)),
+
+  escalateToCapa: (id: string, data: { capa_id: string }) =>
+    qmsComplaintApiClient.post<unknown>(`/complaints/${id}/escalate-to-capa`, data).then((r) => unwrapSuccessData<Complaint>(r.data)),
+
+  delete: (id: string) =>
+    qmsComplaintApiClient.delete<unknown>(`/complaints/${id}`).then((r) => unwrapSuccessData<{ message: string }>(r.data)),
+};
+
+// ─── Risk Management ──────────────────────────────────────────────────────────
+
+export interface Risk {
+  id: string;
+  tenant_id: string;
+  risk_id: string;
+  category: string;
+  description: string;
+  severity: number;
+  likelihood: number;
+  risk_score: number;
+  mitigation_plan: string | null;
+  owner_id: string | null;
+  status: string;
+  review_date: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RiskMatrixCell {
+  severity: number;
+  likelihood: number;
+  count: number;
+  risk_ids: string[];
+}
+
+export const riskApi = {
+  list: (params?: { status?: string; category?: string; page?: number; page_size?: number }) =>
+    qmsRiskApiClient.get<unknown>("/risks", { params }).then((r) => normalizePaginated<Risk>(r.data)),
+
+  get: (id: string) =>
+    qmsRiskApiClient.get<unknown>(`/risks/${id}`).then((r) => unwrapSuccessData<Risk>(r.data)),
+
+  getMatrix: () =>
+    qmsRiskApiClient.get<unknown>("/risks/matrix").then((r) => unwrapSuccessData<RiskMatrixCell[]>(r.data)),
+
+  create: (data: {
+    risk_id: string;
+    category: string;
+    description: string;
+    severity?: number;
+    likelihood?: number;
+    owner_id?: string | null;
+    mitigation_plan?: string | null;
+    review_date?: string | null;
+  }) =>
+    qmsRiskApiClient.post<unknown>("/risks", data).then((r) => unwrapSuccessData<Risk>(r.data)),
+
+  update: (id: string, data: Partial<{
+    category: string;
+    description: string;
+    severity: number;
+    likelihood: number;
+    mitigation_plan: string | null;
+    owner_id: string | null;
+    status: string;
+    review_date: string | null;
+  }>) =>
+    qmsRiskApiClient.patch<unknown>(`/risks/${id}`, data).then((r) => unwrapSuccessData<Risk>(r.data)),
+
+  delete: (id: string) =>
+    qmsRiskApiClient.delete<unknown>(`/risks/${id}`).then((r) => unwrapSuccessData<{ message: string }>(r.data)),
+};
+
+// ─── Management Review ────────────────────────────────────────────────────────
+
+export interface ManagementReview {
+  id: string;
+  tenant_id: string;
+  review_number: string;
+  title: string;
+  scheduled_date: string;
+  completed_date: string | null;
+  facilitator_id: string | null;
+  attendees: unknown[];
+  status: string;
+  agenda: string | null;
+  minutes: string | null;
+  outcomes: unknown[];
+  action_items: unknown[];
+  next_review_date: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const managementReviewApi = {
+  list: (params?: { status?: string; page?: number; page_size?: number }) =>
+    qmsMgmtReviewApiClient.get<unknown>("/management-reviews", { params }).then((r) => normalizePaginated<ManagementReview>(r.data)),
+
+  get: (id: string) =>
+    qmsMgmtReviewApiClient.get<unknown>(`/management-reviews/${id}`).then((r) => unwrapSuccessData<ManagementReview>(r.data)),
+
+  create: (data: {
+    review_number: string;
+    title: string;
+    scheduled_date: string;
+    facilitator_id?: string | null;
+    agenda?: string | null;
+  }) =>
+    qmsMgmtReviewApiClient.post<unknown>("/management-reviews", data).then((r) => unwrapSuccessData<ManagementReview>(r.data)),
+
+  update: (id: string, data: Partial<{
+    title: string;
+    status: string;
+    scheduled_date: string;
+    completed_date: string | null;
+    facilitator_id: string | null;
+    attendees: unknown[];
+    agenda: string | null;
+    minutes: string | null;
+    outcomes: unknown[];
+    action_items: unknown[];
+    next_review_date: string | null;
+  }>) =>
+    qmsMgmtReviewApiClient.patch<unknown>(`/management-reviews/${id}`, data).then((r) => unwrapSuccessData<ManagementReview>(r.data)),
+
+  complete: (id: string) =>
+    qmsMgmtReviewApiClient.post<unknown>(`/management-reviews/${id}/complete`, {}).then((r) => unwrapSuccessData<ManagementReview>(r.data)),
+
+  delete: (id: string) =>
+    qmsMgmtReviewApiClient.delete<unknown>(`/management-reviews/${id}`).then((r) => unwrapSuccessData<{ message: string }>(r.data)),
+};
+
+// ─── Environmental Monitoring ─────────────────────────────────────────────────
+
+export interface MonitoringPoint {
+  id: string;
+  tenant_id: string;
+  point_id: string;
+  location: string;
+  parameter: string;
+  alert_limit: number | null;
+  action_limit: number | null;
+  frequency_type: string;
+  frequency_value: number | null;
+  status: string;
+  last_reading_value: number | null;
+  last_reading_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MonitoringReading {
+  id: string;
+  tenant_id: string;
+  point_id: string;
+  value: number;
+  recorded_at: string;
+  recorded_by_user_id: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export const envMonitoringApi = {
+  listPoints: (params?: { status?: string; page?: number; page_size?: number }) =>
+    qmsEnvMonitoringApiClient
+      .get<unknown>("/monitoring-points", { params })
+      .then((r) => normalizePaginated<MonitoringPoint>(r.data, (v) => v as MonitoringPoint)),
+
+  getPoint: (id: string) =>
+    qmsEnvMonitoringApiClient.get<unknown>(`/monitoring-points/${id}`).then((r) => unwrapSuccessData<MonitoringPoint>(r.data)),
+
+  createPoint: (data: {
+    point_id: string;
+    location: string;
+    parameter: string;
+    frequency_type: string;
+    alert_limit?: number | null;
+    action_limit?: number | null;
+    frequency_value?: number | null;
+  }) =>
+    qmsEnvMonitoringApiClient.post<unknown>("/monitoring-points", data).then((r) => unwrapSuccessData<MonitoringPoint>(r.data)),
+
+  updatePoint: (id: string, data: Record<string, unknown>) =>
+    qmsEnvMonitoringApiClient.patch<unknown>(`/monitoring-points/${id}`, data).then((r) => unwrapSuccessData<MonitoringPoint>(r.data)),
+
+  addReading: (pointId: string, data: { value: number; recorded_at: string; notes?: string }) =>
+    qmsEnvMonitoringApiClient.post<unknown>(`/monitoring-points/${pointId}/readings`, data).then((r) => unwrapSuccessData<MonitoringReading>(r.data)),
+
+  listReadings: (pointId: string, params?: { from?: string; to?: string }) =>
+    qmsEnvMonitoringApiClient.get<unknown>(`/monitoring-points/${pointId}/readings`, { params }).then((r) => {
+      const data = r.data as { data?: MonitoringReading[]; items?: MonitoringReading[] } | MonitoringReading[];
+      if (Array.isArray(data)) return data as MonitoringReading[];
+      if (Array.isArray((data as { data?: MonitoringReading[] }).data)) return (data as { data: MonitoringReading[] }).data;
+      if (Array.isArray((data as { items?: MonitoringReading[] }).items)) return (data as { items: MonitoringReading[] }).items;
+      return [] as MonitoringReading[];
+    }),
+
+  listExcursions: (pointId: string) =>
+    qmsEnvMonitoringApiClient.get<unknown>(`/monitoring-points/${pointId}/excursions`).then((r) => {
+      const data = r.data as { data?: MonitoringReading[] } | MonitoringReading[];
+      if (Array.isArray(data)) return data as MonitoringReading[];
+      return ((data as { data?: MonitoringReading[] }).data ?? []) as MonitoringReading[];
+    }),
+};
+
+// ─── Proficiency Testing ──────────────────────────────────────────────────────
+
+export interface PTProgram {
+  id: string;
+  tenant_id: string;
+  provider: string;
+  scheme_name: string;
+  parameter: string;
+  frequency_months: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PTRound {
+  id: string;
+  tenant_id: string;
+  program_id: string;
+  round_id: string;
+  sample_received_date: string | null;
+  result_due_date: string | null;
+  reported_result: number | null;
+  reference_value: number | null;
+  z_score: number | null;
+  en_number: number | null;
+  status: string;
+  capa_id: string | null;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const ptApi = {
+  listPrograms: (params?: { page?: number; page_size?: number }) =>
+    qmsPtApiClient
+      .get<unknown>("/pt/programs", { params })
+      .then((r) => normalizePaginated<PTProgram>(r.data, (v) => v as PTProgram)),
+
+  getProgram: (id: string) =>
+    qmsPtApiClient.get<unknown>(`/pt/programs/${id}`).then((r) => unwrapSuccessData<PTProgram>(r.data)),
+
+  createProgram: (data: {
+    provider: string;
+    scheme_name: string;
+    parameter: string;
+    frequency_months: number;
+  }) =>
+    qmsPtApiClient.post<unknown>("/pt/programs", data).then((r) => unwrapSuccessData<PTProgram>(r.data)),
+
+  listRounds: (programId: string) =>
+    qmsPtApiClient.get<unknown>(`/pt/programs/${programId}/rounds`).then((r) => {
+      const data = r.data as { data?: PTRound[] } | PTRound[];
+      if (Array.isArray(data)) return data as PTRound[];
+      return ((data as { data?: PTRound[] }).data ?? []) as PTRound[];
+    }),
+
+  createRound: (programId: string, data: {
+    round_id: string;
+    sample_received_date?: string | null;
+    result_due_date?: string | null;
+    notes?: string | null;
+  }) =>
+    qmsPtApiClient.post<unknown>(`/pt/programs/${programId}/rounds`, data).then((r) => unwrapSuccessData<PTRound>(r.data)),
+
+  getRound: (roundId: string) =>
+    qmsPtApiClient.get<unknown>(`/pt/rounds/${roundId}`).then((r) => unwrapSuccessData<PTRound>(r.data)),
+
+  updateRound: (roundId: string, data: Record<string, unknown>) =>
+    qmsPtApiClient.patch<unknown>(`/pt/rounds/${roundId}`, data).then((r) => unwrapSuccessData<PTRound>(r.data)),
+
+  calculateScores: (roundId: string) =>
+    qmsPtApiClient.post<unknown>(`/pt/rounds/${roundId}/calculate-scores`).then((r) => unwrapSuccessData<{
+      round_id: string;
+      reported_result: number;
+      reference_value: number;
+      z_score: number;
+      en_number: number;
+      z_score_pass: boolean;
+      en_number_pass: boolean;
+    }>(r.data)),
 };
